@@ -29,6 +29,9 @@ def get_portfolio(buyer_name: str) -> pd.DataFrame:
     buyer_portfolio = pd.read_csv(f'portfolios/{buyer_name}.csv', index_col='stock_name')
     return buyer_portfolio
 
+def get_balance(investor_name: str) -> float:
+    investor = get_investor_by_name(investor_name)
+    return investor.cash_balance
 
 def get_net_worth(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)
@@ -37,9 +40,9 @@ def get_net_worth(investor_name: str) -> float:
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
         stock = get_stock_by_name(s)
-        net_worth += qty * valuate(stock)    #TODO: find smarter way to adjust for tax? 
+        net_worth += qty * valuate(stock)
     return net_worth
 
-def get_dividend_return(stock_name) -> float:
+def get_dividend_yield(stock_name) -> float:
     stock = get_stock_by_name(stock_name)
-    return stock.prestige - 1
+    return stock.prestige - 1  # This is a percentage
