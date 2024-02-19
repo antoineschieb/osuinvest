@@ -1,3 +1,4 @@
+from datetime import datetime
 import glob
 import pandas as pd
 import os 
@@ -51,17 +52,21 @@ def print_all():
     df = pd.read_csv("all_investors.csv", index_col='name')
     print(df)
 
-    print('\n\nPORTFOLIOS')
-    for x in glob.glob("portfolios/*.csv"):
-        print(x)
-        df = pd.read_csv(x, index_col='stock_name')
-        print(df)
+    # print('\n\nPORTFOLIOS')
+    # for x in glob.glob("portfolios/*.csv"):
+    #     print(x)
+    #     df = pd.read_csv(x, index_col='stock_name')
+    #     print(df)
 
-    print('\n\nOWNERSHIPS')
-    for x in glob.glob("ownerships/*.csv"):
-        print(x)
-        df = pd.read_csv(x, index_col='investor_name')
-        print(df)
+    # print('\n\nOWNERSHIPS')
+    # for x in glob.glob("ownerships/*.csv"):
+    #     print(x)
+    #     df = pd.read_csv(x, index_col='investor_name')
+    #     print(df)
+
+    print("\n\nHISTORY")
+    df = pd.read_csv("transactions_history.csv", index_col='transaction_id')
+    print(df)
     return 
 
 
@@ -111,6 +116,20 @@ def reset_all_trades():
     df = df.iloc[0:0]
     df.to_csv("all_investors.csv", index='name')
 
+    df = pd.read_csv("transactions_history.csv", index_col='transaction_id')
+    df = df.iloc[0:0]
+    df.to_csv("transactions_history.csv", index='transaction_id')
+    return
+
+def log_transaction(investor, stock_id, quantity):
+    # Read column types properly
+    history = pd.read_csv("transactions_history.csv", index_col='transaction_id')
+    history = history.astype({"stock_id": int})
+    history['datetime'] = pd.to_datetime(history['datetime'])
+    
+    t_id = len(history)
+    history.loc[t_id,:] = [investor, int(stock_id), quantity, datetime.now()]
+    history.to_csv("transactions_history.csv", index='transaction_id')
     return
 
 

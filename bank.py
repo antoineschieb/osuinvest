@@ -1,6 +1,6 @@
 from constants import TAX, name_id, id_name
 from utils import get_dividend_yield, get_investor_by_name, get_portfolio, get_stock_by_name, valuate
-from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership
+from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
 
 
 def buy_stock(buyer_name: str, stock_name, quantity: float):
@@ -10,13 +10,11 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     
     buyer = get_investor_by_name(buyer_name)
     stock = get_stock_by_name(stock_name)
-
     share_price = valuate(stock)
-
-    tax = 0 if quantity > 0 else TAX
-    transaction_price = round(share_price * quantity * (1-tax), 2)
     
-    if transaction_price > 0:
+    if quantity > 0:
+        transaction_price = round(share_price * quantity, 2)
+        
         # check if buyer has enough cash
         if transaction_price > buyer.cash_balance:
             print(f'{buyer_name} does not have enough cash (${buyer.cash_balance}) to perform this transaction (${transaction_price}).')
@@ -26,12 +24,17 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
         if stock.total_shares - stock.sold_shares < quantity:
             print(f'The total number of available shares {stock.total_shares - stock.sold_shares} is not sufficient to perform this transaction.')
             return
-    elif transaction_price < 0:
+    elif quantity < 0:
+        transaction_price = round(share_price * quantity * (1-TAX), 2)
+        
         # check if seller has enough shares
         portfolio = get_portfolio(buyer_name)
         if portfolio.loc[stock_name,'shares_owned'] < abs(quantity):
             print(f'{buyer_name} does not have enough {id_name[stock_name]} shares ({portfolio.loc[stock_name,"shares_owned"]}) to perform this transaction.')
             return  
+    else:
+        print(f'Quantity traded can not be zero.')
+        return 
 
     update_stock_ownership(buyer_name, stock_name, quantity)
 
@@ -43,6 +46,9 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     
     stock.sold_shares += quantity
     update_stock(stock)
+
+    # Add transaction to history
+    log_transaction(buyer_name, stock_name, quantity)
 
     print(f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of {id_name[stock_name]} for ${abs(transaction_price)} !")
     return 
