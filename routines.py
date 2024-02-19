@@ -3,8 +3,8 @@ import pandas as pd
 import os 
 
 from constants import id_name, name_id
-from osuapi import all_user_info
-from utils import get_dividend_yield_from_stock, valuate
+# from osuapi import all_user_info
+from utils import get_dividend_yield_from_stock, get_stocks_table, valuate
 
 
 def update_stock(stock: pd.Series):
@@ -44,15 +44,7 @@ def update_buyer_portfolio(buyer_name, stock_name, quantity):
 
 def print_all():
     print("\n\nSTOCKS")
-    df1 = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df2 = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
-    df = pd.concat([df1, df2], axis=1)
-
-    current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
-    df.insert(0,'current_name', current_name_column)
-
-    df["value"] = df.apply(valuate, axis=1)
-    df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
+    df = get_stocks_table()
     print(df)
 
     print('\n\nINVESTORS')
@@ -122,14 +114,14 @@ def reset_all_trades():
     return
 
 
-def update_player_data_raw():
-    d = all_user_info()
-    cols = d.keys()
-    df_raw = pd.DataFrame(columns=cols)
-    df_raw = df_raw.set_index('id')
-    for uuid in id_name.keys():
-        d = all_user_info(uuid)
-        df_raw.loc[uuid,:] = d
-    df_raw.to_csv("player_data_raw.csv", index='id')
-    print(f'Updated all stats for top50 players')
-    return
+# def update_player_data_raw():
+#     d = all_user_info()
+#     cols = d.keys()
+#     df_raw = pd.DataFrame(columns=cols)
+#     df_raw = df_raw.set_index('id')
+#     for uuid in id_name.keys():
+#         d = all_user_info(uuid)
+#         df_raw.loc[uuid,:] = d
+#     df_raw.to_csv("player_data_raw.csv", index='id')
+#     print(f'Updated all stats for top50 players')
+#     return

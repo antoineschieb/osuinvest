@@ -28,7 +28,8 @@ def compute_hype(x: pd.Series) -> float:
     return h
 
 
-def compute_prestige_and_hype(df_raw):
+def compute_prestige_and_hype():
+    df_raw = pd.read_csv("player_data_raw.csv", index_col='id')
     df = (df_raw-df_raw.mean())/df_raw.std()
     df = df.astype(float).fillna(0)
     df = add_current_name_col(df)
@@ -41,5 +42,6 @@ def compute_prestige_and_hype(df_raw):
     df['hype'] = (df['hype']-df['hype'].mean())/df['hype'].std()
     df['hype'] = 1+np.power(1.5, df['hype'])
 
-    return df[['prestige','hype']]
+    df['current_pp'] = df_raw['pp']
+    return df[['current_pp','prestige','hype']]
 
