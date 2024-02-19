@@ -3,7 +3,7 @@ import pandas as pd
 import os 
 
 from constants import id_name, name_id
-from osupeppy import all_user_info
+from osuapi import all_user_info
 from utils import get_dividend_yield_from_stock, valuate
 
 
