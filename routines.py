@@ -2,7 +2,9 @@ import glob
 import pandas as pd
 import os 
 
-from utils import valuate
+from constants import id_name, name_id
+from osupeppy import all_user_info
+from utils import get_dividend_yield_from_stock, valuate
 
 
 def update_stock(stock: pd.Series):
@@ -45,7 +47,12 @@ def print_all():
     df1 = pd.read_csv("all_stocks_static.csv", index_col='name')
     df2 = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
     df = pd.concat([df1, df2], axis=1)
-    df['value'] = df.apply(valuate, axis=1)
+
+    current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
+    df.insert(0,'current_name', current_name_column)
+
+    df["value"] = df.apply(valuate, axis=1)
+    df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
     print(df)
 
     print('\n\nINVESTORS')
@@ -98,5 +105,31 @@ def reset_all_trades():
         os.remove(f)
     files = glob.glob('ownerships/*.csv')
     for f in files:
-        os.remove(f)    
+        os.remove(f)
+
+    df = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
+    df = df.iloc[0:0]
+    df.to_csv("all_stocks_dynamic.csv", index='name')
+
+    df = pd.read_csv("all_stocks_static.csv", index_col='name')
+    df = df.iloc[0:0]
+    df.to_csv("all_stocks_static.csv", index='name')
+
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = df.iloc[0:0]
+    df.to_csv("all_investors.csv", index='name')
+
+    return
+
+
+def update_player_data_raw():
+    d = all_user_info()
+    cols = d.keys()
+    df_raw = pd.DataFrame(columns=cols)
+    df_raw = df_raw.set_index('id')
+    for uuid in id_name.keys():
+        d = all_user_info(uuid)
+        df_raw.loc[uuid,:] = d
+    df_raw.to_csv("player_data_raw.csv", index='id')
+    print(f'Updated all stats for top50 players')
     return

@@ -1,9 +1,12 @@
-from rules import TAX
+from constants import TAX, name_id, id_name
 from utils import get_dividend_yield, get_investor_by_name, get_portfolio, get_stock_by_name, valuate
 from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership
 
 
-def buy_stock(buyer_name: str, stock_name: str, quantity: float):
+def buy_stock(buyer_name: str, stock_name, quantity: float):
+
+    if isinstance(stock_name, str):
+        stock_name = name_id[stock_name]
     
     buyer = get_investor_by_name(buyer_name)
     stock = get_stock_by_name(stock_name)
@@ -27,7 +30,7 @@ def buy_stock(buyer_name: str, stock_name: str, quantity: float):
         # check if seller has enough shares
         portfolio = get_portfolio(buyer_name)
         if portfolio.loc[stock_name,'shares_owned'] < abs(quantity):
-            print(f'{buyer_name} does not have enough {stock_name} shares ({portfolio.loc[stock_name,"shares_owned"]}) to perform this transaction.')
+            print(f'{buyer_name} does not have enough {id_name[stock_name]} shares ({portfolio.loc[stock_name,"shares_owned"]}) to perform this transaction.')
             return  
 
     update_stock_ownership(buyer_name, stock_name, quantity)
@@ -41,7 +44,7 @@ def buy_stock(buyer_name: str, stock_name: str, quantity: float):
     stock.sold_shares += quantity
     update_stock(stock)
 
-    print(f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of {stock_name} for ${abs(transaction_price)} !")
+    print(f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of {id_name[stock_name]} for ${abs(transaction_price)} !")
     return 
 
 
@@ -60,7 +63,7 @@ def pay_dividends(investor_name: str):
         volume = qty * valuate(stock)
         dividend = round(get_dividend_yield(s) * 0.01 * volume, 2)
         investor.cash_balance += dividend
-        print(f'{investor_name} received ${dividend} of dividends from their shares on {s}!')
+        print(f'{investor_name} received ${dividend} of dividends from their shares on {id_name[s]}!')
     
     update_buyer(investor)
     return 

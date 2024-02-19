@@ -1,12 +1,12 @@
 import pandas as pd
 
-from rules import TAX
+from constants import TAX, id_name, name_id
 
 
 def valuate(stock):
     available_shares = stock.total_shares - stock.sold_shares
     supply_demand_ratio = (stock.total_shares + stock.sold_shares)/(available_shares+0.001)
-    intrinsic_value = stock.raw_skill * pow(stock.trendiness, stock.prestige)
+    intrinsic_value = stock.raw_skill * stock.prestige * stock.trendiness
     return round(supply_demand_ratio * intrinsic_value,2)
 
 
@@ -45,4 +45,13 @@ def get_net_worth(investor_name: str) -> float:
 
 def get_dividend_yield(stock_name) -> float:
     stock = get_stock_by_name(stock_name)
-    return stock.prestige - 1  # This is a percentage
+    return round(stock.prestige - 1,2)  # This is a percentage
+
+def get_dividend_yield_from_stock(stock) -> float:
+    return round(stock.prestige - 1,2)  # This is a percentage
+
+def add_current_name_col(df):
+    df=df.copy()
+    cnc = df.apply(lambda x:id_name[x.name], axis=1)
+    df.insert(0,'current_name', cnc)
+    return df

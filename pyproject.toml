@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "osucapital-bot"
+version = "0.1.0"
+description = ""
+authors = ["Antoine Schieb <antoine.schieb@cpe.fr>"]
+readme = "README.md"
+packages = [{include = "osucapital_bot"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^1.26.3"
+ossapi = "^3.4.3"
+scipy = "^1.11.4"
+pandas = "^2.2.0"
+tqdm = "^4.66.1"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
