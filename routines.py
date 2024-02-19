@@ -4,14 +4,32 @@ import pandas as pd
 import os 
 
 from constants import id_name, name_id
-# from osuapi import all_user_info
-from utils import get_dividend_yield_from_stock, get_stocks_table, valuate
+from formulas import valuate
+from osuapi import all_user_info
 
+
+def refresh_player_data_raw():
+    d = all_user_info()
+    cols = d.keys()
+    df_raw = pd.DataFrame(columns=cols)
+    df_raw = df_raw.set_index('id')
+    for uuid in id_name.keys():
+        d = all_user_info(uuid)
+        df_raw.loc[uuid,:] = d
+    df_raw.to_csv("player_data_raw.csv", index='id')
+    print(f'Refreshed all stats for top50 players')
+    return
 
 def update_stock(stock: pd.Series):
+    # 1-put stock into all_stocks
     df = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
     df.loc[stock.name,:] = stock
     df.to_csv("all_stocks_dynamic.csv", index='name')
+
+    # 2-log update in stocks_prices_history
+    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
+    df_updates.to_csv("stock_prices_history.csv", index='name')
     return
 
 
@@ -40,33 +58,6 @@ def update_buyer_portfolio(buyer_name, stock_name, quantity):
     else:
         buyer_portfolio.loc[stock_name,:] = quantity
     buyer_portfolio.to_csv(f'portfolios/{buyer_name}.csv', index='stock_name')
-    return 
-
-
-def print_all():
-    print("\n\nSTOCKS")
-    df = get_stocks_table()
-    print(df)
-
-    print('\n\nINVESTORS')
-    df = pd.read_csv("all_investors.csv", index_col='name')
-    print(df)
-
-    # print('\n\nPORTFOLIOS')
-    # for x in glob.glob("portfolios/*.csv"):
-    #     print(x)
-    #     df = pd.read_csv(x, index_col='stock_name')
-    #     print(df)
-
-    # print('\n\nOWNERSHIPS')
-    # for x in glob.glob("ownerships/*.csv"):
-    #     print(x)
-    #     df = pd.read_csv(x, index_col='investor_name')
-    #     print(df)
-
-    print("\n\nHISTORY")
-    df = pd.read_csv("transactions_history.csv", index_col='transaction_id')
-    print(df)
     return 
 
 
@@ -119,6 +110,11 @@ def reset_all_trades():
     df = pd.read_csv("transactions_history.csv", index_col='transaction_id')
     df = df.iloc[0:0]
     df.to_csv("transactions_history.csv", index='transaction_id')
+
+    df = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df = df.iloc[0:0]
+    df.to_csv("stock_prices_history.csv", index='update_id')
+
     return
 
 def log_transaction(investor, stock_id, quantity):
@@ -133,14 +129,3 @@ def log_transaction(investor, stock_id, quantity):
     return
 
 
-# def update_player_data_raw():
-#     d = all_user_info()
-#     cols = d.keys()
-#     df_raw = pd.DataFrame(columns=cols)
-#     df_raw = df_raw.set_index('id')
-#     for uuid in id_name.keys():
-#         d = all_user_info(uuid)
-#         df_raw.loc[uuid,:] = d
-#     df_raw.to_csv("player_data_raw.csv", index='id')
-#     print(f'Updated all stats for top50 players')
-#     return

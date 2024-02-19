@@ -2,7 +2,7 @@ from math import exp
 import numpy as np
 import pandas as pd
 
-from utils import add_current_name_col
+from visual import add_current_name_col
 
 
 def compute_prestige(x: pd.Series) -> float:
@@ -28,8 +28,7 @@ def compute_hype(x: pd.Series) -> float:
     return h
 
 
-def compute_prestige_and_hype():
-    df_raw = pd.read_csv("player_data_raw.csv", index_col='id')
+def compute_prestige_and_hype(df_raw):
     df = (df_raw-df_raw.mean())/df_raw.std()
     df = df.astype(float).fillna(0)
     df = add_current_name_col(df)
