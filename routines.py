@@ -6,9 +6,10 @@ import os
 from constants import id_name, name_id
 from formulas import valuate
 from osuapi import all_user_info
+from utils import get_stock_by_name
 
 
-def refresh_player_data_raw():
+def refresh_player_data_raw(verbose=False):
     d = all_user_info()
     cols = d.keys()
     df_raw = pd.DataFrame(columns=cols)
@@ -17,16 +18,25 @@ def refresh_player_data_raw():
         d = all_user_info(uuid)
         df_raw.loc[uuid,:] = d
     df_raw.to_csv("player_data_raw.csv", index='id')
-    print(f'Refreshed all stats for top50 players')
+    if verbose:
+        print(f'Refreshed all stats for top50 players')
     return
 
 def update_stock(stock: pd.Series):
-    # 1-put stock into all_stocks
+    """
+    This function updates all static and dynamic values that define a stock, but doesn't update its ownership
+    """
+    # 1-update dynamic values
     df = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
     df.loc[stock.name,:] = stock
     df.to_csv("all_stocks_dynamic.csv", index='name')
 
-    # 2-log update in stocks_prices_history
+    # 2-update static values
+    df = pd.read_csv("all_stocks_static.csv", index_col='name')
+    df.loc[stock.name,:] = stock
+    df.to_csv("all_stocks_static.csv", index='name')
+
+    # 3-log price update in stocks_prices_history
     df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
     df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
     df_updates.to_csv("stock_prices_history.csv", index='name')
@@ -84,6 +94,12 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares,sold_share
     df = pd.DataFrame(columns=['investor_name','shares_owned'])
     df = df.set_index('investor_name')
     df.to_csv(f'ownerships/{name}.csv', index='stock_name')
+
+    # log initial stock price in stocks_prices_history
+    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df_updates.loc[len(df_updates),:] = [name, valuate(get_stock_by_name(name)), datetime.now()]
+    df_updates.to_csv("stock_prices_history.csv", index='name')
+
     return
 
 

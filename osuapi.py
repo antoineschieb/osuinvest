@@ -73,6 +73,27 @@ def get_activity_from_playcounts(pc_list, months_range=(None,None)):
     slope = (stats.linregress(x=list(range(len(pcs_considered))), y=pcs_considered)).slope
     return (volume,proportion,slope)
 
+def fix_peppys_playcount_list(user_monthly_playcounts):
+    """
+    Adds recent months where the user didnt play and logs them as months with 0 playcount
+    """
+    L = []
+    for x in user_monthly_playcounts:
+        s = x.start_date
+        c = x.count
+        L.append([s,c])
+
+    prev_s = L[-1][0]
+    while prev_s.year != datetime.now().year or prev_s.month != datetime.now().month:
+        # while last one is not current month, add entry [previous_start_date+1month, 0]
+        if prev_s.month<12:
+            new_s = datetime(day=1, month=prev_s.month + 1, year=prev_s.year)
+        else:
+            new_s = datetime(day=1, month=1, year=prev_s.year + 1)
+        L.append([new_s, 0])
+        prev_s = L[-1][0]
+    return L
+
 
 def all_user_info(uuid=5189431):
     u = api.user(uuid)
@@ -120,11 +141,12 @@ def all_user_info(uuid=5189431):
     del all_info['rank_highest.rank']
     del all_info['rank_history.data']
 
-    # Monthly playcounts
-    pc1 = all_info['monthly_playcounts'][-1].count
-    pc2 = all_info['monthly_playcounts'][-2].count
-    pc3 = all_info['monthly_playcounts'][-3].count
-    activity = 0.1*pc1 + 0.3*pc2 + 0.6*pc3
+    # Activity from monthly playcounts
+    monthly_playcounts = fix_peppys_playcount_list(all_info['monthly_playcounts'])
+    pc1 = monthly_playcounts[-1][1]
+    pc2 = monthly_playcounts[-2][1]
+    pc3 = monthly_playcounts[-3][1]
+    activity = 0.1*pc3 + 0.3*pc2 + 0.6*pc1
     all_info['activity'] = activity
     
     del all_info['monthly_playcounts']

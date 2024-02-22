@@ -2,9 +2,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import datetime
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+import datetime
 
 from constants import name_id, id_name
 from formulas import get_stocks_table
+from utils import get_stock_value_timedelta
 
 
 def print_all():
@@ -41,11 +46,12 @@ def add_current_name_col(df):
     return df
 
 
-
-def plot_price_evolution(stocks, since=datetime.timedelta(hours=24)):
+def plot_single_stock_price(stocks, since=datetime.timedelta(hours=24)):
+    plt.rcParams["font.family"] = "cursive"
     stocks = [name_id[x] if isinstance(x, str) else x for x in stocks]
 
-    sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
+    # sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
+    sns.set_style('darkgrid')
     
     # Read csv properly
     df = pd.read_csv("stock_prices_history.csv", index_col='update_id')
@@ -67,6 +73,28 @@ def plot_price_evolution(stocks, since=datetime.timedelta(hours=24)):
         return
     
     df[''] = df.apply(lambda x:id_name[x['stock_id']], axis=1)  #naming hack so that the graph looks cleaner
-    sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel='last 24 hours')
+    # sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel=f'last {since}')
+    ymin = min(df['value'])
+    ymax = max(df['value'])
+    d = ymax - ymin
+    
+    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=id_name[stocks[0]])
+    plt.setp(ax.legend().texts, family='Consolas')
     plt.show()
 
+
+def beautify_float(a: float) :
+    char = '↗' if a>=0 else '↘'
+    a *= 100
+    return f'{char} {round(a,2)}%'
+
+def print_real_time_stocks_evolution(n_hours=24):
+    df = get_stocks_table()
+    df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours)), axis=1)
+    df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
+    
+    df = df.sort_values(by='placeholder_name', ascending=False)
+    df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
+    df = df.rename(columns={'placeholder_name': f'last_{n_hours}h'})
+    print(df[['current_name','value',f'last_{n_hours}h']])
+    return 

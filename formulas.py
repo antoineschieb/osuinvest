@@ -5,7 +5,7 @@ from utils import get_investor_by_name, get_portfolio, get_stock_by_name
 
 
 def valuate_intrinsic(stock):
-    intrinsic_value = stock.raw_skill * stock.prestige * stock.trendiness
+    intrinsic_value = stock.raw_skill/1000 * stock.prestige * stock.trendiness
     return round(intrinsic_value,2)
 
 
