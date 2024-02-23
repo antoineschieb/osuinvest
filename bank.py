@@ -63,14 +63,13 @@ def pay_all_dividends():
     for investor_name in df.index:        
         portfolio = get_portfolio(investor_name)
         investor = get_investor_by_name(investor_name)
-        
         for s in portfolio.index:
             qty = portfolio.loc[s,'shares_owned']
             if qty <=0:
                 continue
             stock = get_stock_by_name(s)
             volume = qty * valuate(stock)
-            dividend = round(get_dividend_yield(s) * 0.01 * volume, 2)
+            dividend = round(get_dividend_yield(s)/stock.sold_shares * 0.01 * volume, 2)
             investor.cash_balance += dividend
             ret_str += f'{investor_name} received ${dividend} of dividends from their shares on {id_name[s]}!\n'
         

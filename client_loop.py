@@ -28,8 +28,8 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    minutes_to_wait = 60 - datetime.now().minute
-    await asyncio.sleep(60 * minutes_to_wait)
+    # minutes_to_wait = 60 - datetime.now().minute
+    # await asyncio.sleep(60 * minutes_to_wait)
     pay_all_dividends_async.start()
 
 

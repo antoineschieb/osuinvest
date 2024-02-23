@@ -51,9 +51,9 @@ def get_dividend_yield_from_stock(stock) -> float:
 
 def tax_from_datetime(d):  ##
     now = datetime.now()
-    if (now-d).seconds > 30:
+    if (now-d).hours > 4:
         return 0.05
-    elif (now-d).seconds > 10:
+    elif (now-d).hours > 1:
         return 0.1
     else:
         return 0.2
