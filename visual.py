@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('agg')  # For asynchronous use
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -10,6 +12,7 @@ import datetime
 from constants import name_id, id_name
 from formulas import get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
 from utils import get_stock_by_name, get_stock_value_timedelta
+
 
 
 def print_all():
@@ -46,15 +49,24 @@ def add_current_name_col(df):
     return df
 
 
-def plot_stock(stocks, n_hours=24, n_days=0):
+def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
+    assert isinstance(stock_str_name, str)
+
+    time_str = f'last {n_hours} hours'
     if n_days<0 or n_hours<1:
         return 'n_days must be >= 0 and n_hours must be >=1'
     elif n_days>0:
         n_hours = 0
+        time_str = f'last {n_days} days'
+        if n_days == 1:
+            time_str = f'last day'
+    elif n_hours==1:
+        time_str = f'last hour'
+    
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
     plt.rcParams["font.family"] = "cursive"
-    stocks = [name_id[x] if isinstance(x, str) else x for x in stocks]
+    stock = name_id[stock_str_name] 
 
     # sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
     sns.set_style('darkgrid')
@@ -64,10 +76,8 @@ def plot_stock(stocks, n_hours=24, n_days=0):
     df['datetime'] = pd.to_datetime(df['datetime'])
     df = df.astype({"stock_id": int})
 
-    # select the requested stocks
-    selected_players = df['stock_id']<0  #select none of the indices at the start
-    for x in stocks:
-        selected_players = selected_players | (df['stock_id']==x)
+    # select the requested stock
+    selected_players =(df['stock_id']==stock)
 
     # select the requested time period
     start_date = datetime.datetime.now() - since
@@ -84,10 +94,9 @@ def plot_stock(stocks, n_hours=24, n_days=0):
     ymax = max(df['value'])
     d = ymax - ymin
     
-    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=id_name[stocks[0]])
+    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{id_name[stock]} ({time_str})')
     plt.setp(ax.legend().texts, family='Consolas')
-    # plt.show()
-    plt.savefig('stock.png')
+    plt.savefig(f'plots/{stock_str_name}.png')
     return 0
 
 
@@ -111,8 +120,9 @@ def print_market(n_hours=24, n_days=0):
     
     df = df.sort_values(by='placeholder_name', ascending=False)
     df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
-    df = df.rename(columns={'placeholder_name': new_col_str})
-    ret_df = (df[['current_name','value',new_col_str]])
+    df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
+
+    ret_df = (df[['Stock','value',new_col_str]])
     ret_str = ret_df.to_string(index=False, col_space=20)
     return ret_str
 
@@ -122,10 +132,11 @@ def print_profile(investor_name):
     cash_balance = df.loc[investor_name, 'cash_balance']
     
     pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
-    stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
-    pf.insert(0,'Stock', stock_column)
-    pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_name(x.name)), axis=1)
-    pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_name(x.name)), axis=1)
+    if not pf.empty:
+        stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
+        pf.insert(0,'Stock', stock_column)
+        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_name(x.name)), axis=1)
+        pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_name(x.name)), axis=1)
     
     ret_str = f'Investor: {investor_name}\n\n'
     ret_str += f'Cash balance: ${cash_balance}\n\n'

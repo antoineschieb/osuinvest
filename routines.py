@@ -9,9 +9,8 @@ from osuapi import all_user_info
 from utils import get_stock_by_name
 
 
-async def refresh_player_data_raw(verbose=False):
-    d = all_user_info()
-    cols = d.keys()
+def refresh_player_data_raw(verbose=False):
+    cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
     for uuid in id_name.keys():
@@ -23,26 +22,6 @@ async def refresh_player_data_raw(verbose=False):
     return
 
 def update_stock(stock: pd.Series):
-    """
-    This function updates all static and dynamic values that define a stock, but doesn't update its ownership
-    """
-    # 1-update dynamic values
-    df = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
-    df.loc[stock.name,:] = stock
-    df.to_csv("all_stocks_dynamic.csv", index='name')
-
-    # 2-update static values
-    df = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df.loc[stock.name,:] = stock
-    df.to_csv("all_stocks_static.csv", index='name')
-
-    # 3-log price update in stocks_prices_history
-    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
-    df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
-    df_updates.to_csv("stock_prices_history.csv", index='name')
-    return
-
-async def update_stock_async(stock: pd.Series):
     """
     This function updates all static and dynamic values that define a stock, but doesn't update its ownership
     """
@@ -95,8 +74,11 @@ def update_buyer_portfolio(buyer_name, stock_name, quantity):
     return 
 
 
-async def create_new_investor(name, initial_balance):
+def create_new_investor(name, initial_balance):
     df = pd.read_csv("all_investors.csv", index_col='name')
+    if name in df.index:
+        return f'ERROR: You are already registered'
+
     df.loc[name,:] = initial_balance
     df.to_csv("all_investors.csv", index='name')
 

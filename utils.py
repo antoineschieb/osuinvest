@@ -1,17 +1,10 @@
+from csv import writer
 from datetime import datetime, timedelta
 import pandas as pd
 from constants import name_id
 
 
 def get_stock_by_name(name: str) -> pd.Series:
-    df_s = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df_d = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
-    x_s = df_s.loc[name,:]
-    x_d = df_d.loc[name,:]
-    ret = pd.concat([x_s, x_d])
-    return ret
-
-async def get_stock_by_name_async(name: str) -> pd.Series:
     df_s = pd.read_csv("all_stocks_static.csv", index_col='name')
     df_d = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
     x_s = df_s.loc[name,:]
@@ -60,3 +53,10 @@ def split_msg(msg, max_len=1999):
         cut = indices[-1]
         return [msg[:cut+1], *split_msg(msg[cut+1:])]
 
+def append_list_as_row(file_name, list_of_elem):
+    # Open file in append mode
+    with open(file_name, 'a+', newline='') as write_obj:
+        # Create a writer object from csv module
+        csv_writer = writer(write_obj)
+        # Add contents of list as last row in the csv file
+        csv_writer.writerow(list_of_elem)
