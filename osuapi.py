@@ -16,10 +16,6 @@ def get_username(uuid):
     return api.user(uuid).username
 
 
-def get_join_date(uuid):
-    return api.user(uuid).join_date
-
-
 def create_id_list(country="FR", topN=50, proba=1.0):
     L = list()
     for i in tqdm(range(topN)):
@@ -45,33 +41,6 @@ def update_rename():
     return name_id, id_name
 
 
-def get_playcounts(uuid, start=datetime.now()-td(days=20*365), end=datetime.now() - td(days = datetime.now().day - 1) ):
-    ret = []
-    for x in api.user(uuid).monthly_playcounts:
-        if start <= x.start_date <= end:
-            ret.append(x)
-    y = []
-    for elem in ret:
-        y.append(elem.count)
-    if datetime.now().year == end.year and datetime.now().month == end.month:
-        y[-1]= int(y[-1] * (30.42/datetime.now().day))  # assuming player keeps playing at the same rate
-    # make estimation to correct current month
-    return y
-
-
-def get_activity_from_playcounts(pc_list, months_range=(None,None)):
-    x = list(range(len(pc_list)))
-    b,a = months_range
-    if b>a:
-        a,b = b,a
-    b = len(x) - b if b else None
-    a = len(x) - a if a else None
-
-    pcs_considered = pc_list[a:b]
-    volume = sum(pcs_considered)/len(pc_list[a:b])
-    proportion = sum(pcs_considered) / sum(pc_list)
-    slope = (stats.linregress(x=list(range(len(pcs_considered))), y=pcs_considered)).slope
-    return (volume,proportion,slope)
 
 def fix_peppys_playcount_list(user_monthly_playcounts):
     """

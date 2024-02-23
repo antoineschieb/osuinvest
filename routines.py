@@ -9,7 +9,7 @@ from osuapi import all_user_info
 from utils import get_stock_by_name
 
 
-def refresh_player_data_raw(verbose=False):
+async def refresh_player_data_raw(verbose=False):
     d = all_user_info()
     cols = d.keys()
     df_raw = pd.DataFrame(columns=cols)
@@ -23,6 +23,26 @@ def refresh_player_data_raw(verbose=False):
     return
 
 def update_stock(stock: pd.Series):
+    """
+    This function updates all static and dynamic values that define a stock, but doesn't update its ownership
+    """
+    # 1-update dynamic values
+    df = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
+    df.loc[stock.name,:] = stock
+    df.to_csv("all_stocks_dynamic.csv", index='name')
+
+    # 2-update static values
+    df = pd.read_csv("all_stocks_static.csv", index_col='name')
+    df.loc[stock.name,:] = stock
+    df.to_csv("all_stocks_static.csv", index='name')
+
+    # 3-log price update in stocks_prices_history
+    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
+    df_updates.to_csv("stock_prices_history.csv", index='name')
+    return
+
+async def update_stock_async(stock: pd.Series):
     """
     This function updates all static and dynamic values that define a stock, but doesn't update its ownership
     """
@@ -64,14 +84,18 @@ def update_buyer_portfolio(buyer_name, stock_name, quantity):
     # TODO: add date history in portfolio
     buyer_portfolio = pd.read_csv(f'portfolios/{buyer_name}.csv', index_col='stock_name')
     if stock_name in buyer_portfolio.index:
-        buyer_portfolio.loc[stock_name,:] += quantity
+        buyer_portfolio.loc[stock_name,:] += float(quantity)
     else:
-        buyer_portfolio.loc[stock_name,:] = quantity
+        buyer_portfolio.loc[stock_name,:] = float(quantity)
+
+    # remove stocks where qty<=0
+    buyer_portfolio = buyer_portfolio[buyer_portfolio['shares_owned']>0]
+
     buyer_portfolio.to_csv(f'portfolios/{buyer_name}.csv', index='stock_name')
     return 
 
 
-def create_new_investor(name, initial_balance):
+async def create_new_investor(name, initial_balance):
     df = pd.read_csv("all_investors.csv", index_col='name')
     df.loc[name,:] = initial_balance
     df.to_csv("all_investors.csv", index='name')
@@ -79,7 +103,7 @@ def create_new_investor(name, initial_balance):
     df = pd.DataFrame(columns=['stock_name','shares_owned'])
     df = df.set_index('stock_name')
     df.to_csv(f'portfolios/{name}.csv', index='stock_name')
-    return 
+    return f'{name} has entered the market with ${initial_balance}!'
 
 
 def create_new_stock(name, raw_skill,trendiness,prestige,total_shares,sold_shares=0):

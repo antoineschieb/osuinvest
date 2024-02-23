@@ -8,8 +8,8 @@ import seaborn as sns
 import datetime
 
 from constants import name_id, id_name
-from formulas import get_stocks_table
-from utils import get_stock_value_timedelta
+from formulas import get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
+from utils import get_stock_by_name, get_stock_value_timedelta
 
 
 def print_all():
@@ -46,7 +46,13 @@ def add_current_name_col(df):
     return df
 
 
-def plot_single_stock_price(stocks, since=datetime.timedelta(hours=24)):
+def plot_stock(stocks, n_hours=24, n_days=0):
+    if n_days<0 or n_hours<1:
+        return 'n_days must be >= 0 and n_hours must be >=1'
+    elif n_days>0:
+        n_hours = 0
+
+    since=datetime.timedelta(hours=n_hours, days=n_days)
     plt.rcParams["font.family"] = "cursive"
     stocks = [name_id[x] if isinstance(x, str) else x for x in stocks]
 
@@ -80,7 +86,9 @@ def plot_single_stock_price(stocks, since=datetime.timedelta(hours=24)):
     
     ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=id_name[stocks[0]])
     plt.setp(ax.legend().texts, family='Consolas')
-    plt.show()
+    # plt.show()
+    plt.savefig('stock.png')
+    return 0
 
 
 def beautify_float(a: float) :
@@ -88,13 +96,69 @@ def beautify_float(a: float) :
     a *= 100
     return f'{char} {round(a,2)}%'
 
-def print_real_time_stocks_evolution(n_hours=24):
+def print_market(n_hours=24, n_days=0):
+    if n_days<0 or n_hours<1:
+        return 'n_days must be >= 0 and n_hours must be >=1'
+    elif n_days==0:
+        new_col_str = f'last {n_hours} hour(s)'
+    elif n_days>0:
+        n_hours = 0
+        new_col_str = f'last {n_days} day(s)'
+
     df = get_stocks_table()
-    df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours)), axis=1)
+    df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours, days=n_days)), axis=1)
     df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
     
     df = df.sort_values(by='placeholder_name', ascending=False)
     df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
-    df = df.rename(columns={'placeholder_name': f'last_{n_hours}h'})
-    print(df[['current_name','value',f'last_{n_hours}h']])
-    return 
+    df = df.rename(columns={'placeholder_name': new_col_str})
+    ret_df = (df[['current_name','value',new_col_str]])
+    ret_str = ret_df.to_string(index=False, col_space=20)
+    return ret_str
+
+
+def print_profile(investor_name):
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    cash_balance = df.loc[investor_name, 'cash_balance']
+    
+    pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
+    stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
+    pf.insert(0,'Stock', stock_column)
+    pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_name(x.name)), axis=1)
+    pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_name(x.name)), axis=1)
+    
+    ret_str = f'Investor: {investor_name}\n\n'
+    ret_str += f'Cash balance: ${cash_balance}\n\n'
+    ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
+    ret_str += f'Total worth: ${round(get_net_worth(investor_name),2)}'
+    return ret_str
+
+
+def print_stock(stock_name):
+    if isinstance(stock_name, str):
+        stock_name = name_id[stock_name]
+    df = get_stocks_table()
+    s = df.loc[stock_name]
+
+    own = pd.read_csv(f"ownerships/{stock_name}.csv", index_col='investor_name')
+    own.insert(0,'Investor', own.index)
+    own['Proportion owned (%)'] = own.apply(lambda x: 100*x.shares_owned/s.total_shares, axis=1)
+
+    ret_str = f'Name: {s.current_name}\n'
+    ret_str += f'Current value: ${s.value}\n'
+    ret_str += f'Dividends: {s.dividend_yield}% /day\n'
+    if own.empty:
+        ret_str += f'Ownership:\n Noone currently owns any shares of {id_name[stock_name]}!'
+    else:
+        ret_str += f'Ownership:\n {own.to_string(index=False)}'
+    # plot stock could be a nice addition
+    return ret_str
+
+
+def print_leaderboard():
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    df['Net worth'] = df.apply(lambda x:get_net_worth(x.name), axis=1)
+    df = df.sort_values(by='Net worth', ascending=False)
+    df.insert(0,'Name', df.index)
+    ret_str =f'{df.to_string(index=False, col_space=20)}'
+    return ret_str
