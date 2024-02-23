@@ -18,14 +18,13 @@ bot = discord.Client(intents=intents)
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    await asyncio.sleep(60)
+    await asyncio.sleep(3600)
     pay_all_dividends_async.start()
 
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
-    channel = await bot.fetch_channel(854465506428977156) 
-    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Updating all player stats...")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
     try:
         await refresh_player_data_raw()
         df = await compute_prestige_and_hype_async()
@@ -38,7 +37,7 @@ async def update_static_stats():
             await update_stock_async(stock)
     except Exception as e:
         print(datetime.now(), e)
-    print(f"{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}: Done!")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
 
 
