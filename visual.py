@@ -10,7 +10,7 @@ import seaborn as sns
 import datetime
 
 from constants import name_id, id_name
-from formulas import get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
+from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
 from utils import get_stock_by_name, get_stock_value_timedelta
 
 
@@ -51,6 +51,8 @@ def add_current_name_col(df):
 
 def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     assert isinstance(stock_str_name, str)
+    if stock_str_name not in name_id.keys():
+        return f'ERROR: Unknown stock "{stock_str_name}"'
 
     time_str = f'last {n_hours} hours'
     if n_days<0 or n_hours<1:
@@ -120,15 +122,20 @@ def print_market(n_hours=24, n_days=0):
     
     df = df.sort_values(by='placeholder_name', ascending=False)
     df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
-    df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
 
-    ret_df = (df[['Stock','value',new_col_str]])
+    df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
+
+    df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
+    ret_df = (df[['Stock','value',new_col_str,'Dividend yield (%)']])
     ret_str = ret_df.to_string(index=False, col_space=20)
     return ret_str
 
 
 def print_profile(investor_name):
     df = pd.read_csv("all_investors.csv", index_col='name')
+    if investor_name not in df.index:
+        return f'ERROR: Unknown investor "{investor_name}"'
+
     cash_balance = df.loc[investor_name, 'cash_balance']
     
     pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
@@ -153,7 +160,7 @@ def print_stock(stock_name):
 
     own = pd.read_csv(f"ownerships/{stock_name}.csv", index_col='investor_name')
     own.insert(0,'Investor', own.index)
-    own['Proportion owned (%)'] = own.apply(lambda x: 100*x.shares_owned/s.total_shares, axis=1)
+    own['Proportion owned (%)'] = own.apply(lambda x: 100*x.shares_owned/s.sold_shares, axis=1)
 
     ret_str = f'Name: {s.current_name}\n'
     ret_str += f'Current value: ${s.value}\n'

@@ -10,7 +10,7 @@ from utils import get_stock_by_name
 
 
 def refresh_player_data_raw(verbose=False):
-    cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity']
+    cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity','last_month_activity','topplay_activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
     for uuid in id_name.keys():
@@ -55,12 +55,15 @@ def update_stock_ownership(buyer_name, stock_name, quantity):
         ownership_df.loc[buyer_name,:] += quantity
     else:
         ownership_df.loc[buyer_name,:] = quantity
+    
+    # remove buyers where qty<=0
+    ownership_df = ownership_df[ownership_df['shares_owned']>0]
+
     ownership_df.to_csv(f'ownerships/{stock_name}.csv', index='investor_name')
     return 
 
 
 def update_buyer_portfolio(buyer_name, stock_name, quantity):
-    # TODO: add date history in portfolio
     buyer_portfolio = pd.read_csv(f'portfolios/{buyer_name}.csv', index_col='stock_name')
     if stock_name in buyer_portfolio.index:
         buyer_portfolio.loc[stock_name,:] += float(quantity)

@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timedelta
+from math import exp
 import pandas as pd
 from constants import id_name, name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_name
@@ -51,9 +52,9 @@ def get_dividend_yield_from_stock(stock) -> float:
 
 def tax_from_datetime(d):  ##
     now = datetime.now()
-    if (now-d).hours > 4:
+    if (now-d) > timedelta(hours=4):
         return 0.05
-    elif (now-d).hours > 1:
+    elif (now-d) > timedelta(hours=1):
         return 0.1
     else:
         return 0.2
@@ -99,3 +100,11 @@ def compute_tax_applied(trade_hist, quantity_to_sell):
     
     res = sum([x*y for x,y in combination])  # linear combination
     return res
+
+def recency_function(x):
+    # Defined for x being a number of days and f(x) being the "recency" of a score made on that day
+    return exp((-x*x)/1800)
+
+def topplay_importancy_function(x):
+    # f(x) defines the importance of someone's x-th top play
+    return exp((-x*x)/1500)

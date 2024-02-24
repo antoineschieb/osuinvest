@@ -28,26 +28,26 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    # minutes_to_wait = 60 - datetime.now().minute
-    # await asyncio.sleep(60 * minutes_to_wait)
+    minutes_to_wait = 60 - datetime.now().minute
+    await asyncio.sleep(60 * minutes_to_wait)
     pay_all_dividends_async.start()
 
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
-    try:
-        await run_blocking(refresh_player_data_raw)
-        df = await run_blocking(compute_prestige_and_hype)
-        for x in df.index:
-            pp,p,h = df.loc[x,:]
-            stock = await run_blocking(get_stock_by_name, x)
-            stock.raw_skill = pp
-            stock.trendiness = h
-            stock.prestige = p
-            await run_blocking(update_stock, stock)
-    except Exception as e:
-        print(datetime.now(), e)
+    # try:
+    await run_blocking(refresh_player_data_raw)
+    df = await run_blocking(compute_prestige_and_hype)
+    for x in df.index:
+        pp,p,h = df.loc[x,:]
+        stock = await run_blocking(get_stock_by_name, x)
+        stock.raw_skill = pp
+        stock.trendiness = h
+        stock.prestige = p
+        await run_blocking(update_stock, stock)
+    # except Exception as e:
+    #     print(datetime.now(), e)
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
 

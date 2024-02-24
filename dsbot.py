@@ -1,17 +1,20 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import functools
 import re
 import time
 import typing
 import discord
 from discord.ext import commands
-from bank import buy_stock
-from constants import FEED_CHANNEL_ID
+import pandas as pd
+from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending
+from constants import FEED_CHANNEL_ID, id_name, name_id
 
 from creds import discord_bot_token
+from formulas import valuate
 from routines import create_new_investor
 from visual import plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import split_msg
+from utils import get_investor_by_name, get_stock_by_name, split_msg
+
 
 intents = discord.Intents().all()
 # intents = discord.Intents.none()
@@ -160,11 +163,25 @@ async def buy(ctx: commands.Context, *args):
         stock_name = re.sub("'",'',stock_name)
         return stock_name.lower(), quantity
     stock_name, quantity = parse_args(args)
-
-    ret_str = await run_blocking(buy_stock, ctx.message.author.name, stock_name, quantity)
-    await ctx.reply(ret_str)
-    await broadcast(ret_str)
     
+    stock_name = name_id[stock_name]
+    
+    # calc price
+    buyer = get_investor_by_name(ctx.message.author.name)
+    stock = get_stock_by_name(stock_name)
+    transaction_price = calc_price(buyer, stock, quantity)
+
+    # put in confirmations.csv
+    await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, quantity)
+
+    # ask for confirmation
+    await ctx.reply(f'Do you really want to buy {quantity} {id_name[stock_name]} shares for ${transaction_price}? ($yes/$no)')
+
+    
+    # ret_str = await run_blocking(buy_stock, ctx.message.author.name, stock_name, quantity)
+    # await ctx.reply(ret_str)
+    # await broadcast(ret_str)
+
 
 @bot.command()
 async def sell(ctx: commands.Context, *args):
@@ -182,9 +199,34 @@ async def sell(ctx: commands.Context, *args):
         return stock_name.lower(), quantity
     stock_name, quantity = parse_args(args)
 
-    ret_str = await run_blocking(buy_stock, ctx.message.author.name, stock_name, -quantity)
-    await ctx.reply(ret_str)
-    await broadcast(ret_str)
+    # calc price
+    buyer = get_investor_by_name(ctx.message.author.name)
+    stock = get_stock_by_name(stock_name)
+    transaction_price = calc_price(buyer, stock, -quantity)
+
+    # put in confirmations.csv
+    await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, -quantity)
+
+    # ask for confirmation
+    await ctx.reply(f'Do you really want to sell {quantity} {id_name[stock_name]} shares for ${transaction_price}? ($yes/$no)')
+
+@bot.command()
+async def yes(ctx: commands.Context):
+    stock_name, quantity = await run_blocking(find_transaction,ctx.message.author.name)
+    if stock_name and quantity:
+        ret_str = await run_blocking(buy_stock, ctx.message.author.name, stock_name, quantity)
+        await ctx.reply(ret_str)
+        await broadcast(ret_str)
+    else:
+        await ctx.reply(f'ERROR: No recent transaction found in the last 5 minutes')
+
+@bot.command()
+async def no(ctx: commands.Context):
+    ret = await run_blocking(remove_transaction_from_pending, ctx.message.author.name)
+    if ret:
+        await ctx.reply(f'Transaction cancelled')
+    else:
+        await ctx.reply(f'ERROR: No recent transaction found in the last 5 minutes')
 
 
 @bot.command()

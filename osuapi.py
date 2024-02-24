@@ -7,7 +7,9 @@ from scipy import stats
 import random
 from tqdm import tqdm
 
-from math import log 
+from math import log
+
+from formulas import recency_function, topplay_importancy_function 
 
 api = ossapi.Ossapi(client_id, client_secret, redirect_uri)
 
@@ -64,6 +66,20 @@ def fix_peppys_playcount_list(user_monthly_playcounts):
     return L
 
 
+def get_last_month_activity(uuid):
+    user_recent_activity = api.user_recent_activity(uuid, limit=50)
+    user_recent_activity = [x for x in user_recent_activity if isinstance(x, ossapi.models.RankEvent)]
+    return len(user_recent_activity)
+
+def get_topplay_activity(uuid):
+    user_scores = api.user_scores(uuid, type='best', limit=100, mode='osu')
+    now = datetime.now(timezone.utc)
+    age_of_topplays = [(now - x.created_at).days for x in user_scores]  # in days
+    recency_scores = [recency_function(x) for x in age_of_topplays]
+    topplay_activity = sum([topplay_importancy_function(i) * recency_scores[i] for i in range(len(recency_scores))])
+    return topplay_activity
+
+
 def all_user_info(uuid=5189431):
     u = api.user(uuid)
 
@@ -77,10 +93,6 @@ def all_user_info(uuid=5189431):
                      'scores_first_count','scores_recent_count','support_level','rank_highest.rank',
                      'rank_history.data','monthly_playcounts']:
         all_info[stat_str] = eval(f"u.{stat_str}")
-
-    #TODO: add these later: 
-        # monthly_playcounts:     (trendiness)
-        # replays_watched_counts: (trendiness)
     
     # Post-process all the info so that each entry is a number, and not str or list
     all_info['badges'] = len(all_info['badges'])
@@ -119,6 +131,13 @@ def all_user_info(uuid=5189431):
     all_info['activity'] = activity
     
     del all_info['monthly_playcounts']
+
+    # More specific activity stats
+    # /!\ requires more requests /!\
+    all_info['last_month_activity'] = get_last_month_activity(uuid)  
+
+    all_info['topplay_activity'] = get_topplay_activity(uuid)
+
 
     return all_info
 

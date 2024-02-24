@@ -1,42 +1,55 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
-from constants import TAX, name_id, id_name
+from constants import name_id, id_name
 from formulas import compute_tax_applied, valuate, get_dividend_yield
 from utils import get_investor_by_name, get_portfolio, get_stock_by_name
 from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
 
 
-def buy_stock(buyer_name: str, stock_name, quantity: float):
-
-    if isinstance(stock_name, str):
-        stock_name = name_id[stock_name]
-    
-    buyer = get_investor_by_name(buyer_name)
-    stock = get_stock_by_name(stock_name)
+def calc_price(buyer, stock, quantity: float):
     share_price = valuate(stock)
-    
+
     if quantity > 0:
         transaction_price = round(share_price * quantity, 2)
         # check if buyer has enough cash
         if transaction_price > buyer.cash_balance:
-            return f'ERROR: {buyer_name} does not have enough cash (${buyer.cash_balance}) to perform this transaction (${transaction_price}).'
+            return f'ERROR: {buyer.name} does not have enough cash (${buyer.cash_balance}) to perform this transaction (${transaction_price}).'
         
         # check if enough shares are available for sale
         if stock.total_shares - stock.sold_shares < quantity:
             return f'ERROR: The total number of available shares {stock.total_shares - stock.sold_shares} is not sufficient to perform this transaction.'
     elif quantity < 0:
         # check if seller has enough shares, and then compute transaction price (with tax)
-        portfolio = get_portfolio(buyer_name)
-        if portfolio.loc[stock_name,'shares_owned'] < abs(quantity):
-            return f'ERROR: {buyer_name} does not have enough {id_name[stock_name]} shares ({portfolio.loc[stock_name,"shares_owned"]}) to perform this transaction.'
+        portfolio = get_portfolio(buyer.name)
+        if stock.name not in portfolio.index:
+            return f'ERROR: {buyer.name} does not have any {id_name[stock.name]} shares yet.'
+
+        if portfolio.loc[stock.name,'shares_owned'] < abs(quantity):
+            return f'ERROR: {buyer.name} does not have enough {id_name[stock.name]} shares ({portfolio.loc[stock.name,"shares_owned"]}) to perform this transaction.'
         
-        trade_hist = get_trade_history(buyer_name, stock_name)
+        trade_hist = get_trade_history(buyer.name, stock.name)
         tax = compute_tax_applied(trade_hist, abs(quantity))
         transaction_price = round(share_price * quantity * (1-tax), 2)
-
     else:
         return f'ERROR: Quantity traded can not be zero.'
+    return transaction_price
 
+
+def buy_stock(buyer_name: str, stock_name, quantity: float):
+    if isinstance(stock_name, str):
+        if stock_name not in name_id.keys():
+            return f'ERROR: Unknown stock "{stock_name}"'
+        stock_name = name_id[stock_name]
+    if stock_name not in id_name.keys():
+        return f'ERROR: Unknown stock ID: {stock_name}'    
+    stock_name = int(stock_name)
+
+    buyer = get_investor_by_name(buyer_name)
+    stock = get_stock_by_name(stock_name)
+    transaction_price = calc_price(buyer, stock, quantity)
+    if isinstance(transaction_price, str):  # Error
+        return transaction_price  
+    
     update_stock_ownership(buyer_name, stock_name, quantity)
 
     update_buyer_portfolio(buyer_name, stock_name, quantity)
@@ -69,10 +82,10 @@ def pay_all_dividends():
                 continue
             stock = get_stock_by_name(s)
             volume = qty * valuate(stock)
-            dividend = round(get_dividend_yield(s)/stock.sold_shares * 0.01 * volume, 2)
+            actual_proportion_perceived = get_dividend_yield(s) * qty/stock.sold_shares * 0.01
+            dividend = round(actual_proportion_perceived * volume, 2)
             investor.cash_balance += dividend
             ret_str += f'{investor_name} received ${dividend} of dividends from their shares on {id_name[s]}!\n'
-        
         update_buyer(investor)
     return ret_str
 
@@ -85,3 +98,38 @@ def get_trade_history(buyer_name, stock_id):
     quantities = list(filtered['quantity'])
     datetimes = list(filtered['datetime'])
     return list(zip(quantities, datetimes))
+
+
+def add_pending_transaction(investor, stock_id, quantity):
+    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df['datetime'] = pd.to_datetime(df['datetime'])   
+    df.loc[investor,:] = [stock_id,quantity,datetime.now()]
+    df.to_csv("confirmations.csv", index="investor")
+    return 
+
+def find_transaction(investor):
+    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df['datetime'] = pd.to_datetime(df['datetime'])   
+    
+    # First, filter only transactions < 5mins
+    df = df[datetime.now() - df['datetime'] < timedelta(minutes=5)]
+    
+    # Then find the pending transaction
+    if investor not in df.index:
+        return None, None
+    stock_id,quantity,_ = df.loc[investor,:]
+
+    # Remove it, and export
+    df = df.drop(investor, axis=0)
+    df.to_csv("confirmations.csv", index="investor")
+    return stock_id,quantity
+
+def remove_transaction_from_pending(investor):
+    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    # Remove it, and export
+    if investor not in df.index:
+        return None
+    df = df.drop(investor, axis=0)
+    df.to_csv("confirmations.csv", index="investor")
+    return True
