@@ -11,7 +11,7 @@ from math import log
 
 from formulas import recency_function, topplay_importancy_function 
 
-api = ossapi.Ossapi(client_id, client_secret, redirect_uri)
+api = ossapi.Ossapi(client_id, client_secret)
 
 
 def get_username(uuid):
