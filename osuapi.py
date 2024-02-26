@@ -1,5 +1,5 @@
 import pandas as pd
-from creds import client_id, client_secret, redirect_uri
+from creds import client_id, client_secret
 import ossapi
 from datetime import datetime, timezone
 from datetime import timedelta as td
