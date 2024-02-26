@@ -39,7 +39,7 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     if isinstance(stock_name, str):
         if stock_name not in name_id.keys():
             return f'ERROR: Unknown stock "{stock_name}"'
-        stock_name = name_id[stock_name]
+        stock_name = name_id[stock_name.lower()]
     if stock_name not in id_name.keys():
         return f'ERROR: Unknown stock ID: {stock_name}'    
     stock_name = int(stock_name)
@@ -76,16 +76,20 @@ def pay_all_dividends():
     for investor_name in df.index:        
         portfolio = get_portfolio(investor_name)
         investor = get_investor_by_name(investor_name)
+        sum_of_dividends = 0
         for s in portfolio.index:
             qty = portfolio.loc[s,'shares_owned']
             if qty <=0:
                 continue
             stock = get_stock_by_name(s)
             volume = qty * valuate(stock)
+            if stock.sold_shares == 0:
+                raise ValueError
             actual_proportion_perceived = get_dividend_yield(s) * qty/stock.sold_shares * 0.01
             dividend = round(actual_proportion_perceived * volume, 2)
             investor.cash_balance += dividend
-            ret_str += f'{investor_name} received ${dividend} of dividends from their shares on {id_name[s]}!\n'
+            sum_of_dividends += dividend
+        ret_str += f'{investor_name} received ${round(sum_of_dividends,2)} of total dividends today!\n'
         update_buyer(investor)
     return ret_str
 

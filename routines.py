@@ -4,7 +4,7 @@ import pandas as pd
 import os 
 
 from constants import id_name, name_id
-from formulas import valuate
+from formulas import get_net_worth, valuate
 from osuapi import all_user_info
 from utils import get_stock_by_name
 
@@ -50,6 +50,7 @@ def update_buyer(buyer: pd.Series):
 
 
 def update_stock_ownership(buyer_name, stock_name, quantity):
+    stock_name = int(stock_name)
     ownership_df = pd.read_csv(f'ownerships/{stock_name}.csv', index_col='investor_name')
     if buyer_name in ownership_df.index:
         ownership_df.loc[buyer_name,:] += quantity
@@ -105,10 +106,11 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares,sold_share
     df.to_csv(f'ownerships/{name}.csv', index='stock_name')
 
     # log initial stock price in stocks_prices_history
+    d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
+    stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
     df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
-    df_updates.loc[len(df_updates),:] = [name, valuate(get_stock_by_name(name)), datetime.now()]
+    df_updates.loc[len(df_updates),:] = [name, valuate(stock_object), datetime.now()]
     df_updates.to_csv("stock_prices_history.csv", index='name')
-
     return
 
 
@@ -153,4 +155,13 @@ def log_transaction(investor, stock_id, quantity):
     history.to_csv("transactions_history.csv", index='transaction_id')
     return
 
+
+def log_all_net_worth():
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
+    for inv in df.index:
+        nw = get_net_worth(inv)
+        hist.loc[len(hist),:] = inv, nw, datetime.now()
+    hist.to_csv("net_worth_history.csv", index="log_id")
+    return
 

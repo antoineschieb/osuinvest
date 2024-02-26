@@ -32,15 +32,15 @@ def top_i(i, country):
         i % 50].user.id
 
 
-def update_rename():
-    name_id = {}
-    id_name = {}
-    fridlisttop50  = create_id_list()
-    for x in fridlisttop50:
-        un = get_username(x)
-        name_id[un] = x
-        id_name[x] = un
-    return name_id, id_name
+# def update_rename():
+#     name_id = {}
+#     id_name = {}
+#     fridlisttop50  = create_id_list()
+#     for x in fridlisttop50:
+#         un = get_username(x)
+#         name_id[un] = x
+#         id_name[x] = un
+#     return name_id, id_name
 
 
 

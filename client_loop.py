@@ -9,9 +9,10 @@ from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
 from prestige_hype import compute_prestige_and_hype
-from routines import refresh_player_data_raw, update_stock
+from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
 
 from utils import get_stock_by_name, split_msg
+from visual import print_investors_gains
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -42,12 +43,18 @@ async def update_static_stats():
     for x in df.index:
         pp,p,h = df.loc[x,:]
         stock = await run_blocking(get_stock_by_name, x)
-        stock.raw_skill = pp
-        stock.trendiness = h
-        stock.prestige = p
-        await run_blocking(update_stock, stock)
+        if stock is not None:
+            stock.raw_skill = pp
+            stock.trendiness = h
+            stock.prestige = p
+            await run_blocking(update_stock, stock)
+        else:
+            print("creating new stock....")
+            raise ValueError
+            # await run_blocking(create_new_stock, x, pp, h, p, 1000, 0)
     # except Exception as e:
-    #     print(datetime.now(), e)
+    #     print(datetime.now(), e)   
+
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
 
@@ -60,6 +67,15 @@ async def pay_all_dividends_async():
     for x in message_bits:
         x = "```"+x+"```"
         await channel.send(x)
+
+    # log all_net_worth
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging net worth..")
+    await run_blocking(log_all_net_worth)
+
+    # retrieve delta net_worth
+    ret_str = await run_blocking(print_investors_gains)
+    await channel.send ("```"+ ret_str +"```")
+
 
 
 if __name__=='__main__':

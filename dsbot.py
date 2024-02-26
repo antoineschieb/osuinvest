@@ -25,24 +25,6 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 # client = discord.Client(intents=intents)
 
 
-# USER INTERFACE: (bot commands)
-# - print_leaderboard (print all inv) -- OK
-# - print_market (print all stocks) -- OK but split msg
-# - print_profile(arg:str) (print 1 inv)  -- OK
-# - print_stock(arg: str or int) + plot_stock(arg: int n_hours | int n_days) -- 
-
-# - register()
-# - buy(args:stock str, quantity float)
-# - sell(args:stock str, quantity float)
-
-
-# ADMIN INTERFACE:
-# - pay_dividends()
-# - update_renames(), optional
-
-# TODO:
-# - broadcast(message: str)
-
 async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typing.Any:
     """Runs a blocking function in a non-blocking way"""
     func = functools.partial(blocking_func, *args, **kwargs) # `run_in_executor` doesn't support kwargs, `functools.partial` does
@@ -162,9 +144,17 @@ async def buy(ctx: commands.Context, *args):
         stock_name = re.sub('"','',stock_name)
         stock_name = re.sub("'",'',stock_name)
         return stock_name.lower(), quantity
-    stock_name, quantity = parse_args(args)
+    try:
+        stock_name, quantity = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $buy <stock> <quantity>')
+        return 
+
+    if quantity < 0.1:
+        await ctx.reply(f'ERROR: quantity must be at least 0.1')
+        return
     
-    stock_name = name_id[stock_name]
+    stock_name = name_id[stock_name.lower()]
     
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
@@ -197,7 +187,17 @@ async def sell(ctx: commands.Context, *args):
         stock_name = re.sub('"','',stock_name)
         stock_name = re.sub("'",'',stock_name)
         return stock_name.lower(), quantity
-    stock_name, quantity = parse_args(args)
+    try:
+        stock_name, quantity = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $buy <stock> <quantity>')
+        return 
+
+    if quantity < 0.1:
+        await ctx.reply(f'ERROR: quantity must be at least 0.1')
+        return
+
+    stock_name = name_id[stock_name.lower()]
 
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)

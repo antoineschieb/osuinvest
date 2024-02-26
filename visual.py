@@ -68,7 +68,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
     plt.rcParams["font.family"] = "cursive"
-    stock = name_id[stock_str_name] 
+    stock = name_id[stock_str_name.lower()] 
 
     # sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
     sns.set_style('darkgrid')
@@ -154,13 +154,13 @@ def print_profile(investor_name):
 
 def print_stock(stock_name):
     if isinstance(stock_name, str):
-        stock_name = name_id[stock_name]
+        stock_name = name_id[stock_name.lower()]
     df = get_stocks_table()
     s = df.loc[stock_name]
 
     own = pd.read_csv(f"ownerships/{stock_name}.csv", index_col='investor_name')
     own.insert(0,'Investor', own.index)
-    own['Proportion owned (%)'] = own.apply(lambda x: 100*x.shares_owned/s.sold_shares, axis=1)
+    own['Proportion owned (%)'] = own.apply(lambda x: round(100*x.shares_owned/s.sold_shares,2), axis=1)
 
     ret_str = f'Name: {s.current_name}\n'
     ret_str += f'Current value: ${s.value}\n'
@@ -180,3 +180,24 @@ def print_leaderboard():
     df.insert(0,'Name', df.index)
     ret_str =f'{df.to_string(index=False, col_space=20)}'
     return ret_str
+
+
+
+def print_investors_gains():
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
+    ranking = pd.DataFrame(columns=['investor','Net worth ($)','Gains ($)'])
+    for inv in df.index:
+        hist_filtered = hist[hist['investor']==inv] 
+        current = hist_filtered.iloc[-1,:].net_worth
+        if len(hist_filtered)<2:
+            ranking.loc[len(ranking),:] = [inv, current, 0]
+            continue
+        previous = hist_filtered.iloc[-2,:].net_worth
+        
+        gains = current - previous
+        current = round(current, 2)
+        gains = round(gains, 2)
+        ranking.loc[len(ranking),:] = [inv, current, gains]
+    ranking = ranking.sort_values(by='Gains ($)', ascending=False)
+    return ranking.to_string(index=False, col_space=20)

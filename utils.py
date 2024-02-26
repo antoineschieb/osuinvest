@@ -4,9 +4,12 @@ import pandas as pd
 from constants import name_id
 
 
-def get_stock_by_name(name: str) -> pd.Series:
+def get_stock_by_name(name: int) -> pd.Series:
+    assert isinstance(name, int)
     df_s = pd.read_csv("all_stocks_static.csv", index_col='name')
     df_d = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
+    if name not in df_s.index or name not in df_d.index:
+        return None
     x_s = df_s.loc[name,:]
     x_d = df_d.loc[name,:]
     ret = pd.concat([x_s, x_d])
@@ -32,11 +35,11 @@ def get_balance(investor_name: str) -> float:
 def get_stock_value_timedelta(stock_name, td: timedelta):
     d = datetime.now() - td
     if isinstance(stock_name, str):
-        stock_name = name_id[stock_name]
+        stock_name = name_id[stock_name.lower()]
 
     history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
     history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'])    
+    history['datetime'] = pd.to_datetime(history['datetime'])
     history_filtered = history[(history['stock_id'] == stock_name) & (history['datetime'] <= d)]
     if len(history_filtered) <= 0:  # if date is older than stock's first appearance, use the stock's first known value
         history_player_only = history[history['stock_id'] == stock_name]
