@@ -29,7 +29,7 @@ def get_portfolio(buyer_name: str) -> pd.DataFrame:
 
 def get_balance(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)
-    return investor.cash_balance
+    return round(investor.cash_balance,2)
 
 
 def get_stock_value_timedelta(stock_name, td: timedelta):
