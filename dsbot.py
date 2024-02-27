@@ -62,6 +62,7 @@ async def market(ctx: commands.Context, *args):
         args = list(args)
         n_hours=24
         n_days=0
+        sortby='value'
         if '-d' in args:
             idx = args.index('-d')
             n_days = int(args[idx+1])
@@ -71,7 +72,7 @@ async def market(ctx: commands.Context, *args):
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
-            if sortby not in ['price','evolution','dividend']:
+            if sortby not in ['value','evolution','dividend']:
                 ctx.reply(f'ERROR: -sortby value/evolution/dividend')
         return n_hours, n_days, sortby
     try:
