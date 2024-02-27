@@ -147,7 +147,7 @@ def print_profile(investor_name):
         pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_name(x.name)), axis=1)
     
     ret_str = f'Investor: {investor_name}\n\n'
-    ret_str += f'Cash balance: ${cash_balance}\n\n'
+    ret_str += f'Cash balance: ${round(cash_balance,2)}\n\n'
     ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
     ret_str += f'Total worth: ${round(get_net_worth(investor_name),2)}'
     return ret_str
