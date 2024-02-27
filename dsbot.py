@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import functools
+from math import ceil
 import re
 import time
 import typing
@@ -82,7 +83,7 @@ async def market(ctx: commands.Context, *args):
         return 
     
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    list_of_dfs = await run_blocking(split_df, df, max_rows=round(len(df.index)/3))
+    list_of_dfs = await run_blocking(split_df, df, max_rows=ceil(len(df.index)/3))
     for i,df_i in enumerate(list_of_dfs):
         await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30)
         await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
