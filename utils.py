@@ -1,5 +1,6 @@
 from csv import writer
 from datetime import datetime, timedelta
+from math import ceil
 import pandas as pd
 from constants import name_id
 
@@ -57,7 +58,8 @@ def split_msg(msg, max_len=1999):
         return [msg[:cut+1], *split_msg(msg[cut+1:])]
 
 
-def split_df(df, max_rows=20):
+def split_df(df, pages=3):
+    max_rows=ceil(len(df.index)/pages)
     idx_start = 0
     list_of_dfs = []
     while idx_start < len(df.index):

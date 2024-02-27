@@ -7,9 +7,13 @@ import typing
 import discord
 from discord.ext import commands
 import pandas as pd
+
+from discord.ui import Button, View
+from discord import ButtonStyle
+
+
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending
 from constants import FEED_CHANNEL_ID, id_name, name_id
-
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_new_investor
@@ -83,10 +87,14 @@ async def market(ctx: commands.Context, *args):
         return 
     
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    list_of_dfs = await run_blocking(split_df, df, max_rows=ceil(len(df.index)/3))
+    
+    pages = 3   # empirical value for now
+    list_of_dfs = await run_blocking(split_df, df, pages=pages)
     for i,df_i in enumerate(list_of_dfs):
         await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30)
-        await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
+        # await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
+    pages = [f'plots/market{i}.png' for i in range(pages)]
+    await ctx.send(content=f'Page (1/{len(pages)})', file=discord.File(pages[0]), view=PaginationView(pages))
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
@@ -247,6 +255,37 @@ async def register(ctx: commands.Context):
     ret_str = await run_blocking(create_new_investor, ctx.message.author.name, 10000)
     await ctx.reply(ret_str)
     await broadcast(ret_str)
+
+
+class PaginationView(View):
+    def __init__(self, pages):
+        super().__init__()
+        self.page = 0
+        self.pages = pages
+
+        # self.add_item(Button(label="P", style=ButtonStyle.green, custom_id="prev2"))
+        # self.add_item(Button(label="N", style=ButtonStyle.green, custom_id="next2"))
+
+    @discord.ui.button(custom_id="prev2", label='Previous', emoji='◀')
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.page > 0:
+            self.page -= 1
+        else:
+            self.page = len(self.pages) - 1
+        await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
+
+    @discord.ui.button(custom_id="next2", label='Next', emoji='▶')
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.page < len(self.pages) - 1:
+            self.page += 1
+        else:
+            self.page = 0
+        await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
+
+@bot.command()
+async def button(ctx):
+    pages = [f"market{i}.png" for i in range(5)]
+    await ctx.send(content=f'Page (1/{len(pages)})', file=discord.File(pages[0]), view=PaginationView(pages))
 
 
 if __name__ == "__main__":
