@@ -84,13 +84,13 @@ async def market(ctx: commands.Context, *args):
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
     list_of_dfs = await run_blocking(split_df, df)
     for i,df_i in enumerate(list_of_dfs):
-        await run_blocking(draw_table, df_i, f'plots/market{i}.png')
+        await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30)
         await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
-    await run_blocking(draw_table, df, 'plots/lb.png')
+    await run_blocking(draw_table, df, 'plots/lb.png', 20)
     await ctx.channel.send(file=discord.File(f'plots/lb.png'))
     # ret_str = "```"+ret_str+"```"
     # await ctx.send(ret_str)

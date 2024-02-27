@@ -68,6 +68,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
     plt.rcParams["font.family"] = "cursive"
+    plt.rcParams.update({'font.size': 10})
     stock = name_id[stock_str_name.lower()] 
 
     # sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
@@ -203,8 +204,8 @@ def print_investors_gains():
     return ranking.to_string(index=False, col_space=20)
 
 
-def draw_table(df: pd.DataFrame, filename: str):
-    plt.rcParams.update({'font.size': 30})
+def draw_table(df: pd.DataFrame, filename: str, fontsize:int):
+    plt.rcParams.update({'font.size': fontsize})
     df = df.reindex(index=df.index[::-1])
     # set the number of rows and cols for our table
     rows = len(df.index)         # 50
