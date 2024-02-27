@@ -107,7 +107,7 @@ def beautify_float(a: float) :
     a *= 100
     return f'{char} {round(a,2)}%'
 
-def print_market(n_hours=24, n_days=0):
+def print_market(n_hours=24, n_days=0, sortby='value'):
     if n_days<0 or n_hours<1:
         return 'n_days must be >= 0 and n_hours must be >=1'
     elif n_days==0:
@@ -119,11 +119,12 @@ def print_market(n_hours=24, n_days=0):
     df = get_stocks_table()
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours, days=n_days)), axis=1)
     df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
-    
-    df = df.sort_values(by='placeholder_name', ascending=False)
-    df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
-
     df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
+
+    args_colname = {'value':'value', 'evolution':'placeholder_name','dividend':'Dividend yield (%)'}
+    df = df.sort_values(by=args_colname[sortby], ascending=False)
+
+    df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
 
     df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
     ret_df = (df[['Stock','value',new_col_str,'Dividend yield (%)']])

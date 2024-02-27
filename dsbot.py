@@ -68,10 +68,19 @@ async def market(ctx: commands.Context, *args):
         if '-h' in args:
             idx = args.index('-h')
             n_hours = int(args[idx+1])
-        return n_hours, n_days
+        if '-sortby' in args:
+            idx = args.index('-sortby')
+            sortby = args[idx+1]
+            if sortby not in ['price','evolution','dividend']:
+                ctx.reply(f'ERROR: -sortby value/evolution/dividend')
+        return n_hours, n_days, sortby
+    try:
+        n_hours, n_days,sortby = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.')
+        return 
     
-    n_hours, n_days = parse_args(args)
-    ret_str = await run_blocking(print_market, n_hours=n_hours, n_days=n_days)
+    ret_str = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
     message_bits = await run_blocking(split_msg, ret_str)
     for x in message_bits:
         x = "```"+x+"```"
