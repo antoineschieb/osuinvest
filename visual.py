@@ -11,7 +11,7 @@ import datetime
 
 from constants import name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
-from utils import get_stock_by_name, get_stock_value_timedelta
+from utils import get_balance, get_stock_by_name, get_stock_value_timedelta
 
 
 
@@ -127,9 +127,9 @@ def print_market(n_hours=24, n_days=0, sortby='value'):
     df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
 
     df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
-    ret_df = (df[['Stock','value',new_col_str,'Dividend yield (%)']])
-    ret_str = ret_df.to_string(index=False, col_space=20)
-    return ret_str
+    return df[['Stock','value',new_col_str,'Dividend yield (%)']]
+    # ret_str = ret_df.to_string(index=False, col_space=20)
+    # return ret_str
 
 
 def print_profile(investor_name):
@@ -176,12 +176,11 @@ def print_stock(stock_name):
 
 def print_leaderboard():
     df = pd.read_csv("all_investors.csv", index_col='name')
-    df['Net worth'] = df.apply(lambda x:get_net_worth(x.name), axis=1)
-    df = df.sort_values(by='Net worth', ascending=False)
+    df['Cash balance ($)'] = df.apply(lambda x:round(get_balance(x.name)), axis=1)
+    df['Net worth ($)'] = df.apply(lambda x:round(get_net_worth(x.name)), axis=1)
+    df = df.sort_values(by='Net worth ($)', ascending=False)
     df.insert(0,'Name', df.index)
-    ret_str =f'{df.to_string(index=False, col_space=20)}'
-    return ret_str
-
+    return df[['Name','Net worth ($)','Cash balance ($)']]
 
 
 def print_investors_gains():
@@ -202,3 +201,61 @@ def print_investors_gains():
         ranking.loc[len(ranking),:] = [inv, current, gains]
     ranking = ranking.sort_values(by='Gains ($)', ascending=False)
     return ranking.to_string(index=False, col_space=20)
+
+
+def draw_table(df: pd.DataFrame, filename: str):
+    plt.rcParams.update({'font.size': 30})
+    df = df.reindex(index=df.index[::-1])
+    # set the number of rows and cols for our table
+    rows = len(df.index)         # 50
+    cols = len(list(df.columns)) # 4
+
+    # first, we'll create a new figure and axis object
+    figsize_x = 4.5*cols
+    figsize_y = 1*rows
+    
+    fig, ax = plt.subplots(figsize=(figsize_x,figsize_y))
+
+    # create a coordinate system based on the number of rows/columns
+    ax.set_ylim(0, rows+1)  # 1 more row for header
+    ax.set_xlim(0, cols)
+    fig.set_facecolor('#111111')
+    ax.set_facecolor('#111111')
+
+    for row in range(rows):
+        # extract the row data from the list
+        d = df.iloc[row,:]        
+        for i,elem in enumerate(d):
+            (ha,x,weight) = ('left', i+0.05,'bold') if i==0 else ('right', i+1,'normal')
+            
+            t = ax.text(x=x, y=row+0.5, s=elem, va='center', ha=ha, weight=weight)
+            t.set_color('white')
+            if isinstance(elem, str):
+                if elem[0] == '↗':
+                    t.set_color('green')
+                elif elem[0] == '↘':
+                    t.set_color('red')
+
+    # Add column headers
+    for i,title in enumerate(df.columns):
+        if len(title)>10 and ' ' in title:
+            index = title.index(' ')
+            title = title[:index] + '\n' + title[index:]
+        (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
+        ax.text(x, rows+0.5, title, weight='bold', ha=ha).set_color('white')
+
+    # Plot small lines
+    for row in range(rows):
+        ax.plot(
+            [0, cols + 1],
+            [row, row],
+            ls='--',
+            lw='.5',
+            c='grey'
+        )
+    # line to separate header from data
+    ax.plot([0, cols + 1], [rows, rows], lw='2', c='white')
+    ax.axis('off')
+    fig.set_size_inches(figsize_x,figsize_y)
+    plt.savefig(filename,bbox_inches='tight',dpi=100)
+    return 0

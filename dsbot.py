@@ -12,8 +12,8 @@ from constants import FEED_CHANNEL_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_new_investor
-from visual import plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_stock_by_name, split_msg
+from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
+from utils import get_investor_by_name, get_stock_by_name, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -81,17 +81,19 @@ async def market(ctx: commands.Context, *args):
         await ctx.reply(f'Could not parse arguments.')
         return 
     
-    ret_str = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    message_bits = await run_blocking(split_msg, ret_str)
-    for x in message_bits:
-        x = "```"+x+"```"
-        await ctx.send(x)
+    df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    list_of_dfs = await run_blocking(split_df, df)
+    for i,df_i in enumerate(list_of_dfs):
+        await run_blocking(draw_table, df_i, f'plots/market{i}.png')
+        await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
-    ret_str = await run_blocking(print_leaderboard)
-    ret_str = "```"+ret_str+"```"
-    await ctx.send(ret_str)
+    df = await run_blocking(print_leaderboard)
+    await run_blocking(draw_table, df, 'plots/lb.png')
+    await ctx.channel.send(file=discord.File(f'plots/lb.png'))
+    # ret_str = "```"+ret_str+"```"
+    # await ctx.send(ret_str)
 
 @bot.command()
 async def lb(ctx: commands.Context):

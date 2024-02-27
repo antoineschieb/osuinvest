@@ -38,7 +38,7 @@ def get_net_worth(investor_name: str) -> float:
         qty = portfolio.loc[s,'shares_owned']
         stock = get_stock_by_name(s)
         net_worth += qty * valuate(stock)
-    return net_worth
+    return round(net_worth,2)
 
 
 def get_dividend_yield(stock_name) -> float:

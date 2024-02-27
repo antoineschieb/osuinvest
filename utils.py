@@ -56,6 +56,16 @@ def split_msg(msg, max_len=1999):
         cut = indices[-1]
         return [msg[:cut+1], *split_msg(msg[cut+1:])]
 
+
+def split_df(df, max_rows=20):
+    idx_start = 0
+    list_of_dfs = []
+    while idx_start < len(df.index):
+        list_of_dfs.append(df[idx_start:min(idx_start+max_rows, len(df.index))])
+        idx_start+=max_rows
+    return list_of_dfs
+
+
 def append_list_as_row(file_name, list_of_elem):
     # Open file in append mode
     with open(file_name, 'a+', newline='') as write_obj:
