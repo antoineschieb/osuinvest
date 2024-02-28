@@ -79,7 +79,7 @@ async def update_static_stats():
     return 
 
 
-@tasks.loop(hours=1)
+@tasks.loop(hours=4)
 async def pay_all_dividends_async():
     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
     ret_str = await run_blocking(pay_all_dividends)
