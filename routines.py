@@ -21,7 +21,7 @@ def refresh_player_data_raw(verbose=False):
         print(f'Refreshed all stats for top50 players')
     return
 
-def update_stock(stock: pd.Series):
+def update_stock(stock: pd.Series, log_price=True):
     """
     This function updates all static and dynamic values that define a stock, but doesn't update its ownership
     """
@@ -35,10 +35,11 @@ def update_stock(stock: pd.Series):
     df.loc[stock.name,:] = stock
     df.to_csv("all_stocks_static.csv", index='name')
 
-    # 3-log price update in stocks_prices_history
-    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
-    df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
-    df_updates.to_csv("stock_prices_history.csv", index='name')
+    if log_price:
+        # 3-log price update in stocks_prices_history
+        df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+        df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
+        df_updates.to_csv("stock_prices_history.csv", index='update_id')
     return
 
 

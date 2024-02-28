@@ -2,11 +2,13 @@ from datetime import datetime
 import functools
 import typing
 import discord
+import pandas as pd
 from bank import check_for_alerts, pay_all_dividends
 from constants import FEED_CHANNEL_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
+from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
 
@@ -39,20 +41,31 @@ async def update_static_stats():
     # try:
     await run_blocking(refresh_player_data_raw)
     df = await run_blocking(compute_prestige_and_hype)
-    for x in df.index:
+    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
+    df_updates_appendice = df_updates_appendice.set_index('update_id')
+
+    for i,x in enumerate(df.index):
         pp,p,h = df.loc[x,:]
         stock = await run_blocking(get_stock_by_id, x)
         if stock is not None:
             stock.raw_skill = pp
             stock.trendiness = h
             stock.prestige = p
-            await run_blocking(update_stock, stock)
+
+            df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
+
+            await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
         else:
-            print("creating new stock....")
+            print("Need to create new stock....")
             raise ValueError
             # await run_blocking(create_new_stock, x, pp, h, p, 1000, 0)
     # except Exception as e:
     #     print(datetime.now(), e)   
+    
+    # update stock prices
+    df_updates = pd.concat([df_updates, df_updates_appendice])
+    df_updates.to_csv("stock_prices_history.csv", index='update_id')
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
     
@@ -82,7 +95,5 @@ async def pay_all_dividends_async():
     # retrieve delta net_worth
     ret_str = await run_blocking(print_investors_gains)
     await channel.send ("```"+ ret_str +"```")
-
-
 
 client.run(discord_bot_token)
