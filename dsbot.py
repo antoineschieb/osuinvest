@@ -292,7 +292,7 @@ async def pingmeif(ctx: commands.Context, *args):
         if args[1]=='<':
             is_greater_than = False
         value = float(args[2])
-        return stock_id, is_greater_than, value
+        return stock_id.lower(), is_greater_than, value
     
     investor = ctx.message.author.id
     try:
