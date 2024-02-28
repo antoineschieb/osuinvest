@@ -11,7 +11,7 @@ import datetime
 
 from constants import name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
-from utils import get_balance, get_stock_by_name, get_stock_value_timedelta
+from utils import get_balance, get_stock_by_id, get_stock_value_timedelta
 
 
 
@@ -144,8 +144,8 @@ def print_profile(investor_name):
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)
-        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_name(x.name)), axis=1)
-        pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_name(x.name)), axis=1)
+        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name)), axis=1)
+        pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
     
     ret_str = f'Investor: {investor_name}\n\n'
     ret_str += f'Cash balance: ${round(cash_balance,2)}\n\n'
@@ -262,5 +262,5 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, row_offset):
     ax.plot([0, cols + 1], [rows, rows], lw='2', c='white')
     ax.axis('off')
     fig.set_size_inches(figsize_x,figsize_y)
-    plt.savefig(filename,bbox_inches='tight',dpi=100)
+    plt.savefig(filename,bbox_inches='tight',dpi=40)
     return 0

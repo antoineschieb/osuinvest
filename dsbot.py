@@ -12,13 +12,13 @@ from discord.ui import Button, View
 from discord import ButtonStyle
 
 
-from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending
+from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
 from constants import FEED_CHANNEL_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
-from routines import create_new_investor
+from routines import create_alert, create_new_investor
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_stock_by_name, split_df, split_msg
+from utils import get_investor_by_name, get_stock_by_id, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -179,7 +179,7 @@ async def buy(ctx: commands.Context, *args):
     
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
-    stock = get_stock_by_name(stock_name)
+    stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, quantity)
 
     # put in confirmations.csv
@@ -218,7 +218,7 @@ async def sell(ctx: commands.Context, *args):
 
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
-    stock = get_stock_by_name(stock_name)
+    stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, -quantity)
 
     # put in confirmations.csv
@@ -277,6 +277,32 @@ class PaginationView(View):
         else:
             self.page = 0
         await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
+
+
+
+@bot.command()
+async def pingmeif(ctx: commands.Context, *args):
+    def parse_args(args):
+        args = list(args)
+        assert len(args) == 3
+        
+        stock_id = name_id[args[0]]
+        if args[1]=='>':
+            is_greater_than = True
+        if args[1]=='<':
+            is_greater_than = False
+        value = float(args[2])
+        return stock_id, is_greater_than, value
+    
+    investor = ctx.message.author.id
+    try:
+        stock_id, is_greater_than, value = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: `pingmeif stock < value` or `pingmeif stock > value`')
+        return
+
+    ret_str = await run_blocking(create_alert, investor, stock_id, is_greater_than, value)
+    await ctx.reply(ret_str)
 
 
 if __name__ == "__main__":

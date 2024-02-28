@@ -2,16 +2,15 @@ from datetime import datetime
 import functools
 import typing
 import discord
-from bank import pay_all_dividends
+from bank import check_for_alerts, pay_all_dividends
 from constants import FEED_CHANNEL_ID
-from dsbot import broadcast
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
 
-from utils import get_stock_by_name, split_msg
+from utils import get_stock_by_id, split_msg
 from visual import print_investors_gains
 
 intents = discord.Intents().all()
@@ -42,7 +41,7 @@ async def update_static_stats():
     df = await run_blocking(compute_prestige_and_hype)
     for x in df.index:
         pp,p,h = df.loc[x,:]
-        stock = await run_blocking(get_stock_by_name, x)
+        stock = await run_blocking(get_stock_by_id, x)
         if stock is not None:
             stock.raw_skill = pp
             stock.trendiness = h
@@ -56,7 +55,15 @@ async def update_static_stats():
     #     print(datetime.now(), e)   
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
-
+    
+    # Now check for alerts
+    ret_strs = await run_blocking(check_for_alerts)
+    channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+    for s in ret_strs:
+        print(s)
+        # s = "```"+s+"```"
+        await channel.send(s)
+    return 
 
 
 @tasks.loop(hours=1)
@@ -78,7 +85,4 @@ async def pay_all_dividends_async():
 
 
 
-if __name__=='__main__':
-    
-    client.run(discord_bot_token)
-    
+client.run(discord_bot_token)

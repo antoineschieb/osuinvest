@@ -6,7 +6,7 @@ import os
 from constants import id_name, name_id
 from formulas import get_net_worth, valuate
 from osuapi import all_user_info
-from utils import get_stock_by_name
+from utils import get_stock_by_id
 
 
 def refresh_player_data_raw(verbose=False):
@@ -165,3 +165,9 @@ def log_all_net_worth():
     hist.to_csv("net_worth_history.csv", index="log_id")
     return
 
+def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
+    df = pd.read_csv("alerts.csv", index_col="alert_id")
+    df = df.astype({"stock": int})
+    df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
+    df.to_csv("alerts.csv", index="alert_id")
+    return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'

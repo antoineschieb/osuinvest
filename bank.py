@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from constants import name_id, id_name
 from formulas import compute_tax_applied, valuate, get_dividend_yield
-from utils import get_investor_by_name, get_portfolio, get_stock_by_name
+from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
 
 
@@ -45,7 +45,7 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     stock_name = int(stock_name)
 
     buyer = get_investor_by_name(buyer_name)
-    stock = get_stock_by_name(stock_name)
+    stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, quantity)
     if isinstance(transaction_price, str):  # Error
         return transaction_price  
@@ -81,7 +81,7 @@ def pay_all_dividends():
             qty = portfolio.loc[s,'shares_owned']
             if qty <=0:
                 continue
-            stock = get_stock_by_name(s)
+            stock = get_stock_by_id(s)
             volume = qty * valuate(stock)
             if stock.sold_shares == 0:
                 raise ValueError
@@ -137,3 +137,23 @@ def remove_transaction_from_pending(investor):
     df = df.drop(investor, axis=0)
     df.to_csv("confirmations.csv", index="investor")
     return True
+
+
+def check_for_alerts():
+    ret_strs = []
+    df_alerts = pd.read_csv("alerts.csv", index_col="alert_id")
+    df_alerts = df_alerts.astype({"stock": int})
+    for x in df_alerts.index:
+        # Conveniently, we store investor's discord uuid and not investor's in-game name so it's easier to ping them
+        investor, stock_id, is_greater_than, value = df_alerts.loc[x,:]
+        
+        current_value = valuate(get_stock_by_id(int(stock_id)))
+        if is_greater_than:
+            if current_value > value:
+                ret_strs.append(f'<@{investor}> {id_name[stock_id]} is now > {value}')
+        else:
+            if current_value < value:
+                ret_strs.append(f'<@{investor:.20f}> {id_name[stock_id]} is now < {value}')
+        df_alerts = df_alerts.drop(x)
+    df_alerts.to_csv("alerts.csv", index="alert_id")
+    return ret_strs

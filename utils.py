@@ -2,10 +2,10 @@ from csv import writer
 from datetime import datetime, timedelta
 from math import ceil
 import pandas as pd
-from constants import name_id
+from constants import name_id, id_name
 
 
-def get_stock_by_name(name: int) -> pd.Series:
+def get_stock_by_id(name: int) -> pd.Series:
     assert isinstance(name, int)
     df_s = pd.read_csv("all_stocks_static.csv", index_col='name')
     df_d = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
@@ -82,4 +82,5 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
-    
+
+

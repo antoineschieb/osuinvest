@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from math import exp
 import pandas as pd
 from constants import id_name, name_id
-from utils import get_investor_by_name, get_portfolio, get_stock_by_name
+from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 
 
 def valuate_intrinsic(stock):
@@ -36,13 +36,13 @@ def get_net_worth(investor_name: str) -> float:
     portfolio = get_portfolio(investor_name)
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
-        stock = get_stock_by_name(s)
+        stock = get_stock_by_id(s)
         net_worth += qty * valuate(stock)
     return round(net_worth,2)
 
 
 def get_dividend_yield(stock_name) -> float:
-    return get_dividend_yield_from_stock(get_stock_by_name(stock_name))
+    return get_dividend_yield_from_stock(get_stock_by_id(stock_name))
 
 
 def get_dividend_yield_from_stock(stock) -> float:
