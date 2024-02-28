@@ -58,8 +58,15 @@ def split_msg(msg, max_len=1999):
         return [msg[:cut+1], *split_msg(msg[cut+1:])]
 
 
-def split_df(df, pages=3):
+def split_df(df: pd.DataFrame, pages=3):
     max_rows=ceil(len(df.index)/pages)
+
+    # add blank rows at the end if the length of total df is not divisible by pages
+    if len(df.index) < max_rows * pages:
+        nb_blank_rows = max_rows * pages - len(df.index)
+        for i in range(nb_blank_rows):
+            df.loc[-i,:] = [' ',0,' ',0]   # Quick hack since uuids cannot be negative. draw_table will mark these rows as blank
+
     idx_start = 0
     list_of_dfs = []
     while idx_start < len(df.index):
@@ -75,3 +82,4 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer = writer(write_obj)
         # Add contents of list as last row in the csv file
         csv_writer.writerow(list_of_elem)
+    

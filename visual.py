@@ -109,7 +109,7 @@ def beautify_float(a: float) :
     return f'{char} {round(a,2)}%'
 
 def print_market(n_hours=24, n_days=0, sortby='value'):
-    if n_days<0 or n_hours<1:
+    if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
     elif n_days==0:
         new_col_str = f'last {n_hours} hour(s)'
@@ -204,7 +204,7 @@ def print_investors_gains():
     return ranking.to_string(index=False, col_space=20)
 
 
-def draw_table(df: pd.DataFrame, filename: str, fontsize:int):
+def draw_table(df: pd.DataFrame, filename: str, fontsize:int, row_offset):
     plt.rcParams.update({'font.size': fontsize})
     df = df.reindex(index=df.index[::-1])
     # set the number of rows and cols for our table
@@ -225,11 +225,15 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int):
 
     for row in range(rows):
         # extract the row data from the list
-        d = df.iloc[row,:]        
+        d = df.iloc[row,:]
+        if d.name <= 0:  #skip blank rows
+            continue
+
         for i,elem in enumerate(d):
-            (ha,x,weight) = ('left', i+0.05,'bold') if i==0 else ('right', i+1,'normal')
+            (ha,x,weight,s) = ('left', i+0.05,'bold',f'{rows-row + row_offset}. {elem}') if i==0 else ('right', i+1,'normal',elem)
             
-            t = ax.text(x=x, y=row+0.5, s=elem, va='center', ha=ha, weight=weight)
+
+            t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight)
             t.set_color('white')
             if isinstance(elem, str):
                 if elem[0] == '↗':

@@ -65,8 +65,8 @@ async def profile(ctx: commands.Context, *args):
 async def market(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
-        n_hours=24
-        n_days=0
+        n_hours=0
+        n_days=7
         sortby='value'
         if '-d' in args:
             idx = args.index('-d')
@@ -78,7 +78,7 @@ async def market(ctx: commands.Context, *args):
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['value','evolution','dividend']:
-                ctx.reply(f'ERROR: -sortby value/evolution/dividend')
+                ctx.reply(f'ERROR: -sortby value|evolution|dividend')
         return n_hours, n_days, sortby
     try:
         n_hours, n_days,sortby = parse_args(args)
@@ -87,11 +87,11 @@ async def market(ctx: commands.Context, *args):
         return 
     
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    
     pages = 3   # empirical value for now
     list_of_dfs = await run_blocking(split_df, df, pages=pages)
+    row_offset = ceil(len(df.index)/pages)
     for i,df_i in enumerate(list_of_dfs):
-        await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30)
+        await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30, row_offset*i)
         # await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
     pages = [f'plots/market{i}.png' for i in range(pages)]
     await ctx.send(content=f'Page (1/{len(pages)})', file=discord.File(pages[0]), view=PaginationView(pages))
@@ -188,10 +188,6 @@ async def buy(ctx: commands.Context, *args):
     # ask for confirmation
     await ctx.reply(f'Do you really want to buy {quantity} {id_name[stock_name]} shares for ${transaction_price}? ($yes/$no)')
 
-    
-    # ret_str = await run_blocking(buy_stock, ctx.message.author.name, stock_name, quantity)
-    # await ctx.reply(ret_str)
-    # await broadcast(ret_str)
 
 
 @bot.command()
@@ -266,7 +262,7 @@ class PaginationView(View):
         # self.add_item(Button(label="P", style=ButtonStyle.green, custom_id="prev2"))
         # self.add_item(Button(label="N", style=ButtonStyle.green, custom_id="next2"))
 
-    @discord.ui.button(custom_id="prev2", label='Previous', emoji='◀')
+    @discord.ui.button(custom_id="prev2", label='Prev', emoji='◀', style=ButtonStyle.green)
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page > 0:
             self.page -= 1
@@ -274,18 +270,13 @@ class PaginationView(View):
             self.page = len(self.pages) - 1
         await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
 
-    @discord.ui.button(custom_id="next2", label='Next', emoji='▶')
+    @discord.ui.button(custom_id="next2", label='Next', emoji='▶', style=ButtonStyle.green)
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page < len(self.pages) - 1:
             self.page += 1
         else:
             self.page = 0
         await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
-
-@bot.command()
-async def button(ctx):
-    pages = [f"market{i}.png" for i in range(5)]
-    await ctx.send(content=f'Page (1/{len(pages)})', file=discord.File(pages[0]), view=PaginationView(pages))
 
 
 if __name__ == "__main__":
