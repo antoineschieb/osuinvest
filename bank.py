@@ -150,10 +150,10 @@ def check_for_alerts():
         current_value = valuate(get_stock_by_id(int(stock_id)))
         if is_greater_than:
             if current_value > value:
-                ret_strs.append(f'<@{investor:.20f}> {id_name[stock_id]} is now > {value}')
+                ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now > {value}')
         else:
             if current_value < value:
-                ret_strs.append(f'<@{investor:.20f}> {id_name[stock_id]} is now < {value}')
+                ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now < {value}')
         df_alerts = df_alerts.drop(x)
     df_alerts.to_csv("alerts.csv", index="alert_id")
     return ret_strs
