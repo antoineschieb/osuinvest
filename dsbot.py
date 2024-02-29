@@ -99,7 +99,7 @@ async def market(ctx: commands.Context, *args):
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
-    await run_blocking(draw_table, df, 'plots/lb.png', 20)
+    await run_blocking(draw_table, df, 'plots/lb.png', 20, 0)
     await ctx.channel.send(file=discord.File(f'plots/lb.png'))
     # ret_str = "```"+ret_str+"```"
     # await ctx.send(ret_str)
