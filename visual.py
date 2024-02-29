@@ -226,13 +226,11 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, row_offset):
     for row in range(rows):
         # extract the row data from the list
         d = df.iloc[row,:]
-        if d.name <= 0:  #skip blank rows
+        if not isinstance(d.name, str) and d.name <= 0:  #skip blank rows
             continue
 
         for i,elem in enumerate(d):
             (ha,x,weight,s) = ('left', i+0.05,'bold',f'{rows-row + row_offset}. {elem}') if i==0 else ('right', i+1,'normal',elem)
-            
-
             t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight)
             t.set_color('white')
             if isinstance(elem, str):
