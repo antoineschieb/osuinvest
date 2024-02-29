@@ -286,13 +286,13 @@ async def pingmeif(ctx: commands.Context, *args):
         args = list(args)
         assert len(args) == 3
         
-        stock_id = name_id[args[0]]
+        stock_id = name_id[args[0].lower()]
         if args[1]=='>':
             is_greater_than = True
         if args[1]=='<':
             is_greater_than = False
         value = float(args[2])
-        return stock_id.lower(), is_greater_than, value
+        return stock_id, is_greater_than, value
     
     investor = ctx.message.author.id
     try:
