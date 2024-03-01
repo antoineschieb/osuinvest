@@ -73,6 +73,7 @@ def sell_stock(buyer_name: str, stock_name: str, quantity: float):
 def pay_all_dividends():
     df = pd.read_csv("all_investors.csv", index_col='name')
     ret_str = 'Paying all dividends...\n'
+    ret_dict = {}
     for investor_name in df.index:        
         portfolio = get_portfolio(investor_name)
         investor = get_investor_by_name(investor_name)
@@ -90,8 +91,9 @@ def pay_all_dividends():
             investor.cash_balance += dividend
             sum_of_dividends += dividend
         ret_str += f'{investor_name} received ${round(sum_of_dividends,2)} of total dividends today!\n'
+        ret_dict[investor_name] = round(sum_of_dividends,2)
         update_buyer(investor)
-    return ret_str
+    return ret_str, ret_dict
 
 
 def get_trade_history(buyer_name, stock_id):

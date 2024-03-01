@@ -200,7 +200,7 @@ def print_leaderboard():
     return df[['Name','Net worth ($)','Cash balance ($)']]
 
 
-def print_investors_gains():
+def print_investors_gains(dividends_dict):
     df = pd.read_csv("all_investors.csv", index_col='name')
     hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
     ranking = pd.DataFrame(columns=['investor','Net worth ($)','Gains ($)'])
@@ -217,6 +217,8 @@ def print_investors_gains():
         gains = round(gains, 2)
         ranking.loc[len(ranking),:] = [inv, current, gains]
     ranking = ranking.sort_values(by='Gains ($)', ascending=False)
+    ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
+    ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
     return ranking.to_string(index=False, col_space=20)
 
 

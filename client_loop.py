@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, time
 import functools
 import typing
 import discord
@@ -12,7 +12,7 @@ from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
 
-from utils import get_stock_by_id, split_msg
+from utils import calculate_remaining_time, get_stock_by_id, split_msg
 from visual import print_investors_gains
 
 intents = discord.Intents().all()
@@ -30,8 +30,8 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    minutes_to_wait = 60 - datetime.now().minute
-    await asyncio.sleep(60 * minutes_to_wait)
+    seconds = calculate_remaining_time(datetime.now(), time(hour=20))
+    await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
 
 
@@ -79,10 +79,10 @@ async def update_static_stats():
     return 
 
 
-@tasks.loop(hours=4)
+@tasks.loop(hours=24)
 async def pay_all_dividends_async():
     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
-    ret_str = await run_blocking(pay_all_dividends)
+    ret_str, ret_dict = await run_blocking(pay_all_dividends)
     message_bits = split_msg(ret_str)
     for x in message_bits:
         x = "```"+x+"```"
@@ -93,7 +93,7 @@ async def pay_all_dividends_async():
     await run_blocking(log_all_net_worth)
 
     # retrieve delta net_worth
-    ret_str = await run_blocking(print_investors_gains)
+    ret_str = await run_blocking(print_investors_gains, ret_dict)
     await channel.send ("```"+ ret_str +"```")
 
 client.run(discord_bot_token)

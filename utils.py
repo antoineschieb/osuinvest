@@ -1,5 +1,5 @@
 from csv import writer
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from math import ceil
 import pandas as pd
 from constants import name_id, id_name
@@ -87,3 +87,11 @@ def append_list_as_row(file_name, list_of_elem):
         csv_writer.writerow(list_of_elem)
 
 
+def calculate_remaining_time(t_now, t_payout):
+    dt_now = datetime.combine(date.today(), t_now)
+    dt_payout = datetime.combine(date.today(), t_payout)
+    dateTimeDifference = dt_payout - dt_now
+    if dateTimeDifference >= timedelta():   # is diff pos or neg
+        return dateTimeDifference.total_seconds()
+    else:
+        return (timedelta(hours=24) + dateTimeDifference).total_seconds()
