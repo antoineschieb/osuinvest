@@ -86,7 +86,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     # select the requested time period
     start_date = datetime.datetime.now() - since
-    selected_period = df['datetime']>start_date
+    selected_period = df['datetime']>=start_date
 
     df = df[selected_players & selected_period]
     if df.empty:
@@ -124,7 +124,17 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
         new_col_str += f'{n_hours} hour(s)'
     
     df = get_stocks_table()
-    df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours, days=n_days)), axis=1)
+    
+    history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    history = history.astype({"stock_id": int})
+    history['datetime'] = pd.to_datetime(history['datetime'])
+
+    td = datetime.timedelta(hours=n_hours, days=n_days)
+    d = datetime.datetime.now() - td
+    history_time_filtered = history[history['datetime'] >= d]
+    assert len(history_time_filtered) > 0
+
+    df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
     df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
     df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
 

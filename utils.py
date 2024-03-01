@@ -33,19 +33,22 @@ def get_balance(investor_name: str) -> float:
     return round(investor.cash_balance,2)
 
 
-def get_stock_value_timedelta(stock_name, td: timedelta):
-    d = datetime.now() - td
+def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=None):
+    # if history_time_filtered is not None, td will be ignored
+
     if isinstance(stock_name, str):
         stock_name = name_id[stock_name.lower()]
+    if history_time_filtered is None:
+        d = datetime.now() - td
+        history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+        history = history.astype({"stock_id": int})
+        history['datetime'] = pd.to_datetime(history['datetime'])
+        history_time_filtered = history[history['datetime'] >= d]
+    assert len(history_time_filtered) > 0
 
-    history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
-    history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'])
-    history_filtered = history[(history['stock_id'] == stock_name) & (history['datetime'] <= d)]
-    if len(history_filtered) <= 0:  # if date is older than stock's first appearance, use the stock's first known value
-        history_player_only = history[history['stock_id'] == stock_name]
-        return history_player_only.iloc[0,:].value
-    return history_filtered.iloc[-1,:].value
+    history_name_time_filtered = history_time_filtered[(history_time_filtered['stock_id'] == stock_name)]
+    
+    return history_name_time_filtered.iloc[0,:].value
 
 
 def split_msg(msg, max_len=1999):
