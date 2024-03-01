@@ -63,10 +63,10 @@ async def profile(ctx: commands.Context, *args):
 
 @bot.command()
 async def market(ctx: commands.Context, *args):
-    def parse_args(args):
+    async def parse_args(args):
         args = list(args)
         n_hours=0
-        n_days=7
+        n_days=0
         sortby='value'
         if '-d' in args:
             idx = args.index('-d')
@@ -78,10 +78,10 @@ async def market(ctx: commands.Context, *args):
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['value','evolution','dividend']:
-                ctx.reply(f'ERROR: -sortby value|evolution|dividend')
+                await ctx.reply(f'ERROR: -sortby value|evolution|dividend')
         return n_hours, n_days, sortby
     try:
-        n_hours, n_days,sortby = parse_args(args)
+        n_hours, n_days, sortby = await parse_args(args)
     except:
         await ctx.reply(f'Could not parse arguments.')
         return 
@@ -112,9 +112,9 @@ async def lb(ctx: commands.Context):
 async def stock(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
-        #start by optional args -d and -n
+        #start by optional args -d and -h
         n_days = 0
-        n_hours = 24
+        n_hours = 0
         if '-d' in args:
             idx = args.index('-d')
             n_days = int(args[idx+1])

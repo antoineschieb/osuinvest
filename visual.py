@@ -54,16 +54,18 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     if stock_str_name not in name_id.keys():
         return f'ERROR: Unknown stock "{stock_str_name}"'
 
-    time_str = f'last {n_hours} hours'
-    if n_days<0 or n_hours<1:
+
+    if n_hours==0 and n_days==0:
+        n_days = 7
+
+    time_str = f'last '
+    if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
-    elif n_days>0:
-        n_hours = 0
-        time_str = f'last {n_days} days'
-        if n_days == 1:
-            time_str = f'last day'
-    elif n_hours==1:
-        time_str = f'last hour'
+    
+    if n_days>0:
+        time_str += f'{n_days} day(s) '
+    if n_hours>0:   
+        time_str += f'{n_hours} hour(s)'
     
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
@@ -97,7 +99,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ymax = max(df['value'])
     d = ymax - ymin
     
-    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{id_name[stock]} ({time_str})')
+    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{id_name[stock]} {time_str}')
     plt.setp(ax.legend().texts, family='Consolas')
     plt.savefig(f'plots/{stock_str_name}.png')
     return 0
@@ -108,15 +110,19 @@ def beautify_float(a: float) :
     a *= 100
     return f'{char} {round(a,2)}%'
 
-def print_market(n_hours=24, n_days=0, sortby='value'):
+def print_market(n_hours=0, n_days=0, sortby='value'):
+    if n_hours==0 and n_days==0:
+        n_days = 7
+    
+    new_col_str = 'last '
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
-    elif n_days==0:
-        new_col_str = f'last {n_hours} hour(s)'
-    elif n_days>0:
-        n_hours = 0
-        new_col_str = f'last {n_days} day(s)'
-
+    
+    if n_days>0:
+        new_col_str += f'{n_days} day(s) '
+    if n_hours>0:
+        new_col_str += f'{n_hours} hour(s)'
+    
     df = get_stocks_table()
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, datetime.timedelta(hours=n_hours, days=n_days)), axis=1)
     df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
