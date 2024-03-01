@@ -61,20 +61,20 @@ def split_msg(msg, max_len=1999):
         return [msg[:cut+1], *split_msg(msg[cut+1:])]
 
 
-def split_df(df: pd.DataFrame, pages=3):
-    max_rows=ceil(len(df.index)/pages)
+def split_df(df: pd.DataFrame, rows_per_page: int):
+    pages=ceil(len(df.index)/rows_per_page)
 
     # add blank rows at the end if the length of total df is not divisible by pages
-    if len(df.index) < max_rows * pages:
-        nb_blank_rows = max_rows * pages - len(df.index)
+    if len(df.index) < rows_per_page * pages:
+        nb_blank_rows = rows_per_page * pages - len(df.index)
         for i in range(nb_blank_rows):
-            df.loc[-i,:] = [' ',0,' ',0]   # Quick hack since uuids cannot be negative. draw_table will mark these rows as blank
+            df.loc[-i,:] = [0]*len(df.columns)   # Quick hack since uuids cannot be negative. draw_table will mark these rows as blank
 
     idx_start = 0
     list_of_dfs = []
     while idx_start < len(df.index):
-        list_of_dfs.append(df[idx_start:min(idx_start+max_rows, len(df.index))])
-        idx_start+=max_rows
+        list_of_dfs.append(df[idx_start:min(idx_start+rows_per_page, len(df.index))])
+        idx_start+=rows_per_page
     return list_of_dfs
 
 

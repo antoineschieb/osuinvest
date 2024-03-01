@@ -87,14 +87,9 @@ async def market(ctx: commands.Context, *args):
         return 
     
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    pages = 3   # empirical value for now
-    list_of_dfs = await run_blocking(split_df, df, pages=pages)
-    row_offset = ceil(len(df.index)/pages)
-    for i,df_i in enumerate(list_of_dfs):
-        await run_blocking(draw_table, df_i, f'plots/market{i}.png', 30, row_offset*i)
-        # await ctx.channel.send(file=discord.File(f'plots/market{i}.png'))
-    pages = [f'plots/market{i}.png' for i in range(pages)]
-    await ctx.send(content=f'Page (1/{len(pages)})', file=discord.File(pages[0]), view=PaginationView(pages))
+    ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
+
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
@@ -259,10 +254,7 @@ class PaginationView(View):
         self.page = 0
         self.pages = pages
 
-        # self.add_item(Button(label="P", style=ButtonStyle.green, custom_id="prev2"))
-        # self.add_item(Button(label="N", style=ButtonStyle.green, custom_id="next2"))
-
-    @discord.ui.button(custom_id="prev2", label='Prev', emoji='◀', style=ButtonStyle.green)
+    @discord.ui.button(custom_id="prev2", label='Prev', emoji='◀')
     async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page > 0:
             self.page -= 1
@@ -270,7 +262,7 @@ class PaginationView(View):
             self.page = len(self.pages) - 1
         await interaction.response.edit_message(content=f'Page ({self.page+1}/{len(self.pages)})', attachments=[discord.File(self.pages[self.page])])
 
-    @discord.ui.button(custom_id="next2", label='Next', emoji='▶', style=ButtonStyle.green)
+    @discord.ui.button(custom_id="next2", label='Next', emoji='▶')
     async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.page < len(self.pages) - 1:
             self.page += 1

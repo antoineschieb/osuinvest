@@ -11,7 +11,7 @@ import datetime
 
 from constants import name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
-from utils import get_balance, get_stock_by_id, get_stock_value_timedelta
+from utils import get_balance, get_stock_by_id, get_stock_value_timedelta, split_df
 
 
 
@@ -220,62 +220,80 @@ def print_investors_gains():
     return ranking.to_string(index=False, col_space=20)
 
 
-def draw_table(df: pd.DataFrame, filename: str, fontsize:int, row_offset):
+def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int):
     plt.rcParams.update({'font.size': fontsize})
-    df = df.reindex(index=df.index[::-1])
-    # set the number of rows and cols for our table
-    rows = len(df.index)         # 50
-    cols = len(list(df.columns)) # 4
-
-    # first, we'll create a new figure and axis object
-    figsize_x = 4.5*cols
-    figsize_y = 1*rows
+    df['row_index'] = range(1, len(df)+1)
+    list_of_dfs = split_df(df, rows_per_page)
+    ret_files = []
     
-    fig, ax = plt.subplots(figsize=(figsize_x,figsize_y))
+    for page,df in enumerate(list_of_dfs):
+        df = df.reindex(index=df.index[::-1])
+        # set the number of rows and cols for our table
+        rows = rows_per_page
+        cols = len(list(df.columns)) - 1   # -1 because we have one hidden column (row_index)
 
-    # create a coordinate system based on the number of rows/columns
-    ax.set_ylim(0, rows+1)  # 1 more row for header
-    ax.set_xlim(0, cols)
-    fig.set_facecolor('#111111')
-    ax.set_facecolor('#111111')
+        # first, we'll create a new figure and axis object
+        figsize_x = 18
+        figsize_y = 1*rows
+        
+        fig, ax = plt.subplots(figsize=(figsize_x,figsize_y))
 
-    for row in range(rows):
-        # extract the row data from the list
-        d = df.iloc[row,:]
-        if not isinstance(d.name, str) and d.name <= 0:  #skip blank rows
-            continue
+        # create a coordinate system based on the number of rows/columns
+        ax.set_ylim(0, rows+1)  # 1 more row for header
+        ax.set_xlim(0, cols)
+        fig.set_facecolor('#111111')
 
-        for i,elem in enumerate(d):
-            (ha,x,weight,s) = ('left', i+0.05,'bold',f'{rows-row + row_offset}. {elem}') if i==0 else ('right', i+1,'normal',elem)
-            t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight)
-            t.set_color('white')
-            if isinstance(elem, str):
-                if elem[0] == '↗':
-                    t.set_color('green')
-                elif elem[0] == '↘':
-                    t.set_color('red')
+        for row in range(rows):
+            d = df.iloc[row,:]
+            row_index = d.row_index
+            d = d.drop(labels=['row_index'])
 
-    # Add column headers
-    for i,title in enumerate(df.columns):
-        if len(title)>10 and ' ' in title:
-            index = title.index(' ')
-            title = title[:index] + '\n' + title[index:]
-        (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
-        ax.text(x, rows+0.5, title, weight='bold', ha=ha).set_color('white')
+            if not isinstance(d.name, str) and d.name <= 0:  #skip blank rows  # str d.name means we are in a $lb
+                continue
 
-    # Plot small lines
-    for row in range(rows):
-        ax.plot(
-            [0, cols + 1],
-            [row, row],
-            ls='--',
-            lw='.5',
-            c='grey'
-        )
-    # line to separate header from data
-    ax.plot([0, cols + 1], [rows, rows], lw='2', c='white')
-    ax.axis('off')
-    fig.set_size_inches(figsize_x,figsize_y)
-    plt.savefig(filename,bbox_inches='tight',dpi=40)
-    plt.close()
-    return 0
+            for i,elem in enumerate(d):
+                (ha,x,weight,s) = ('left', i+0.05,'bold',f'{int(row_index)}. {elem}') if i==0 else ('right', i+1,'normal',elem)
+                t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight)
+                
+                t.set_color('white')
+                if isinstance(elem, str):
+                    if elem[0] == '↗':
+                        t.set_color('green')
+                    elif elem[0] == '↘':
+                        t.set_color('red')
+                    elif row_index==1 and i==0:
+                        t.set_color('gold')
+                    elif row_index==2 and i==0:
+                        t.set_color('silver')
+                    elif row_index==3 and i==0:
+                        t.set_color('darkgoldenrod')
+
+        df = df.drop(columns=['row_index'])
+
+        # Add column headers
+        for i,title in enumerate(df.columns):  # Drop hidden columns
+            if len(title)>10 and ' ' in title:
+                index = title.index(' ')
+                title = title[:index] + '\n' + title[index:]
+            (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
+            ax.text(x, rows+0.5, title, weight='bold', ha=ha).set_color('white')
+
+        # Plot small lines
+        for row in range(rows):
+            ax.plot(
+                [0, cols + 1],
+                [row, row],
+                ls='--',
+                lw='.5',
+                c='grey'
+            )
+        # line to separate header from data
+        ax.plot([0, cols + 1], [rows, rows], lw='2', c='white')
+        ax.axis('off')
+
+        fig.set_size_inches(figsize_x,figsize_y)
+        dest_file = f'{filename}{page}.png'
+        plt.savefig(dest_file,bbox_inches='tight',dpi=40)
+        plt.close()
+        ret_files.append(dest_file)
+    return ret_files
