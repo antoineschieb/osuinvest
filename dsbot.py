@@ -186,7 +186,7 @@ async def buy(ctx: commands.Context, *args):
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, quantity)
 
     # ask for confirmation
-    await ctx.reply(f'Do you really want to buy {quantity} {id_name[stock_name]} shares for ${transaction_price}? ($yes/$no)')
+    await ctx.reply(f'Do you really want to buy {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
 
 
 

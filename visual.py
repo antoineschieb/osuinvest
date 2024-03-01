@@ -277,4 +277,5 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, row_offset):
     ax.axis('off')
     fig.set_size_inches(figsize_x,figsize_y)
     plt.savefig(filename,bbox_inches='tight',dpi=40)
+    plt.close()
     return 0
