@@ -44,8 +44,6 @@ def buffer_plot_and_get(fig):
     return PIL.Image.open(buf)
 
 
-
-
 def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_rank, graph, avatar, pie, shareholders_list, colors):
     def draw_align_right(y, text, fontsize, color=(255,255,255)):
         lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
@@ -94,7 +92,11 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
 
     flag = Image.open('templates\Flag_of_France.svg.png')
     flag = flag.resize((21,14))
-    full.paste(flag, (326,234))
+    lgth = draw.textlength(f'#{country_rank}', font=ImageFont.truetype(file, 20))
+    full.paste(flag, (400-round(lgth)-margin-21-4, 234))    #326
+
+    # lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
+    #     draw.text((400-lgth-margin,
 
     # TOP SHAREHOLDERS
     draw.text((margin, 280), "Top shareholders", font=ImageFont.truetype(file, 20), fill=(255, 255, 255))
@@ -160,6 +162,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
 
     colors= ['#181D27'] if len(shareholders_list)<=1 else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
+
 
     card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors)
     
