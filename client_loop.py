@@ -58,7 +58,6 @@ async def update_static_stats():
             await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
         else:
             print("Need to create new stock....")
-            raise ValueError
             # await run_blocking(create_new_stock, x, pp, h, p, 1000, 0)
     # except Exception as e:
     #     print(datetime.now(), e)   

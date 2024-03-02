@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 import datetime
 
-from constants import name_id, id_name, font_prop
+from constants import name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
 from utils import get_balance, get_stock_by_id, get_stock_value_timedelta, split_df
 
@@ -245,6 +245,7 @@ def print_investors_gains(dividends_dict):
 
 
 def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int):
+    plt.rcParams['font.family'] = "Aller"
     df['row_index'] = range(1, len(df)+1)
     list_of_dfs = split_df(df, rows_per_page)
     ret_files = []
@@ -276,7 +277,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
 
             for i,elem in enumerate(d):
                 (ha,x,weight,s) = ('left', i+0.05,'bold',f'{int(row_index)}. {elem}') if i==0 else ('right', i+1,'normal',elem)
-                t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight, font_properties=font_prop, fontsize=fontsize)
+                t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight, fontsize=fontsize)
                 
                 t.set_color('white')
                 if isinstance(elem, str):
@@ -299,7 +300,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
                 index = title.index(' ')
                 title = title[:index] + '\n' + title[index:]
             (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
-            ax.text(x, rows+0.5, title, weight='bold', ha=ha, font_properties=font_prop, fontsize=fontsize).set_color('white')
+            ax.text(x, rows+0.5, title, weight='bold', ha=ha, fontsize=fontsize).set_color('white')
 
         # Plot small lines
         for row in range(rows):

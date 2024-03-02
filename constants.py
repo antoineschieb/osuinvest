@@ -11,6 +11,3 @@ with open('name_id.json') as json_file:
     name_id = json.load(json_file)
     name_id = {k:int(v) for k,v in name_id.items()}
     
-
-from matplotlib import font_manager
-font_prop = font_manager.FontProperties(fname='custom_font\Aller_Bd.ttf')

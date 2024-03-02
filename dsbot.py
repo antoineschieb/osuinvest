@@ -94,7 +94,7 @@ async def market(ctx: commands.Context, *args):
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
-    ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, 18)
+    ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)))
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
 
     # ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
