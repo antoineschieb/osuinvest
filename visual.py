@@ -1,4 +1,5 @@
 import matplotlib
+from matplotlib.font_manager import FontProperties
 matplotlib.use('agg')  # For asynchronous use
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -9,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 import datetime
 
-from constants import name_id, id_name
+from constants import name_id, id_name, font_prop
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
 from utils import get_balance, get_stock_by_id, get_stock_value_timedelta, split_df
 
@@ -58,7 +59,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     if n_hours==0 and n_days==0:
         n_days = 7
 
-    time_str = f'last '
+    time_str = f'Last '
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
     
@@ -69,12 +70,26 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
-    plt.rcParams["font.family"] = "cursive"
-    plt.rcParams.update({'font.size': 10})
+    plt.rcParams['font.family'] = "Aller"
+    # plt.rcParams.update({'font.size': 10})
+    
+    font = {'family' : 'Aller',
+            'weight' : 'bold',
+            'size'   : 10,
+            }
+    matplotlib.rc('font', **font)
+
+    params = {"ytick.color" : "w",
+              "xtick.color" : "w",
+             "axes.labelcolor" : "w",
+             "axes.edgecolor" : "w"}
+    plt.rcParams.update(params)
+
     stock = name_id[stock_str_name.lower()] 
 
-    # sns.set_style(rc={'axes.facecolor':'#333333', 'figure.facecolor':'#aaaaaa'})
-    sns.set_style('darkgrid')
+    sns.set_style(rc={'axes.facecolor':'#222222', 'figure.facecolor':'#333333'})
+    # sns.set_style('darkgrid')
+
     
     # Read csv properly
     df = pd.read_csv("stock_prices_history.csv", index_col='update_id')
@@ -98,23 +113,30 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ymin = min(df['value'])
     ymax = max(df['value'])
     d = ymax - ymin
-    
+
+    # matplotlib.rcParams['font.family'] = font_prop.get_name()
+    # plt.rcParams['font.family'] = font_prop.get_name()
+    # plt.rcParams.update({'font.size': 10})
+
     ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{id_name[stock]} {time_str}')
-    plt.setp(ax.legend().texts, family='Consolas')
+    ax.xaxis.label.set_color('white')
+    ax.title.set_color('white')
+    ax.get_legend().remove()
+
     plt.savefig(f'plots/{stock_str_name}.png')
     return 0
 
 
 def beautify_float(a: float) :
-    char = '↗' if a>=0 else '↘'
+    char = '+' if a>=0 else '-'
     a *= 100
-    return f'{char} {round(a,2)}%'
+    return f'{char} {abs(round(a,2))}%'
 
 def print_market(n_hours=0, n_days=0, sortby='value'):
     if n_hours==0 and n_days==0:
         n_days = 7
     
-    new_col_str = 'last '
+    new_col_str = 'Last '
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
     
@@ -223,7 +245,6 @@ def print_investors_gains(dividends_dict):
 
 
 def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int):
-    plt.rcParams.update({'font.size': fontsize})
     df['row_index'] = range(1, len(df)+1)
     list_of_dfs = split_df(df, rows_per_page)
     ret_files = []
@@ -255,13 +276,13 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
 
             for i,elem in enumerate(d):
                 (ha,x,weight,s) = ('left', i+0.05,'bold',f'{int(row_index)}. {elem}') if i==0 else ('right', i+1,'normal',elem)
-                t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight)
+                t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight, font_properties=font_prop, fontsize=fontsize)
                 
                 t.set_color('white')
                 if isinstance(elem, str):
-                    if elem[0] == '↗':
+                    if elem[0] == '+' and i!=0:
                         t.set_color('green')
-                    elif elem[0] == '↘':
+                    elif elem[0] == '-' and i!=0:
                         t.set_color('red')
                     elif row_index==1 and i==0:
                         t.set_color('gold')
@@ -278,7 +299,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
                 index = title.index(' ')
                 title = title[:index] + '\n' + title[index:]
             (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
-            ax.text(x, rows+0.5, title, weight='bold', ha=ha).set_color('white')
+            ax.text(x, rows+0.5, title, weight='bold', ha=ha, font_properties=font_prop, fontsize=fontsize).set_color('white')
 
         # Plot small lines
         for row in range(rows):
