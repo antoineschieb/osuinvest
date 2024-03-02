@@ -79,7 +79,8 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
     draw.text((240, 230), f'#{global_rank}', font=ImageFont.truetype(file, 20), fill=(255, 255, 255))
 
     draw_align_right(60, f'${value}',44)
-    draw_align_right(110, f'({beautify_float(evolution)})',30, color=(0,255,0))
+    clr = (0,255,0) if evolution > 0 else (255,0,0)
+    draw_align_right(110, f'({beautify_float(evolution)})',30, color=clr)
     draw_align_right(150,f'Dividends: {dividend_yield}% /day',14, color="#d0db97")
     draw_align_right(200, f'{round(pp)}pp', 20)
     draw_align_right(230, f'#{country_rank}', 20)
@@ -160,7 +161,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
 
     global_rank,pp,country_rank,avatar = get_profile_info_for_stock(stock_id)
 
-    colors= ['#181D27'] if len(shareholders_list)<=1 else ["darkred","darkgreen","goldenrod","darkblue"]
+    colors= ['#181D27'] if shareholders_list[0][0] is None else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
 
 
