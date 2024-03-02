@@ -17,6 +17,7 @@ from constants import FEED_CHANNEL_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor
+from templating import generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
 from utils import get_investor_by_name, get_stock_by_id, split_df, split_msg
 
@@ -134,11 +135,13 @@ async def stock(ctx: commands.Context, *args):
 
     stock_name, n_hours, n_days = parse_args(args)
 
-    await run_blocking(plot_stock, stock_name, n_hours=n_hours, n_days=n_days)
-    ret_str = await run_blocking(print_stock, stock_name)
-    ret_str = "```"+ret_str+"```"
-    await ctx.send(ret_str)
-    await ctx.channel.send(file=discord.File(f'plots/{stock_name}.png'))
+    # await run_blocking(plot_stock, stock_name, n_hours=n_hours, n_days=n_days)
+    file_path = await run_blocking(generate_stock_card, stock_name, n_hours=n_hours, n_days=n_days)
+
+    # ret_str = await run_blocking(print_stock, stock_name)
+    # ret_str = "```"+ret_str+"```"
+    # await ctx.send(ret_str)
+    await ctx.channel.send(file=discord.File(file_path))
 
 
 async def broadcast(msg :str, channel_id=FEED_CHANNEL_ID):

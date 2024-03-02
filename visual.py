@@ -87,7 +87,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     stock = name_id[stock_str_name.lower()] 
 
-    sns.set_style(rc={'axes.facecolor':'#222222', 'figure.facecolor':'#333333'})
+    sns.set_style(rc={'axes.facecolor':'#181D27', 'figure.facecolor':'#181D27'})
     # sns.set_style('darkgrid')
 
     
@@ -118,13 +118,14 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     # plt.rcParams['font.family'] = font_prop.get_name()
     # plt.rcParams.update({'font.size': 10})
 
-    ax = df.plot.area(x='datetime', y='value', color='green',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{id_name[stock]} {time_str}')
+    ax = df.plot.area(x='datetime', y='value', color='#254D32',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{time_str}')
     ax.xaxis.label.set_color('white')
+    ax.set_xlabel(" ")
     ax.title.set_color('white')
     ax.get_legend().remove()
 
     plt.savefig(f'plots/{stock_str_name}.png')
-    return 0
+    return f'plots/{stock_str_name}.png'
 
 
 def beautify_float(a: float) :
@@ -257,7 +258,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
         cols = len(list(df.columns)) - 1   # -1 because we have one hidden column (row_index)
 
         # first, we'll create a new figure and axis object
-        figsize_x = 18
+        figsize_x = 4.5*cols
         figsize_y = 1*rows
         
         fig, ax = plt.subplots(figsize=(figsize_x,figsize_y))
