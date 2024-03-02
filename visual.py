@@ -55,7 +55,6 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     if stock_str_name not in name_id.keys():
         return f'ERROR: Unknown stock "{stock_str_name}"'
 
-
     if n_hours==0 and n_days==0:
         n_days = 7
 
@@ -266,7 +265,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
         # create a coordinate system based on the number of rows/columns
         ax.set_ylim(0, rows+1)  # 1 more row for header
         ax.set_xlim(0, cols)
-        fig.set_facecolor('#111111')
+        fig.set_facecolor('#181d27')
 
         for row in range(rows):
             d = df.iloc[row,:]
@@ -301,7 +300,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
                 index = title.index(' ')
                 title = title[:index] + '\n' + title[index:]
             (ha,x) = ('left', i+0.05) if i==0 else ('right', i+1)
-            ax.text(x, rows+0.5, title, weight='bold', ha=ha, fontsize=fontsize).set_color('white')
+            ax.text(x, rows+0.5, title, weight='bold', ha=ha, fontsize=fontsize).set_color("white")
 
         # Plot small lines
         for row in range(rows):
@@ -310,10 +309,10 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
                 [row, row],
                 ls='--',
                 lw='.5',
-                c='grey'
+                c='#3a7d44'
             )
         # line to separate header from data
-        ax.plot([0, cols + 1], [rows, rows], lw='2', c='white')
+        ax.plot([0, cols + 1], [rows, rows], lw='2', c='#3a7d44')
         ax.axis('off')
 
         fig.set_size_inches(figsize_x,figsize_y)

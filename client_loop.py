@@ -60,7 +60,7 @@ async def update_static_stats():
             print("Need to create new stock....")
             # await run_blocking(create_new_stock, x, pp, h, p, 1000, 0)
     # except Exception as e:
-    #     print(datetime.now(), e)   
+    #     print(datetime.now(), e)
     
     # update stock prices
     df_updates = pd.concat([df_updates, df_updates_appendice])
@@ -70,7 +70,7 @@ async def update_static_stats():
     
     # Now check for alerts
     ret_strs = await run_blocking(check_for_alerts)
-    channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+    channel = await client.fetch_channel(FEED_CHANNEL_ID)
     for s in ret_strs:
         print(s)
         # s = "```"+s+"```"
