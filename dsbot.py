@@ -135,13 +135,12 @@ async def stock(ctx: commands.Context, *args):
 
     stock_name, n_hours, n_days = parse_args(args)
 
-    # await run_blocking(plot_stock, stock_name, n_hours=n_hours, n_days=n_days)
-    file_path = await run_blocking(generate_stock_card, stock_name, n_hours=n_hours, n_days=n_days)
-
-    # ret_str = await run_blocking(print_stock, stock_name)
-    # ret_str = "```"+ret_str+"```"
-    # await ctx.send(ret_str)
-    await ctx.channel.send(file=discord.File(file_path))
+    ret_str = await run_blocking(generate_stock_card, stock_name, n_hours=n_hours, n_days=n_days)
+    if ret_str.startswith('ERROR:'):
+        await ctx.reply(ret_str)
+        return
+    # Else, ret_str should be a file path
+    await ctx.channel.send(file=discord.File(ret_str))
 
 
 async def broadcast(msg :str, channel_id=FEED_CHANNEL_ID):

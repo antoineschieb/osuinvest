@@ -11,7 +11,8 @@ from discord.ext import commands, tasks
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
-
+from season import update_name_id
+from constants import name_id, id_name
 from utils import calculate_remaining_time, get_stock_by_id, split_msg
 from visual import print_investors_gains
 
@@ -80,6 +81,7 @@ async def update_static_stats():
 
 @tasks.loop(hours=24)
 async def pay_all_dividends_async():
+    # Pay all dividends
     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
     ret_str, ret_dict = await run_blocking(pay_all_dividends)
     message_bits = split_msg(ret_str)
@@ -91,8 +93,11 @@ async def pay_all_dividends_async():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging net worth..")
     await run_blocking(log_all_net_worth)
 
-    # retrieve delta net_worth
+    # Print net gains since last day
     ret_str = await run_blocking(print_investors_gains, ret_dict)
     await channel.send ("```"+ ret_str +"```")
+
+    # Check for renames
+    await run_blocking(update_name_id, name_id, id_name, N=52)
 
 client.run(discord_bot_token)

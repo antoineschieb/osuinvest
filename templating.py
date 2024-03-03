@@ -96,9 +96,6 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
     lgth = draw.textlength(f'#{country_rank}', font=ImageFont.truetype(file, 20))
     full.paste(flag, (400-round(lgth)-margin-21-4, 234))    #326
 
-    # lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
-    #     draw.text((400-lgth-margin,
-
     # TOP SHAREHOLDERS
     draw.text((margin, 280), "Top shareholders", font=ImageFont.truetype(file, 20), fill=(255, 255, 255))
     for i in range(len(shareholders_list)):
@@ -137,7 +134,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     if n_hours==0 and n_days==0:
         n_days = 7
     if n_days<0 or (n_days==0 and n_hours<1):
-        return 'n_days must be >= 0 and n_hours must be >=1'
+        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
     time_str = f'Last '
     if n_days>0:
         time_str += f'{n_days} day(s) '

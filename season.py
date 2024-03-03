@@ -2,12 +2,10 @@ import json
 from osuapi import api, top_i
 
 
-def create_name_id(N=52):  
+def update_name_id(name_id, id_name, N=52):  
     """
-    Creates names : id correspondences for the top N players, taking renames into account. 
+    Updates names : id correspondences for the top N players, taking renames into account. 
     """
-    name_id = {}
-    id_name = {}
     for i in range(N):
         uuid = top_i(i, country='FR')
         u = api.user(uuid)
