@@ -178,7 +178,7 @@ from utils import get_stock_by_id
 
 def get_nw_plot(last_7_values):
 
-    last_7_values = [round(x/1000,3) for x in last_7_values]
+    last_7_values = [round(x) for x in last_7_values]
     min_v = min(last_7_values)
     max_v = max(last_7_values)
     delta = max_v - min_v

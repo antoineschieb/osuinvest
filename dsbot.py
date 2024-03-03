@@ -55,10 +55,10 @@ async def profile(ctx: commands.Context, *args):
                 a = a.replace("<","")
                 a = a.replace(">","")
                 a = a.replace("@","")
-                a = bot.get_user(int(a)).name
+                investor_name = bot.get_user(int(a)).name
                 display_avatar = bot.get_user(int(a)).display_avatar
 
-        return a, display_avatar
+        return investor_name, display_avatar
     investor_name, display_avatar = parse_args(args)
     if display_avatar is None:
         display_avatar = ctx.message.author.display_avatar
