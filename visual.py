@@ -124,6 +124,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ax.get_legend().remove()
 
     plt.savefig(f'plots/{stock_str_name}.png')
+    plt.close()
     return f'plots/{stock_str_name}.png'
 
 

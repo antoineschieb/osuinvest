@@ -11,7 +11,7 @@ import pandas as pd
 
 from constants import name_id, id_name
 from formulas import get_stocks_table
-from utils import get_stock_value_timedelta
+from utils import get_pilimg_from_url, get_stock_value_timedelta
 from visual import beautify_float, plot_stock
 
 
@@ -29,12 +29,7 @@ def get_profile_info_for_stock(uuid):
     u = api.user(uuid)
     url = u.avatar_url
     url = str(url)
-    req = Request(
-        url=url, 
-        headers={'User-Agent': 'Mozilla/5.0'})
-    webpage = urlopen(req).read()
-    avatar = Image.open(BytesIO(webpage)).convert("RGBA")
-
+    avatar = get_pilimg_from_url(url)
     return u.statistics.global_rank,u.statistics.pp,u.statistics.rank['country'],avatar
 
 def buffer_plot_and_get(fig):
@@ -165,5 +160,174 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors)
     
     file_path = f'plots/card_{stock_id}.png'
+    card.save(file_path)
+    return file_path
+
+
+########################################################################################
+
+from matplotlib import font_manager
+import matplotlib
+from constants import id_name, name_id
+import pandas as pd
+from PIL import Image, ImageDraw, ImageFont
+
+from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
+from utils import get_stock_by_id
+
+
+def get_nw_plot(last_7_values):
+
+    last_7_values = [round(x/1000,3) for x in last_7_values]
+    min_v = min(last_7_values)
+    max_v = max(last_7_values)
+    delta = max_v - min_v
+
+    fig, ax = plt.subplots(figsize=(10,5))
+    fig.patch.set_alpha(0.0)
+    ax.patch.set_alpha(0.0)
+
+    matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"]) 
+    markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
+    ax.set_xticklabels([])
+    ax.set_xticks([])
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_color('white')
+    ax.spines['left'].set_color('white')
+
+    ax.tick_params(axis='y', colors='white', labelsize=20)
+    ax.set_ylabel('Net worth', fontsize=20, color='white')
+    ax.set_xlabel('Last 7 days', fontsize=20, color='white')
+
+    
+
+    fig_path = "plots/net_worth.png"
+    plt.setp(markerline, markersize = 20)
+    plt.ylim([min_v-0.15*delta, max_v+0.15*delta])
+    
+    fig.savefig(fig_path, transparent=True, bbox_inches='tight')
+    plt.close()
+    return fig_path
+
+
+def shorten_portfolio(pf,N):
+    if len(pf)<=N:
+        return pf
+    sum_of_all_other_stocks = pf.iloc[N:,:].sum(axis=0, numeric_only=True)   #sum from 3rd to last
+    pf = pf.iloc[:N]
+    pf.loc['Others',:] = sum_of_all_other_stocks
+    return pf
+
+
+
+def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_balance, pf, last_7_values, server_rank, server_total_investors):
+    def draw_align_right(y, text, fontsize, color=(255,255,255), font='regular'):
+        if font=='bold':
+            font=ImageFont.truetype(file_bold, fontsize)
+        elif font=='regular':
+            font=ImageFont.truetype(file, fontsize)
+        lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
+        draw.text((400-lgth-margin, y), text, font=font, fill=color)
+        return
+    
+    margin=10
+    # LOAD MAIN TEMPLATE
+    tpl = Image.open('templates/profile_400_fond_rouge.png')
+
+    # RESIZE ALL SUBLAYERS
+    avatar = avatar.resize((90,90))
+    graph = Image.open(graph_filepath).resize((360,180))
+
+
+    # ADD ALL SUBLAYERS (GRAPH, AVATAR, PIE) TO TEMPLATE
+    full = Image.new('RGB', (400, 700), color="#181D27")
+    full.paste(avatar, (34,85), avatar)
+    full.paste(tpl, (0, 0), tpl)
+    full.paste(graph, (margin,210), graph)
+    
+
+    # ALL TEXT
+    draw = ImageDraw.Draw(full)
+    font = font_manager.FontProperties(family='Aller')
+    file = font_manager.findfont(font)
+
+    font_bold = font_manager.FontProperties(family='Aller', weight="bold")
+    file_bold = font_manager.findfont(font_bold)
+
+    
+    draw.text((margin, 40), investor_name, font=ImageFont.truetype(file_bold, 30), fill=(255, 255, 255))
+    appendix='th'
+    if server_rank==1:
+        appendix='st'
+    elif server_rank==2:
+        appendix='nd'
+    elif server_rank==3:
+        appendix='rd'
+
+    draw_align_right(40, f'{server_rank}{appendix} /{server_total_investors}',40, font='bold')
+    draw_align_right(90, f'${current_networth}',34,color='gold')
+    draw_align_right(130, f'Total net worth', 16, color='gold')
+    draw_align_right(160, f'${cash_balance} from cash balance',16)
+    draw_align_right(180, f'${current_networth - cash_balance} from stocks value',16)
+    # DRAW PORTFOLIO TXT
+    for i,x in enumerate(pf.index):
+        s = pf.loc[x]
+        draw.text((30, 450 + 24*i), id_name[x], font=ImageFont.truetype(file, 15))
+        draw.text((210, 450 + 24*i), str(s['Shares owned']), font=ImageFont.truetype(file, 15))
+        draw.text((295, 450 + 24*i), f"${round(s['Total value ($)'])}", font=ImageFont.truetype(file, 15))
+
+
+    # PORTFOLIO HEADERS
+
+    draw.text((30, 420), 'Stock', font=ImageFont.truetype(file_bold, 14))
+    draw.text((210, 420), 'Shares', font=ImageFont.truetype(file_bold, 14))
+    draw.text((295, 420), "Total value", font=ImageFont.truetype(file_bold, 14))
+
+    # clr = (0,255,0) if evolution > 0 else (255,0,0)
+    # draw_align_right(110, f'({beautify_float(evolution)})',30, color=clr)
+    # draw_align_right(150,f'Dividends: {dividend_yield}% /day',14, color="#d0db97")
+    # draw_align_right(200, f'{round(pp)}pp', 20)
+    # draw_align_right(230, f'#{country_rank}', 20)
+    
+    return full
+
+def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
+    df = pd.read_csv("all_investors.csv", index_col='name')
+    if investor_name not in df.index:
+        return f'ERROR: Unknown investor "{investor_name}"'
+
+    # CASH BALANCE
+    cash_balance = df.loc[investor_name, 'cash_balance']
+
+    # PORTFOLIO
+    pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
+    if not pf.empty:
+        stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
+        pf.insert(0,'Stock', stock_column)
+        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name)), axis=1)
+        pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
+        pf = pf.rename(columns={'shares_owned':'Shares owned'})
+        pf = pf.sort_values(by='Total value ($)', ascending=False)
+        pf = shorten_portfolio(pf, 8)
+
+    
+    # NET WORTH HISTORY
+    hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
+    hist_filtered_investor = hist[hist.investor==investor_name]
+    last_7_values = [round(x,2) for x in hist_filtered_investor["net_worth"][-7:]]
+    graph_filepath = get_nw_plot(last_7_values)
+
+    #retrieve these:: TODO
+    all_invs = pd.read_csv("all_investors.csv", index_col='name')
+    all_invs['net_worth'] = all_invs.apply(lambda x:get_net_worth(x.name), axis=1)
+    all_invs = all_invs.sort_values(by='net_worth', ascending=False)
+    
+    server_rank = list(all_invs.index).index(investor_name)+1
+    server_total_investors = len(all_invs.index)
+
+    card = profile_card(investor_name, avatar, graph_filepath, round(get_net_worth(investor_name)), round(cash_balance), pf, last_7_values, server_rank, server_total_investors)
+    file_path = f'plots/card_{investor_name}.png'
     card.save(file_path)
     return file_path

@@ -17,9 +17,9 @@ from constants import FEED_CHANNEL_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor
-from templating import generate_stock_card
+from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_stock_by_id, split_df, split_msg
+from utils import get_investor_by_name, get_pilimg_from_url, get_stock_by_id, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -46,7 +46,7 @@ async def profile(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
         if len(args) <= 0:
-            a = ctx.message.author.name
+            return ctx.message.author.name, None
         elif len(args)>1:
             raise RuntimeError
         else:
@@ -56,11 +56,22 @@ async def profile(ctx: commands.Context, *args):
                 a = a.replace(">","")
                 a = a.replace("@","")
                 a = bot.get_user(int(a)).name
-        return a
-    investor_name = parse_args(args)
-    ret_str = await run_blocking(print_profile, investor_name)
-    ret_str = "```"+ret_str+"```"
-    await ctx.send(ret_str)
+                display_avatar = bot.get_user(int(a)).display_avatar
+
+        return a, display_avatar
+    investor_name, display_avatar = parse_args(args)
+    if display_avatar is None:
+        display_avatar = ctx.message.author.display_avatar
+    avatar = get_pilimg_from_url(str(display_avatar))
+    ret_str = await run_blocking(generate_profile_card, investor_name, avatar)
+    # ret_str = await run_blocking(print_profile, investor_name)
+    
+    if ret_str.startswith('ERROR:'):
+        await ctx.reply(ret_str)
+        return
+    # Else, ret_str should be a file path
+    await ctx.channel.send(file=discord.File(ret_str))
+
 
 @bot.command()
 async def market(ctx: commands.Context, *args):
@@ -98,10 +109,6 @@ async def leaderboard(ctx: commands.Context):
     ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)))
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
 
-    # ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
-    # await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
-    # ret_str = "```"+ret_str+"```"
-    # await ctx.send(ret_str)
 
 @bot.command()
 async def lb(ctx: commands.Context):

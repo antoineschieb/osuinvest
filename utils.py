@@ -1,6 +1,9 @@
 from csv import writer
 from datetime import date, datetime, timedelta
+from io import BytesIO
 from math import ceil
+from urllib.request import Request, urlopen
+from PIL import Image
 import pandas as pd
 from constants import name_id, id_name
 
@@ -95,3 +98,12 @@ def calculate_remaining_time(t_now, t_payout):
         return dateTimeDifference.total_seconds()
     else:
         return (timedelta(hours=24) + dateTimeDifference).total_seconds()
+
+
+def get_pilimg_from_url(url):
+    req = Request(
+        url=url, 
+        headers={'User-Agent': 'Mozilla/5.0'})
+    webpage = urlopen(req).read()
+    pilimg = Image.open(BytesIO(webpage)).convert("RGBA")
+    return pilimg
