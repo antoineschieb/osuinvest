@@ -215,8 +215,8 @@ def get_nw_plot(last_7_values):
 def shorten_portfolio(pf,N):
     if len(pf)<=N:
         return pf
-    sum_of_all_other_stocks = pf.iloc[N:,:].sum(axis=0, numeric_only=True)   #sum from 3rd to last
-    pf = pf.iloc[:N]
+    sum_of_all_other_stocks = pf.iloc[N:,:].sum(axis=0, numeric_only=True).copy()   #sum from 3rd to last
+    pf = pf.iloc[:N].copy()
     pf.loc['Others',:] = sum_of_all_other_stocks
     return pf
 
@@ -274,7 +274,7 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     # DRAW PORTFOLIO TXT
     for i,x in enumerate(pf.index):
         s = pf.loc[x]
-        draw.text((30, 450 + 24*i), id_name[x], font=ImageFont.truetype(file, 15))
+        draw.text((30, 450 + 24*i), x if x=='Others' else id_name[x], font=ImageFont.truetype(file, 15))
         draw.text((210, 450 + 24*i), str(s['Shares owned']), font=ImageFont.truetype(file, 15))
         draw.text((295, 450 + 24*i), f"${round(s['Total value ($)'])}", font=ImageFont.truetype(file, 15))
 
@@ -310,7 +310,7 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
         pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
         pf = pf.rename(columns={'shares_owned':'Shares owned'})
         pf = pf.sort_values(by='Total value ($)', ascending=False)
-        pf = shorten_portfolio(pf, 8)
+        pf = shorten_portfolio(pf, 9)
 
     
     # NET WORTH HISTORY
