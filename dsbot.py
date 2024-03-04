@@ -43,32 +43,25 @@ async def on_ready():
 
 @bot.command()
 async def profile(ctx: commands.Context, *args):
-    def parse_args(args):
+    def parse_args(args, ctx):
         args = list(args)
-        if len(args) <= 0:
-            return ctx.message.author.name, None
-        elif len(args)>1:
+        if len(args)>1:
             raise RuntimeError
+        elif len(args) <= 0:
+            return ctx.message.author.name, ctx.message.author.display_avatar
         else:
-            investor_name = args[0]
-            if investor_name[0] == '<' and investor_name[1] == '@' and investor_name[-1] == '>':
-                investor_name = investor_name.replace("<","")
-                investor_name = investor_name.replace(">","")
-                investor_name = investor_name.replace("@","")
-                investor_name = bot.get_user(int(investor_name)).name
-                display_avatar = bot.get_user(int(investor_name)).display_avatar
+            a = args[0]
+            if a[0] == '<' and a[1] == '@' and a[-1] == '>':
+                investor_id = a.replace("<","").replace(">","").replace("@","")
+                investor_name = bot.get_user(int(investor_id)).name
+                display_avatar = bot.get_user(int(investor_id)).display_avatar
                 return investor_name, display_avatar
             else:
-                return investor_name, None
-
-    print(bot.get_user(277543003717894144).display_avatar)
-    investor_name, display_avatar = parse_args(args)
-    if display_avatar is None:
-        display_avatar = ctx.message.author.display_avatar
+                user = discord.utils.get(ctx.guild.members, name=a)
+                return a, user.display_avatar
+    investor_name, display_avatar = parse_args(args, ctx)
     avatar = get_pilimg_from_url(str(display_avatar))
-    print(display_avatar)
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar)
-    # ret_str = await run_blocking(print_profile, investor_name)
     
     if ret_str.startswith('ERROR:'):
         await ctx.reply(ret_str)
