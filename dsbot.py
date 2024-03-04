@@ -50,19 +50,23 @@ async def profile(ctx: commands.Context, *args):
         elif len(args)>1:
             raise RuntimeError
         else:
-            a = args[0]
-            if a[0] == '<' and a[1] == '@' and a[-1] == '>':
-                a = a.replace("<","")
-                a = a.replace(">","")
-                a = a.replace("@","")
-                investor_name = bot.get_user(int(a)).name
-                display_avatar = bot.get_user(int(a)).display_avatar
+            investor_name = args[0]
+            if investor_name[0] == '<' and investor_name[1] == '@' and investor_name[-1] == '>':
+                investor_name = investor_name.replace("<","")
+                investor_name = investor_name.replace(">","")
+                investor_name = investor_name.replace("@","")
+                investor_name = bot.get_user(int(investor_name)).name
+                display_avatar = bot.get_user(int(investor_name)).display_avatar
+                return investor_name, display_avatar
+            else:
+                return investor_name, None
 
-        return investor_name, display_avatar
+    print(bot.get_user(277543003717894144).display_avatar)
     investor_name, display_avatar = parse_args(args)
     if display_avatar is None:
         display_avatar = ctx.message.author.display_avatar
     avatar = get_pilimg_from_url(str(display_avatar))
+    print(display_avatar)
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar)
     # ret_str = await run_blocking(print_profile, investor_name)
     

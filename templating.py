@@ -237,13 +237,13 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     tpl = Image.open('templates/profile_400_fond_rouge.png')
 
     # RESIZE ALL SUBLAYERS
-    avatar = avatar.resize((90,90))
+    avatar = avatar.resize((100,100))
     graph = Image.open(graph_filepath).resize((360,180))
 
 
     # ADD ALL SUBLAYERS (GRAPH, AVATAR, PIE) TO TEMPLATE
     full = Image.new('RGB', (400, 700), color="#181D27")
-    full.paste(avatar, (34,85), avatar)
+    full.paste(avatar, (28,81), avatar)
     full.paste(tpl, (0, 0), tpl)
     full.paste(graph, (margin,210), graph)
     
