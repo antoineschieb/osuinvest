@@ -179,6 +179,9 @@ async def buy(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
         return
     
+    if stock_name.lower() not in name_id.keys():
+        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
+        return
     stock_name = name_id[stock_name.lower()]
     
     # calc price
@@ -218,6 +221,9 @@ async def sell(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
         return
 
+    if stock_name.lower() not in name_id.keys():
+        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
+        return
     stock_name = name_id[stock_name.lower()]
 
     # calc price
@@ -229,7 +235,7 @@ async def sell(ctx: commands.Context, *args):
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, -quantity)
 
     # ask for confirmation
-    await ctx.reply(f'Do you really want to sell {quantity} {id_name[stock_name]} shares for ${transaction_price}? ($yes/$no)')
+    await ctx.reply(f'Do you really want to sell {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
 
 @bot.command()
 async def yes(ctx: commands.Context):
