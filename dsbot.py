@@ -53,13 +53,20 @@ async def profile(ctx: commands.Context, *args):
             a = args[0]
             if a[0] == '<' and a[1] == '@' and a[-1] == '>':
                 investor_id = a.replace("<","").replace(">","").replace("@","")
-                investor_name = bot.get_user(int(investor_id)).name
-                display_avatar = bot.get_user(int(investor_id)).display_avatar
-                return investor_name, display_avatar
+                u = bot.get_user(int(investor_id))               
+                return u.name, u.display_avatar
             else:
                 user = discord.utils.get(ctx.guild.members, name=a)
+                if user is None:
+                    raise ValueError(f"ERROR: Unknown user {a}")
                 return a, user.display_avatar
-    investor_name, display_avatar = parse_args(args, ctx)
+            
+    try:
+        investor_name, display_avatar = parse_args(args, ctx)
+    except ValueError as e:
+        await ctx.reply(e)
+        return
+
     avatar = get_pilimg_from_url(str(display_avatar))
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar)
     
@@ -293,7 +300,10 @@ async def pingmeif(ctx: commands.Context, *args):
         args = list(args)
         assert len(args) == 3
         
+        if args[0].lower() not in name_id.keys():
+            raise KeyError(f'ERROR: Unknown stock {args[0]}')
         stock_id = name_id[args[0].lower()]
+        
         if args[1]=='>':
             is_greater_than = True
         if args[1]=='<':
@@ -304,8 +314,11 @@ async def pingmeif(ctx: commands.Context, *args):
     investor = ctx.message.author.id
     try:
         stock_id, is_greater_than, value = parse_args(args)
+    except KeyError as e:
+        await ctx.reply(e)
+        return 
     except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: `pingmeif stock < value` or `pingmeif stock > value`')
+        await ctx.reply(f'ERROR: Could not parse arguments.\nUsage: `pingmeif stock < value` or `pingmeif stock > value`')
         return
 
     ret_str = await run_blocking(create_alert, investor, stock_id, is_greater_than, value)
