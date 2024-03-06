@@ -190,7 +190,7 @@ def update_name_id(name_id, id_name, N=52):
     """
     for i in range(N):
         uuid = top_i(i, country='FR')
-        u = api.user(uuid)
+        u = api.user(uuid, mode='osu')
         current_username = u.username
         id_name[uuid] = current_username
         name_id[current_username.lower()] = uuid

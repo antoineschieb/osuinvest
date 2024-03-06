@@ -26,7 +26,7 @@ def get_pilimg_of_pie(x, colors):
     return pimg
 
 def get_profile_info_for_stock(uuid):
-    u = api.user(uuid)
+    u = api.user(uuid, mode='osu')
     url = u.avatar_url
     url = str(url)
     avatar = get_pilimg_from_url(url)

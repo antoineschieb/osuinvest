@@ -12,7 +12,7 @@ from osuapi import api, top_i
 
 
 def get_username(uuid):
-    return api.user(uuid).username
+    return api.user(uuid, mode='osu').username
 
 
 def create_id_list(country="FR", topN=50, proba=1.0):
@@ -64,7 +64,7 @@ def get_topplay_activity(uuid):
 
 
 def all_user_info(uuid=5189431):
-    u = api.user(uuid)
+    u = api.user(uuid, mode='osu')
 
     all_info = {}
     # first add all u.statistics

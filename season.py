@@ -21,7 +21,7 @@ def new_season(new_season_id, N=52):
     name_id = {}
     for i in range(N):
         uuid = top_i(i, country='FR')
-        u = api.user(uuid)
+        u = api.user(uuid, mode='osu')
         current_username = u.username
         id_name[uuid] = current_username
         name_id[current_username.lower()] = uuid
