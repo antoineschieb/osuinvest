@@ -10,8 +10,7 @@ import asyncio
 from discord.ext import commands, tasks
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
-from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock
-from season import update_name_id
+from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock, update_name_id
 from constants import name_id, id_name
 from utils import calculate_remaining_time, get_stock_by_id, split_msg
 from visual import print_investors_gains

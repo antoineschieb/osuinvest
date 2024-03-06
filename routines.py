@@ -1,11 +1,12 @@
 from datetime import datetime
 import glob
+import json
 import pandas as pd
 import os 
 
 from constants import SEASON_ID, id_name, name_id
 from formulas import get_net_worth, valuate
-from osuapi import all_user_info
+from osuapi import all_user_info, top_i, api
 from utils import get_stock_by_id
 
 
@@ -181,3 +182,22 @@ def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: flo
     df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
     df.to_csv(f"{SEASON_ID}/alerts.csv", index="alert_id")
     return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
+
+
+def update_name_id(name_id, id_name, N=52):
+    """
+    Updates names : id correspondences for the top N players, taking renames into account. 
+    """
+    for i in range(N):
+        uuid = top_i(i, country='FR')
+        u = api.user(uuid)
+        current_username = u.username
+        id_name[uuid] = current_username
+        name_id[current_username.lower()] = uuid
+        for n in u.previous_usernames:
+            name_id[n.lower()] = uuid
+    with open(f"{SEASON_ID}/name_id.json", "w") as fp:
+        json.dump(name_id , fp)
+    with open(f"{SEASON_ID}/id_name.json", "w") as fp:
+        json.dump(id_name , fp) 
+    return
