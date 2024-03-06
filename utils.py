@@ -5,13 +5,13 @@ from math import ceil
 from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
-from constants import name_id, id_name
+from constants import SEASON_ID, name_id, id_name
 
 
 def get_stock_by_id(name: int) -> pd.Series:
     assert isinstance(name, int)
-    df_s = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df_d = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
+    df_s = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
+    df_d = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     if name not in df_s.index or name not in df_d.index:
         return None
     x_s = df_s.loc[name,:]
@@ -21,13 +21,13 @@ def get_stock_by_id(name: int) -> pd.Series:
 
 
 def get_investor_by_name(name: str) -> pd.Series:
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     x = df.loc[name,:]
     return x
 
 
 def get_portfolio(buyer_name: str) -> pd.DataFrame:
-    buyer_portfolio = pd.read_csv(f'portfolios/{buyer_name}.csv', index_col='stock_name')
+    buyer_portfolio = pd.read_csv(f'{SEASON_ID}/portfolios/{buyer_name}.csv', index_col='stock_name')
     return buyer_portfolio
 
 
@@ -43,7 +43,7 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=N
         stock_name = name_id[stock_name.lower()]
     if history_time_filtered is None:
         d = datetime.now() - td
-        history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+        history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
         history = history.astype({"stock_id": int})
         history['datetime'] = pd.to_datetime(history['datetime'])
         history_time_filtered = history[history['datetime'] >= d]

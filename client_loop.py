@@ -4,7 +4,7 @@ import typing
 import discord
 import pandas as pd
 from bank import check_for_alerts, pay_all_dividends
-from constants import FEED_CHANNEL_ID
+from constants import FEED_CHANNEL_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
@@ -42,7 +42,7 @@ async def update_static_stats():
     # try:
     await run_blocking(refresh_player_data_raw)
     df = await run_blocking(compute_prestige_and_hype)
-    df_updates = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
     df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
     df_updates_appendice = df_updates_appendice.set_index('update_id')
 
@@ -65,7 +65,7 @@ async def update_static_stats():
     
     # update stock prices
     df_updates = pd.concat([df_updates, df_updates_appendice])
-    df_updates.to_csv("stock_prices_history.csv", index='update_id')
+    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
     

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from math import exp
 import pandas as pd
-from constants import id_name, name_id
+from constants import SEASON_ID, id_name, name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 
 
@@ -18,8 +18,8 @@ def valuate(stock):
 
 
 def get_stocks_table():
-    df1 = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df2 = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
+    df1 = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
+    df2 = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     df = pd.concat([df1, df2], axis=1)
 
     current_name_column = df.apply(lambda x:id_name[x.name], axis=1)

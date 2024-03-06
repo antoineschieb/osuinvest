@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
-from constants import name_id, id_name
+from constants import SEASON_ID, name_id, id_name
 from formulas import compute_tax_applied, valuate, get_dividend_yield
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
@@ -71,7 +71,7 @@ def sell_stock(buyer_name: str, stock_name: str, quantity: float):
 
 
 def pay_all_dividends():
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     ret_str = 'Paying all dividends...\n'
     ret_dict = {}
     for investor_name in df.index:        
@@ -97,7 +97,7 @@ def pay_all_dividends():
 
 
 def get_trade_history(buyer_name, stock_id):
-    history = pd.read_csv("transactions_history.csv", index_col='transaction_id')
+    history = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime']) 
     filtered = history[(history['investor']==buyer_name) & (history['stock_id']==stock_id)]
@@ -107,14 +107,14 @@ def get_trade_history(buyer_name, stock_id):
 
 
 def add_pending_transaction(investor, stock_id, quantity):
-    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
     df['datetime'] = pd.to_datetime(df['datetime'])   
     df.loc[investor,:] = [stock_id,quantity,datetime.now()]
-    df.to_csv("confirmations.csv", index="investor")
+    df.to_csv(f"{SEASON_ID}/confirmations.csv", index="investor")
     return 
 
 def find_transaction(investor):
-    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
     df['datetime'] = pd.to_datetime(df['datetime'])   
     
     # First, filter only transactions < 5mins
@@ -127,23 +127,23 @@ def find_transaction(investor):
 
     # Remove it, and export
     df = df.drop(investor, axis=0)
-    df.to_csv("confirmations.csv", index="investor")
+    df.to_csv(f"{SEASON_ID}/confirmations.csv", index="investor")
     return stock_id,quantity
 
 def remove_transaction_from_pending(investor):
-    df = pd.read_csv("confirmations.csv", index_col="investor")
+    df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
     df['datetime'] = pd.to_datetime(df['datetime'])
     # Remove it, and export
     if investor not in df.index:
         return None
     df = df.drop(investor, axis=0)
-    df.to_csv("confirmations.csv", index="investor")
+    df.to_csv(f"{SEASON_ID}/confirmations.csv", index="investor")
     return True
 
 
 def check_for_alerts():
     ret_strs = []
-    df_alerts = pd.read_csv("alerts.csv", index_col="alert_id")
+    df_alerts = pd.read_csv(f"{SEASON_ID}/alerts.csv", index_col="alert_id")
     df_alerts = df_alerts.astype({"stock": int})
     for x in df_alerts.index:
         # Conveniently, we store investor's discord uuid and not investor's in-game name so it's easier to ping them
@@ -157,5 +157,5 @@ def check_for_alerts():
             if current_value < value:
                 ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now < {value}')
         df_alerts = df_alerts.drop(x)
-    df_alerts.to_csv("alerts.csv", index="alert_id")
+    df_alerts.to_csv(f"{SEASON_ID}/alerts.csv", index="alert_id")
     return ret_strs

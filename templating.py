@@ -9,7 +9,7 @@ from matplotlib import font_manager
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 
-from constants import name_id, id_name
+from constants import SEASON_ID, name_id, id_name
 from formulas import get_stocks_table
 from utils import get_pilimg_from_url, get_stock_value_timedelta
 from visual import beautify_float, plot_stock
@@ -144,7 +144,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     value_previous=get_stock_value_timedelta(s.current_name, td)
     evolution = (s.value - value_previous)/value_previous
 
-    own = pd.read_csv(f"ownerships/{stock_id}.csv", index_col='investor_name')
+    own = pd.read_csv(f"{SEASON_ID}/ownerships/{stock_id}.csv", index_col='investor_name')
     shareholders_list = [[x, own.loc[x].shares_owned] for x in own.index]
     shareholders_list = shorten_shareholders_list(shareholders_list)
 
@@ -294,7 +294,7 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     return full
 
 def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     if investor_name not in df.index:
         return f'ERROR: Unknown investor "{investor_name}"'
 
@@ -302,7 +302,7 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
     cash_balance = df.loc[investor_name, 'cash_balance']
 
     # PORTFOLIO
-    pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
+    pf = pd.read_csv(f'{SEASON_ID}/portfolios/{investor_name}.csv', index_col='stock_name')
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)
@@ -314,13 +314,13 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
 
     
     # NET WORTH HISTORY
-    hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
+    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
     hist_filtered_investor = hist[hist.investor==investor_name]
     last_7_values = [round(x,2) for x in hist_filtered_investor["net_worth"][-7:]]
     graph_filepath = get_nw_plot(last_7_values)
 
     #retrieve these:: TODO
-    all_invs = pd.read_csv("all_investors.csv", index_col='name')
+    all_invs = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     all_invs['net_worth'] = all_invs.apply(lambda x:get_net_worth(x.name), axis=1)
     all_invs = all_invs.sort_values(by='net_worth', ascending=False)
     

@@ -10,7 +10,7 @@ import pandas as pd
 import seaborn as sns
 import datetime
 
-from constants import name_id, id_name
+from constants import SEASON_ID, name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
 from utils import get_balance, get_stock_by_id, get_stock_value_timedelta, split_df
 
@@ -22,23 +22,23 @@ def print_all():
     print(df)
 
     print('\n\nINVESTORS')
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     print(df)
 
     # print('\n\nPORTFOLIOS')
-    # for x in glob.glob("portfolios/*.csv"):
+    # for x in glob.glob(f"{SEASON_ID}/portfolios/*.csv"):
     #     print(x)
     #     df = pd.read_csv(x, index_col='stock_name')
     #     print(df)
 
     # print('\n\nOWNERSHIPS')
-    # for x in glob.glob("ownerships/*.csv"):
+    # for x in glob.glob(f"{SEASON_ID}/ownerships/*.csv"):
     #     print(x)
     #     df = pd.read_csv(x, index_col='investor_name')
     #     print(df)
 
     print("\n\nHISTORY")
-    df = pd.read_csv("transactions_history.csv", index_col='transaction_id')
+    df = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     print(df)
     return 
 
@@ -91,7 +91,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     
     # Read csv properly
-    df = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
     df['datetime'] = pd.to_datetime(df['datetime'])
     df = df.astype({"stock_id": int})
 
@@ -148,7 +148,7 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     
     df = get_stocks_table()
     
-    history = pd.read_csv("stock_prices_history.csv", index_col='update_id')
+    history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'])
 
@@ -173,13 +173,13 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
 
 
 def print_profile(investor_name):
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     if investor_name not in df.index:
         return f'ERROR: Unknown investor "{investor_name}"'
 
     cash_balance = df.loc[investor_name, 'cash_balance']
     
-    pf = pd.read_csv(f'portfolios/{investor_name}.csv', index_col='stock_name')
+    pf = pd.read_csv(f'{SEASON_ID}/portfolios/{investor_name}.csv', index_col='stock_name')
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)
@@ -199,7 +199,7 @@ def print_stock(stock_name):
     df = get_stocks_table()
     s = df.loc[stock_name]
 
-    own = pd.read_csv(f"ownerships/{stock_name}.csv", index_col='investor_name')
+    own = pd.read_csv(f"{SEASON_ID}/ownerships/{stock_name}.csv", index_col='investor_name')
     own.insert(0,'Investor', own.index)
     own['Proportion owned (%)'] = own.apply(lambda x: round(100*x.shares_owned/s.sold_shares,2), axis=1)
 
@@ -215,7 +215,7 @@ def print_stock(stock_name):
 
 
 def print_leaderboard():
-    df = pd.read_csv("all_investors.csv", index_col='name')
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     df['Cash balance ($)'] = df.apply(lambda x:round(get_balance(x.name)), axis=1)
     df['Net worth ($)'] = df.apply(lambda x:round(get_net_worth(x.name)), axis=1)
     df = df.sort_values(by='Net worth ($)', ascending=False)
@@ -224,8 +224,8 @@ def print_leaderboard():
 
 
 def print_investors_gains(dividends_dict):
-    df = pd.read_csv("all_investors.csv", index_col='name')
-    hist = pd.read_csv("net_worth_history.csv", index_col="log_id")
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
     ranking = pd.DataFrame(columns=['investor','Net worth ($)','Gains ($)'])
     for inv in df.index:
         hist_filtered = hist[hist['investor']==inv] 

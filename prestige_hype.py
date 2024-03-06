@@ -1,6 +1,7 @@
 from math import exp
 import numpy as np
 import pandas as pd
+from constants import SEASON_ID
 
 from visual import add_current_name_col
 
@@ -31,7 +32,7 @@ def compute_hype(x: pd.Series) -> float:
 
 
 def compute_prestige_and_hype():
-    df_raw = pd.read_csv("player_data_raw.csv", index_col='id')
+    df_raw = pd.read_csv(f"{SEASON_ID}/player_data_raw.csv", index_col='id')
     df = (df_raw-df_raw.mean())/df_raw.std()
     df = df.astype(float).fillna(0)
     df = add_current_name_col(df)
@@ -46,20 +47,3 @@ def compute_prestige_and_hype():
 
     df['current_pp'] = df_raw['pp']
     return df[['current_pp','prestige','hype']]
-
-# async def compute_prestige_and_hype_async():
-#     df_raw = pd.read_csv("player_data_raw.csv", index_col='id')
-#     df = (df_raw-df_raw.mean())/df_raw.std()
-#     df = df.astype(float).fillna(0)
-#     df = add_current_name_col(df)
-
-#     df['prestige'] = df.apply(compute_prestige, axis=1)
-#     df['prestige'] = (df['prestige']-df['prestige'].mean())/df['prestige'].std()
-#     df['prestige'] = 1+np.power(2.0,df['prestige'])
-
-#     df['hype'] = df.apply(compute_hype, axis=1)
-#     df['hype'] = (df['hype']-df['hype'].mean())/df['hype'].std()
-#     df['hype'] = 1+np.power(1.5, df['hype'])
-
-#     df['current_pp'] = df_raw['pp']
-#     return df[['current_pp','prestige','hype']]
