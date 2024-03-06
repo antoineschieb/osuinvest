@@ -1,6 +1,6 @@
 from urllib.request import Request, urlopen
 from io import BytesIO
-from osuapi import api
+from game_related import api
 import io
 import PIL
 from matplotlib import pyplot as plt

@@ -6,7 +6,7 @@ import os
 
 from constants import SEASON_ID, id_name, name_id
 from formulas import get_net_worth, valuate
-from osuapi import all_user_info, top_i, api
+from game_related import all_user_info, top_i, api
 from utils import get_stock_by_id
 
 
