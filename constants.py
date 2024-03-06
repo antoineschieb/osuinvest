@@ -3,7 +3,10 @@ import json
 # FEED_CHANNEL_ID = 854465506428977156  # Antoine's server
 FEED_CHANNEL_ID = 1210628840720695386  # serv des oeufs
 
-SEASON_ID = "1"
+
+with open(f"config.json") as json_file:
+    cfg = json.load(json_file)
+    SEASON_ID = cfg['SEASON_ID']
 
 with open(f"{SEASON_ID}/id_name.json") as json_file:
     id_name = json.load(json_file)

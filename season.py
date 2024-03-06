@@ -87,6 +87,11 @@ def new_season(new_season_id, N=52):
         writer = csv.writer(file)
         writer.writerow(['transaction_id','investor','stock_id','quantity','datetime'])
 
+    # Finally, change season_id in config json
+    cfg = {}
+    cfg['SEASON_ID'] = str(new_season_id)
+    with open(f"config.json", "w") as fp:
+        json.dump(cfg , fp) 
     return
 
 
