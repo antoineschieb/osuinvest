@@ -86,7 +86,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
     globe = globe.resize((22,22))
     full.paste(globe, (214,230), globe)
 
-    flag = Image.open('templates\Flag_of_France.svg.png')
+    flag = Image.open('templates/Flag_of_France.svg.png')
     flag = flag.resize((21,14))
     lgth = draw.textlength(f'#{country_rank}', font=ImageFont.truetype(file, 20))
     full.paste(flag, (400-round(lgth)-margin-21-4, 234))    #326

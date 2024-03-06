@@ -193,6 +193,9 @@ async def buy(ctx: commands.Context, *args):
     
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
+    if isinstance(buyer, str):
+        await ctx.reply(buyer)
+        return
     stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, quantity)
 
@@ -235,6 +238,9 @@ async def sell(ctx: commands.Context, *args):
 
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
+    if isinstance(buyer, str):
+        await ctx.reply(buyer)
+        return
     stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, -quantity)
 

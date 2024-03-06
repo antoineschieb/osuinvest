@@ -22,6 +22,8 @@ def get_stock_by_id(name: int) -> pd.Series:
 
 def get_investor_by_name(name: str) -> pd.Series:
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    if name not in df:
+        return f'ERROR: Unknown investor: {name}'
     x = df.loc[name,:]
     return x
 
