@@ -31,8 +31,13 @@ def compute_hype(x: pd.Series) -> float:
     return h
 
 
-def compute_prestige_and_hype():
-    df_raw = pd.read_csv(f"{SEASON_ID}/player_data_raw.csv", index_col='id')
+def compute_prestige_and_hype(new_season_id=None):
+    if new_season_id is not None:
+        season_id = new_season_id
+    else:
+        season_id = SEASON_ID
+
+    df_raw = pd.read_csv(f"{season_id}/player_data_raw.csv", index_col='id')
     df = (df_raw-df_raw.mean())/df_raw.std()
     df = df.astype(float).fillna(0)
     df = add_current_name_col(df)

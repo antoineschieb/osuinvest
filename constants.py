@@ -12,4 +12,3 @@ with open(f"{SEASON_ID}/id_name.json") as json_file:
 with open(f"{SEASON_ID}/name_id.json") as json_file:
     name_id = json.load(json_file)
     name_id = {k:int(v) for k,v in name_id.items()}
-    
