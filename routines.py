@@ -84,17 +84,22 @@ def update_buyer_portfolio(buyer_name, stock_name, quantity):
     return 
 
 
-def create_new_investor(name, initial_balance):
-    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+def create_new_investor(name, initial_balance, season_id=None):
+    if season_id is not None:
+        season_id = season_id
+    else:
+        season_id = SEASON_ID
+
+    df = pd.read_csv(f"{season_id}/all_investors.csv", index_col='name')
     if name in df.index:
         return f'ERROR: You are already registered'
 
     df.loc[name,:] = initial_balance
-    df.to_csv(f"{SEASON_ID}/all_investors.csv", index='name')
+    df.to_csv(f"{season_id}/all_investors.csv", index='name')
 
     df = pd.DataFrame(columns=['stock_name','shares_owned'])
     df = df.set_index('stock_name')
-    df.to_csv(f'{SEASON_ID}/portfolios/{name}.csv', index='stock_name')
+    df.to_csv(f'{season_id}/portfolios/{name}.csv', index='stock_name')
     return f'{name} has entered the market with ${initial_balance}!'
 
 
@@ -184,10 +189,11 @@ def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: flo
     return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
 
 
-def update_name_id(name_id, id_name, N=52):
+def update_name_id(name_id, id_name):
     """
     Updates names : id correspondences for the top N players, taking renames into account. 
     """
+    N = len(id_name)
     for i in range(N):
         uuid = top_i(i, country='FR')
         u = api.user(uuid, mode='osu')

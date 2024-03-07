@@ -97,6 +97,6 @@ async def pay_all_dividends_async():
     await channel.send ("```"+ ret_str +"```")
 
     # Check for renames
-    await run_blocking(update_name_id, name_id, id_name, N=52)
+    await run_blocking(update_name_id, name_id, id_name)
 
 client.run(discord_bot_token)

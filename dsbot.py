@@ -41,8 +41,10 @@ async def on_ready():
     print("Bot is ready")
     # await broadcast("Bot is ready")
 
+
+
 @bot.command()
-async def profile(ctx: commands.Context, *args):
+async def profile(ctx: commands.Context, *args):   
     def parse_args(args, ctx):
         args = list(args)
         if len(args)>1:
@@ -60,7 +62,7 @@ async def profile(ctx: commands.Context, *args):
                 if user is None:
                     raise ValueError(f"ERROR: Unknown user {a}")
                 return a, user.display_avatar
-            
+
     try:
         investor_name, display_avatar = parse_args(args, ctx)
     except ValueError as e:
@@ -94,15 +96,18 @@ async def market(ctx: commands.Context, *args):
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['value','evolution','dividend']:
-                await ctx.reply(f'ERROR: -sortby value|evolution|dividend')
+                raise NameError
         return n_hours, n_days, sortby
     try:
         n_hours, n_days, sortby = await parse_args(args)
     except:
-        await ctx.reply(f'Could not parse arguments.')
+        await ctx.reply(f'Could not parse arguments.\nUsage $market [-d days] [-h hours] [-sortby value | evolution | dividend]')
         return 
     
     df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    if isinstance(df,str) and df.startswith('ERROR:'):
+        await ctx.reply(df)
+        return 
     ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
@@ -144,7 +149,11 @@ async def stock(ctx: commands.Context, *args):
         stock_name = re.sub("'",'',stock_name)
         return stock_name.lower(), n_hours, n_days
 
-    stock_name, n_hours, n_days = parse_args(args)
+    try:
+        stock_name, n_hours, n_days = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $stock <stock_name> [-d days] [-h hours]')
+        return 
 
     ret_str = await run_blocking(generate_stock_card, stock_name, n_hours=n_hours, n_days=n_days)
     if ret_str.startswith('ERROR:'):
@@ -199,6 +208,10 @@ async def buy(ctx: commands.Context, *args):
     stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, quantity)
 
+    if isinstance(transaction_price, str) and transaction_price.startswith('ERROR:'):
+        await ctx.reply(transaction_price)
+        return
+
     # put in confirmations.csv
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, quantity)
 
@@ -243,6 +256,10 @@ async def sell(ctx: commands.Context, *args):
         return
     stock = get_stock_by_id(stock_name)
     transaction_price = calc_price(buyer, stock, -quantity)
+
+    if isinstance(transaction_price, str) and transaction_price.startswith('ERROR:'):
+        await ctx.reply(transaction_price)
+        return
 
     # put in confirmations.csv
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, -quantity)

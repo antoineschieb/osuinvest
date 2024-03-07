@@ -4,7 +4,7 @@ import csv
 import os
 
 
-def new_season(new_season_id, N=52):
+def new_season(new_season_id, N=52, set_as_default=True):
     """
     Remember to change the SEASON_ID variable in constants.py after running this
     """
@@ -66,10 +66,11 @@ def new_season(new_season_id, N=52):
         writer.writerow(['transaction_id','investor','stock_id','quantity','datetime'])
 
     # Finally, change season_id in config json
-    cfg = {}
-    cfg['SEASON_ID'] = str(new_season_id)
-    with open(f"config.json", "w") as fp:
-        json.dump(cfg , fp) 
+    if set_as_default:
+        cfg = {}
+        cfg['SEASON_ID'] = str(new_season_id)
+        with open(f"config.json", "w") as fp:
+            json.dump(cfg , fp) 
     return
 
 

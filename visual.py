@@ -139,7 +139,7 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     
     new_col_str = 'Last '
     if n_days<0 or (n_days==0 and n_hours<1):
-        return 'n_days must be >= 0 and n_hours must be >=1'
+        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
     
     if n_days>0:
         new_col_str += f'{n_days} day(s) '
