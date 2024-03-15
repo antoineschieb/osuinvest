@@ -37,44 +37,47 @@ async def on_ready():
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
-    # try:
-    await run_blocking(refresh_player_data_raw)
-    df = await run_blocking(compute_prestige_and_hype)
-    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
-    df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
-    df_updates_appendice = df_updates_appendice.set_index('update_id')
+    try:
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
+        # try:
+        await run_blocking(refresh_player_data_raw)
+        df = await run_blocking(compute_prestige_and_hype)
+        df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+        df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
+        df_updates_appendice = df_updates_appendice.set_index('update_id')
 
-    for i,x in enumerate(df.index):
-        pp,p,h = df.loc[x,:]
-        stock = await run_blocking(get_stock_by_id, x)
-        if stock is not None:
-            stock.raw_skill = pp
-            stock.trendiness = h
-            stock.prestige = p
+        for i,x in enumerate(df.index):
+            pp,p,h = df.loc[x,:]
+            stock = await run_blocking(get_stock_by_id, x)
+            if stock is not None:
+                stock.raw_skill = pp
+                stock.trendiness = h
+                stock.prestige = p
 
-            df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
+                df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
 
-            await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
-        else:
-            print("Need to create new stock....")
-            await run_blocking(create_new_stock, x, pp, h, p)
-    # except Exception as e:
-    #     print(datetime.now(), e)
-    
-    # update stock prices
-    df_updates = pd.concat([df_updates, df_updates_appendice])
-    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
+                await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
+            else:
+                print("Need to create new stock....")
+                await run_blocking(create_new_stock, x, pp, h, p)
+        # except Exception as e:
+        #     print(datetime.now(), e)
+        
+        # update stock prices
+        df_updates = pd.concat([df_updates, df_updates_appendice])
+        df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
-    
-    # Now check for alerts
-    ret_strs = await run_blocking(check_for_alerts)
-    channel = await client.fetch_channel(FEED_CHANNEL_ID)
-    for s in ret_strs:
-        print(s)
-        # s = "```"+s+"```"
-        await channel.send(s)
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
+        
+        # Now check for alerts
+        ret_strs = await run_blocking(check_for_alerts)
+        channel = await client.fetch_channel(FEED_CHANNEL_ID)
+        for s in ret_strs:
+            print(s)
+            # s = "```"+s+"```"
+            await channel.send(s)
+    except Exception as e:
+        print(e)
     return 
 
 
