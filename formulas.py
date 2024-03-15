@@ -52,12 +52,14 @@ def get_dividend_yield_from_stock(stock) -> float:
 
 def tax_from_datetime(d):  ##
     now = datetime.now()
-    if (now-d) > timedelta(hours=4):
+    if (now-d) > timedelta(days=7):
+        return 0
+    elif (now-d) > timedelta(days=3):
         return 0.05
-    elif (now-d) > timedelta(hours=1):
-        return 0.1
+    elif (now-d) > timedelta(days=1):
+        return 0.10
     else:
-        return 0.2
+        return 0.20
 
 
 def compute_tax_applied(trade_hist, quantity_to_sell):
