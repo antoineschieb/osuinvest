@@ -19,7 +19,7 @@ from formulas import valuate
 from routines import create_alert, create_new_investor
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_pilimg_from_url, get_stock_by_id, split_df, split_msg
+from utils import get_investor_by_name, get_pilimg_from_url, get_stock_by_id, pretty_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -288,9 +288,14 @@ async def no(ctx: commands.Context):
 
 @bot.command()
 async def register(ctx: commands.Context):
-    ret_str = await run_blocking(create_new_investor, ctx.message.author.name, 10000)
-    await ctx.reply(ret_str)
-    await broadcast(ret_str)
+    season_start_date = datetime(year=2024, month=3, day=17, hour=19, minute=0, second=0)  #Sunday 7pm
+    if datetime.now() < season_start_date:
+        td = season_start_date - datetime.now()
+        await ctx.reply(f"You can't register before season starts!\nSeason will start in {pretty_time_delta(td.total_seconds())}")
+    else:
+        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, 10000)
+        await ctx.reply(ret_str)
+        await broadcast(ret_str)
 
 
 class PaginationView(View):
