@@ -1,7 +1,8 @@
 import json
 
 # FEED_CHANNEL_ID = 854465506428977156  # Antoine's server
-FEED_CHANNEL_ID = 1210628840720695386  # serv des oeufs
+# FEED_CHANNEL_ID = 1210628840720695386  # serv des oeufs
+FEED_CHANNEL_ID = 1218303570609311926  # osu!Invest FR (beta)
 
 
 with open(f"config.json") as json_file:
