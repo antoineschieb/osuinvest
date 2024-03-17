@@ -13,7 +13,7 @@ def calc_price(buyer, stock, quantity: float):
         transaction_price = round(share_price * quantity, 2)
         # check if buyer has enough cash
         if transaction_price > buyer.cash_balance:
-            return f'ERROR: {buyer.name} does not have enough cash (${buyer.cash_balance}) to perform this transaction (${transaction_price}).'
+            return f'ERROR: {buyer.name} does not have enough cash (${int(buyer.cash_balance)}) to perform this transaction (${transaction_price}).'
         
         # check if enough shares are available for sale
         if stock.total_shares - stock.sold_shares < quantity:

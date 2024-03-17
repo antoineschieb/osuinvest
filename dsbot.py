@@ -194,7 +194,12 @@ async def buy(ctx: commands.Context, *args):
     if quantity < 0.1:
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
         return
+
     
+    if quantity > 50:
+        await ctx.reply(f'ERROR: You can only buy 50 shares maximum at once.\nIf you want to buy {quantity} shares, do it in multiple transactions.')
+        return
+
     if stock_name.lower() not in name_id.keys():
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
@@ -242,6 +247,10 @@ async def sell(ctx: commands.Context, *args):
 
     if quantity < 0.1:
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
+        return
+    
+    if quantity > 50:
+        await ctx.reply(f'ERROR: You can only sell 50 shares maximum at once.\nIf you want to sell {quantity} shares, do it in multiple transactions.')
         return
 
     if stock_name.lower() not in name_id.keys():

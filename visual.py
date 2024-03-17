@@ -111,7 +111,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     # sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel=f'last {since}')
     ymin = min(df['value'])
     ymax = max(df['value'])
-    d = ymax - ymin
+    d = ymax - ymin + 0.1
 
     # matplotlib.rcParams['font.family'] = font_prop.get_name()
     # plt.rcParams['font.family'] = font_prop.get_name()

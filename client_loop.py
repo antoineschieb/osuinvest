@@ -97,7 +97,10 @@ async def pay_all_dividends_async():
 
     # Print net gains since last day
     ret_str = await run_blocking(print_investors_gains, ret_dict)
-    await channel.send ("```"+ ret_str +"```")
+    message_bits = split_msg(ret_str)
+    for x in message_bits:
+        x = "```"+x+"```"
+        await channel.send(x)
 
     # Check for renames
     await run_blocking(update_name_id, name_id, id_name)
