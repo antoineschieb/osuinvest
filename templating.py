@@ -176,9 +176,9 @@ from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
 from utils import get_stock_by_id
 
 
-def get_nw_plot(last_7_values):
+def get_nw_plot(last_7_values, default=10000):
     if len(last_7_values) == 0:
-        last_7_values = [0]
+        last_7_values = [default]
 
     last_7_values = [round(x) for x in last_7_values]
     min_v = min(last_7_values)
@@ -319,7 +319,7 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
     hist_filtered_investor = hist[hist.investor==investor_name]
     last_7_values = [round(x,2) for x in hist_filtered_investor["net_worth"][-7:]]
-    graph_filepath = get_nw_plot(last_7_values)
+    graph_filepath = get_nw_plot(last_7_values, default=get_net_worth(investor_name))
 
     #retrieve these:: TODO
     all_invs = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')

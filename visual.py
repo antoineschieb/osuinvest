@@ -245,7 +245,7 @@ def print_investors_gains(dividends_dict):
     return ranking.to_string(index=False, col_space=20)
 
 
-def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int):
+def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int, dpi: int=40):
     plt.rcParams['font.family'] = "Aller"
     df['row_index'] = range(1, len(df)+1)
     list_of_dfs = split_df(df, rows_per_page)
@@ -318,7 +318,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
 
         fig.set_size_inches(figsize_x,figsize_y)
         dest_file = f'{filename}{page}.png'
-        plt.savefig(dest_file,bbox_inches='tight',dpi=40)
+        plt.savefig(dest_file,bbox_inches='tight',dpi=dpi)
         plt.close()
         ret_files.append(dest_file)
     return ret_files
