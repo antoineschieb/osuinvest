@@ -180,16 +180,16 @@ def get_nw_plot(last_7_values, default=10000):
     if len(last_7_values) == 0:
         last_7_values = [default]
 
-    last_7_values = [round(x) for x in last_7_values]
+    last_7_values = [round(x/1000,3) for x in last_7_values]
     min_v = min(last_7_values)
     max_v = max(last_7_values)
-    delta = max_v - min_v + 0.01
-
+    delta = max_v - min_v + 0.1
     fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_alpha(0.0)
     ax.patch.set_alpha(0.0)
 
-    matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"]) 
+    matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"])
+    matplotlib.rcParams['axes.formatter.useoffset'] = False
     markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
     ax.set_xticklabels([])
     ax.set_xticks([])
@@ -200,7 +200,7 @@ def get_nw_plot(last_7_values, default=10000):
     ax.spines['left'].set_color('white')
 
     ax.tick_params(axis='y', colors='white', labelsize=20)
-    ax.set_ylabel('Net worth', fontsize=20, color='white')
+    ax.set_ylabel('Net worth (k$)', fontsize=20, color='white')
     ax.set_xlabel('Last 7 days', fontsize=20, color='white')
 
     

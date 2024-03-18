@@ -107,6 +107,9 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
         print(f'No data to plot since {start_date}.')
         return
     
+    # Important to avoid visual glitches: sort the df by datetime
+    df = df.sort_values(by='datetime')
+
     df[''] = df.apply(lambda x:id_name[x['stock_id']], axis=1)  #naming hack so that the graph looks cleaner
     # sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel=f'last {since}')
     ymin = min(df['value'])
@@ -116,7 +119,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     # matplotlib.rcParams['font.family'] = font_prop.get_name()
     # plt.rcParams['font.family'] = font_prop.get_name()
     # plt.rcParams.update({'font.size': 10})
-
+    
     ax = df.plot.area(x='datetime', y='value', color='#254D32',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{time_str}')
     ax.xaxis.label.set_color('white')
     ax.set_xlabel(" ")
@@ -210,7 +213,6 @@ def print_stock(stock_name):
         ret_str += f'Ownership:\n Noone currently owns any shares of {id_name[stock_name]}!'
     else:
         ret_str += f'Ownership:\n {own.to_string(index=False)}'
-    # plot stock could be a nice addition
     return ret_str
 
 
