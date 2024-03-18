@@ -362,9 +362,9 @@ async def pingmeif(ctx: commands.Context, *args):
     await ctx.reply(ret_str)
 
 
-@bot.command()
-async def help(ctx: commands.Context, *args):
-    await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
+# @bot.command()
+# async def help(ctx: commands.Context, *args):
+#     await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
