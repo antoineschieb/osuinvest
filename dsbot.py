@@ -13,7 +13,7 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor
@@ -361,6 +361,10 @@ async def pingmeif(ctx: commands.Context, *args):
     ret_str = await run_blocking(create_alert, investor, stock_id, is_greater_than, value)
     await ctx.reply(ret_str)
 
+
+@bot.command()
+async def help(ctx: commands.Context, *args):
+    await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
