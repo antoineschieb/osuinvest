@@ -10,7 +10,7 @@ def main():
         '$register',
         '$profile',
         '$profile uoifnbsiuef',
-        
+    
 
         '$buy flasteh 0.1',
         '$yes',
@@ -26,6 +26,10 @@ def main():
         '$buy justman sefuosebhfnoi',
         
         '$profile @Antoin',
+
+        '$balance',
+        '$balance iufseiub3 2 sfe iuzdq',
+        '$balance mihate',
 
         '$market',
         '$market -v 44',
@@ -49,8 +53,6 @@ def main():
         '$stock flasteh -d -fsidbuf',
         '$stock flasteh -fsidbuf',
         
-
-
         '$pingmeif',
         '$pingmeif flasteh > 10',
         '$pingmeif flasteh>3',

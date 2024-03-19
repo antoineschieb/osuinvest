@@ -363,6 +363,36 @@ async def pingmeif(ctx: commands.Context, *args):
 
 
 @bot.command()
+async def balance(ctx: commands.Context, *args):
+    def parse_args(args, ctx):
+        args = list(args)
+        if len(args)>1:
+            raise ValueError(f"Could not parse arguments.\nUsage: `$balance [investor]`")
+        elif len(args) <= 0:
+            return ctx.message.author.name
+        else:
+            a = args[0]
+            if a[0] == '<' and a[1] == '@' and a[-1] == '>':
+                investor_id = a.replace("<","").replace(">","").replace("@","")
+                u = bot.get_user(int(investor_id))               
+                return u.name
+            else:
+                return a
+
+    try:
+        investor_name = parse_args(args, ctx)
+    except ValueError as e:
+        await ctx.reply(e)
+        return
+
+    ret_str = await run_blocking(print_profile, investor_name)
+    message_bits = split_msg(ret_str)
+    for x in message_bits:
+        x = "```"+x+"```"
+        await ctx.reply(x)
+
+
+@bot.command()
 async def help(ctx: commands.Context, *args):
     await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
 

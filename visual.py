@@ -182,16 +182,17 @@ def print_profile(investor_name):
 
     cash_balance = df.loc[investor_name, 'cash_balance']
     
-    pf = pd.read_csv(f'{SEASON_ID}/portfolios/{investor_name}.csv', index_col='stock_name')
-    if not pf.empty:
-        stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
-        pf.insert(0,'Stock', stock_column)
-        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name)), axis=1)
-        pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
+    # pf = pd.read_csv(f'{SEASON_ID}/portfolios/{investor_name}.csv', index_col='stock_name')
+    # if not pf.empty:
+    #     stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
+    #     pf.insert(0,'Stock', stock_column)
+    #     pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name)), axis=1)
+    #     pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
     
     ret_str = f'Investor: {investor_name}\n\n'
     ret_str += f'Cash balance: ${round(cash_balance,2)}\n\n'
-    ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
+    ret_str += f'From stocks: ${round(get_net_worth(investor_name),2) - round(cash_balance,2)}\n\n'
+    # ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
     ret_str += f'Total worth: ${round(get_net_worth(investor_name),2)}'
     return ret_str
 
