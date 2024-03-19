@@ -219,7 +219,7 @@ def shorten_portfolio(pf,N):
         return pf
     sum_of_all_other_stocks = pf.iloc[N:,:].sum(axis=0, numeric_only=True).copy()   #sum from 3rd to last
     pf = pf.iloc[:N].copy()
-    pf.loc['Others',:] = sum_of_all_other_stocks
+    pf.loc['Others',:] = round(sum_of_all_other_stocks, 1)
     return pf
 
 
