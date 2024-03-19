@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from math import exp
+from math import exp, sqrt
 import pandas as pd
 from constants import SEASON_ID, id_name, name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
@@ -11,8 +11,9 @@ def valuate_intrinsic(stock):
 
 
 def valuate(stock):
-    available_shares = stock.total_shares - stock.sold_shares
-    supply_demand_ratio = (stock.total_shares + stock.sold_shares)/(available_shares+0.001)
+    speculation_coeff = 0.5
+    available_shares = stock.total_shares - speculation_coeff * stock.sold_shares
+    supply_demand_ratio = (stock.total_shares + speculation_coeff * stock.sold_shares)/(available_shares+0.001)
     intrinsic_value = valuate_intrinsic(stock)
     return round(supply_demand_ratio * intrinsic_value,2)
 
@@ -46,7 +47,7 @@ def get_dividend_yield(stock_name) -> float:
 
 
 def get_dividend_yield_from_stock(stock) -> float:
-    div_yield = 0.8*(stock.prestige-1) + 0.2*(stock.trendiness-1)
+    div_yield = 0.8*(sqrt(stock.prestige)-1) + 0.2*(stock.trendiness-1)
     return round(div_yield, 2)  # This is a percentage
 
 
