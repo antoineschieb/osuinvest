@@ -92,7 +92,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     
     # Read csv properly
     df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
-    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")
     df = df.astype({"stock_id": int})
 
     # select the requested stock
@@ -153,7 +153,7 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     
     history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
     history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'])
+    history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
 
     td = datetime.timedelta(hours=n_hours, days=n_days)
     d = datetime.datetime.now() - td
@@ -245,6 +245,7 @@ def print_investors_gains(dividends_dict):
     ranking = ranking.sort_values(by='Gains ($)', ascending=False)
     ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
     ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
+    top_investor_otd = ranking.iloc[0,0]
     return ranking.to_string(index=False, col_space=20)
 
 

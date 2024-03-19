@@ -47,7 +47,7 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=N
         d = datetime.now() - td
         history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
         history = history.astype({"stock_id": int})
-        history['datetime'] = pd.to_datetime(history['datetime'])
+        history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
         history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
 

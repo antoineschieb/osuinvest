@@ -164,7 +164,7 @@ def log_transaction(investor, stock_id, quantity):
     # Read column types properly
     history = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'])
+    history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
     
     t_id = len(history)
     history.loc[t_id,:] = [investor, int(stock_id), quantity, datetime.now()]
