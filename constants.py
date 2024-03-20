@@ -1,5 +1,4 @@
 import json
-
 with open(f"config.json") as json_file:
     cfg = json.load(json_file)
     SEASON_ID = cfg['SEASON_ID']
