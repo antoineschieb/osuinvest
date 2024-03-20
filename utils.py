@@ -52,7 +52,10 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=N
     assert len(history_time_filtered) > 0
 
     history_name_time_filtered = history_time_filtered[(history_time_filtered['stock_id'] == stock_name)]
-    
+    if not len(history_name_time_filtered) > 0:
+        print(f'INFO: {stock_name} has no history yet. Returning 0 as first value.')
+        return 0
+
     return history_name_time_filtered.iloc[0,:].value
 
 

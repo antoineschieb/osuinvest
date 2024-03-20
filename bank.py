@@ -6,7 +6,7 @@ from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
 
 
-def calc_price(buyer, stock, quantity: float):
+def calc_price(buyer, stock, quantity: float, return_tax=False):
     share_price = valuate(stock)
 
     if quantity > 0:
@@ -32,7 +32,10 @@ def calc_price(buyer, stock, quantity: float):
         transaction_price = round(share_price * quantity * (1-tax), 2)
     else:
         return f'ERROR: Quantity traded can not be zero.'
-    return transaction_price
+    if return_tax:
+        return transaction_price, tax
+    else:    
+        return transaction_price
 
 
 def buy_stock(buyer_name: str, stock_name, quantity: float):

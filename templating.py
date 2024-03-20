@@ -142,7 +142,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     
     td = datetime.timedelta(hours=n_hours, days=n_days)
     value_previous=get_stock_value_timedelta(s.current_name, td)
-    evolution = (s.value - value_previous)/value_previous
+    evolution = 0 if value_previous==0 else (s.value - value_previous)/value_previous
 
     own = pd.read_csv(f"{SEASON_ID}/ownerships/{stock_id}.csv", index_col='investor_name')
     shareholders_list = [[x, own.loc[x].shares_owned] for x in own.index]

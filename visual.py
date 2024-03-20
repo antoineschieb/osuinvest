@@ -161,7 +161,7 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     assert len(history_time_filtered) > 0
 
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
-    df['placeholder_name'] = df.apply(lambda x: (x.value - x.value_previous)/x.value_previous, axis=1)
+    df['placeholder_name'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
     df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
 
     args_colname = {'value':'value', 'evolution':'placeholder_name','dividend':'Dividend yield (%)'}

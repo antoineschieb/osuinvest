@@ -264,17 +264,19 @@ async def sell(ctx: commands.Context, *args):
         await ctx.reply(buyer)
         return
     stock = get_stock_by_id(stock_name)
-    transaction_price = calc_price(buyer, stock, -quantity)
-
-    if isinstance(transaction_price, str) and transaction_price.startswith('ERROR:'):
-        await ctx.reply(transaction_price)
+    
+    ret_object = calc_price(buyer, stock, -quantity, return_tax=True)
+    if isinstance(ret_object, str) and ret_object.startswith('ERROR:'):
+        await ctx.reply(ret_object)
         return
+    else:
+        transaction_price, tax_applied = ret_object
 
     # put in confirmations.csv
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, -quantity)
 
     # ask for confirmation
-    await ctx.reply(f'Do you really want to sell {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
+    await ctx.reply(f'[{round(100*tax_applied,2)}% of tax applied]\nDo you really want to sell {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
 
 @bot.command()
 async def yes(ctx: commands.Context):
