@@ -191,7 +191,7 @@ def print_profile(investor_name):
     
     ret_str = f'Investor: {investor_name}\n\n'
     ret_str += f'Cash balance: ${round(cash_balance,2)}\n\n'
-    ret_str += f'From stocks: ${round(get_net_worth(investor_name),2) - round(cash_balance,2)}\n\n'
+    ret_str += f'From stocks: ${round(round(get_net_worth(investor_name),2) - round(cash_balance,2),2)}\n\n'
     # ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
     ret_str += f'Total worth: ${round(get_net_worth(investor_name),2)}'
     return ret_str
