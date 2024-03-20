@@ -1,3 +1,4 @@
+from math import sqrt
 from urllib.request import Request, urlopen
 from io import BytesIO
 from game_related import api
@@ -100,7 +101,8 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
             txt = f'Nobody owns any shares\nof {playername} yet!'
         else:
             txt = f'{shareholders_list[i][0]} : {shareholders_list[i][1]}'
-        draw.text((26, 310 + 20*i), txt, font=ImageFont.truetype(file, 16), fill=(255,255,255))
+        fontsize = int(16*sqrt(17/(len(txt)))) if len(txt)>17 else 16
+        draw.text((26, 310 + 20*i), txt, font=ImageFont.truetype(file, fontsize), fill=(255,255,255))
         full.paste(square, (margin, 310 + 20*i + 6))
     
     return full
@@ -258,8 +260,8 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     font_bold = font_manager.FontProperties(family='Aller', weight="bold")
     file_bold = font_manager.findfont(font_bold)
 
-    
-    draw.text((margin, 40), investor_name, font=ImageFont.truetype(file_bold, 30), fill=(255, 255, 255))
+    fontsize = int(30*sqrt(14/(len(investor_name)))) if len(investor_name)>14 else 30
+    draw.text((margin, 40), investor_name, font=ImageFont.truetype(file_bold, fontsize), fill=(255, 255, 255))
     appendix='th'
     if server_rank==1:
         appendix='st'
