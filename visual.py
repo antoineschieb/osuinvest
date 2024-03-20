@@ -225,6 +225,10 @@ def print_leaderboard():
     df.insert(0,'Name', df.index)
     return df[['Name','Net worth ($)','Cash balance ($)']]
 
+def get_richest_investor():
+    d = print_leaderboard()
+    return d['Name'].iloc[0], d['Net worth ($)'].iloc[0]
+
 
 def print_investors_gains(dividends_dict):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
