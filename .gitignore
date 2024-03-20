@@ -161,3 +161,7 @@ cython_debug/
 
 plots/*.png
 config.json
+creds.py
+test.ipynb
+test_season/
+beta1_copy/

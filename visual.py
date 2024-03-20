@@ -126,6 +126,8 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ax.title.set_color('white')
     ax.get_legend().remove()
     ax.margins(x=0)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
 
     plt.savefig(f'plots/{stock_str_name}.png')
     plt.close()
