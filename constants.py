@@ -1,12 +1,11 @@
 import json
 
-FEED_CHANNEL_ID = 1218303570609311926  # osu!Invest FR (beta)
-
-DETAILS_CHANNEL_ID = 1218900174101938217 
-
 with open(f"config.json") as json_file:
     cfg = json.load(json_file)
     SEASON_ID = cfg['SEASON_ID']
+    FEED_CHANNEL_ID = int(cfg['FEED_CHANNEL_ID'])
+    GUILD_ID = int(cfg['GUILD_ID'])
+    DETAILS_CHANNEL_ID = int(cfg['DETAILS_CHANNEL_ID'])
 
 with open(f"{SEASON_ID}/id_name.json") as json_file:
     id_name = json.load(json_file)

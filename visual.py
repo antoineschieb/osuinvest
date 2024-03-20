@@ -246,7 +246,7 @@ def print_investors_gains(dividends_dict):
     ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
     ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
     top_investor_otd = ranking.iloc[0,0]
-    return ranking.to_string(index=False, col_space=20)
+    return ranking.to_string(index=False, col_space=20), top_investor_otd
 
 
 def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int, dpi: int=40):

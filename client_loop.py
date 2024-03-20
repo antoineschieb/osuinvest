@@ -4,7 +4,7 @@ import typing
 import discord
 import pandas as pd
 from bank import check_for_alerts, pay_all_dividends
-from constants import FEED_CHANNEL_ID, SEASON_ID
+from constants import FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
@@ -60,14 +60,15 @@ async def update_static_stats():
             else:
                 print("Need to create new stock....")
                 await run_blocking(create_new_stock, x, pp, h, p)
-        # except Exception as e:
-        #     print(datetime.now(), e)
         
         # update stock prices
         df_updates = pd.concat([df_updates, df_updates_appendice])
         df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
+
+        
+
         
         # Now check for alerts
         ret_strs = await run_blocking(check_for_alerts)
@@ -82,7 +83,7 @@ async def update_static_stats():
 
 
 @tasks.loop(hours=24)
-async def pay_all_dividends_async():
+async def pay_all_dividends_async():      
     # Pay all dividends
     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
     ret_str, ret_dict = await run_blocking(pay_all_dividends)
@@ -96,11 +97,21 @@ async def pay_all_dividends_async():
     await run_blocking(log_all_net_worth)
 
     # Print net gains since last day
-    ret_str = await run_blocking(print_investors_gains, ret_dict)
+    ret_str, top_investor = await run_blocking(print_investors_gains, ret_dict)
     message_bits = split_msg(ret_str)
     for x in message_bits:
         x = "```"+x+"```"
         await channel.send(x)
+
+    # Give Trader of the day role
+    guild = client.get_guild(GUILD_ID)
+    user = discord.utils.get(guild.members, name=top_investor)
+    if user is None:
+        print(f"ERROR: Unknown user {top_investor}")    
+    else:
+        role = discord.utils.get(guild.roles, name="Trader of the day")
+        await user.add_roles(role, reason='Added automatically for best net gains today')        
+        await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
 
     # Check for renames
     await run_blocking(update_name_id, name_id, id_name)
