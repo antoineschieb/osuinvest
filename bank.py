@@ -89,8 +89,7 @@ def pay_all_dividends():
             volume = qty * valuate(stock)
             if stock.sold_shares == 0:
                 raise ValueError
-            actual_proportion_perceived = get_dividend_yield(s) * qty/stock.sold_shares * 0.01
-            dividend = round(actual_proportion_perceived * volume, 2)
+            dividend = round(get_dividend_yield(s) * 0.01 * volume, 2)
             investor.cash_balance += dividend
             sum_of_dividends += dividend
         ret_str += f'{investor_name} received ${round(sum_of_dividends,2)} of total dividends today!\n'
