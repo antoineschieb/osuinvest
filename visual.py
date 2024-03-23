@@ -236,24 +236,26 @@ def get_richest_investor():
 def print_investors_gains(dividends_dict):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
-    ranking = pd.DataFrame(columns=['investor','Net worth ($)','Gains ($)'])
+    ranking = pd.DataFrame(columns=['Rank Today','investor','Gains (%)','Gains ($)'])
     for inv in df.index:
         hist_filtered = hist[hist['investor']==inv] 
         current = hist_filtered.iloc[-1,:].net_worth
         if len(hist_filtered)<2:
-            ranking.loc[len(ranking),:] = [inv, current, 0]
+            ranking.loc[len(ranking),:] = ['#', inv, 0, 0] 
             continue
         previous = hist_filtered.iloc[-2,:].net_worth
         
         gains = current - previous
         current = round(current, 2)
         gains = round(gains, 2)
-        ranking.loc[len(ranking),:] = [inv, current, gains]
-    ranking = ranking.sort_values(by='Gains ($)', ascending=False)
+        gains_percentage = round(100 * gains/previous, 2)
+        ranking.loc[len(ranking),:] = [f'#', inv, gains_percentage, gains]
+    ranking = ranking.sort_values(by='Gains (%)', ascending=False)
+    ranking['Rank Today'] = [f'#{x+1}' for x in range(len(df.index))]
     ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
     ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
     top_investor_otd = ranking.iloc[0,0]
-    return ranking.to_string(index=False, col_space=20), top_investor_otd
+    return ranking.to_string(index=False, col_space=16), top_investor_otd
 
 
 def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int, dpi: int=40):
