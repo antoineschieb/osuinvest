@@ -21,7 +21,7 @@ def main():
         '$buy mrekk 4',
         '$buy flasteh 9999999',
         '$sell justman 2',
-        '$sell flasteh 0.1',
+        '$sell flasteh all',
         '$yes',
         '$buy justman sefuosebhfnoi',
         
