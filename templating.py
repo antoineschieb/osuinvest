@@ -172,25 +172,30 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
 
 
 def get_nw_plot(dates, vals, default=10000):
-    print(dates)
-    print(vals)
-    if len(dates) or len(vals) == 0:
+
+    if len(dates) == 0 or len(vals) == 0:
         vals = [default]
         dates = [datetime.datetime.now()]
+
+    fig, ax = plt.subplots(figsize=(10,5))
+    ax.plot(dates, vals)
+    fig_path = "plots/net_worth.png"
+    # fig.savefig(fig_path, transparent=True, bbox_inches='tight')
+    fig.savefig(fig_path, transparent=False, bbox_inches='tight')
+    plt.close()
+    return fig_path
 
     # last_7_values = [round(x/1000,3) for x in last_7_values]
     # min_v = min(vals)
     # max_v = max(vals)
     # delta = max_v - min_v + 0.1
-
-    fig, ax = plt.subplots(figsize=(10,5))
     # fig.patch.set_alpha(0.0)
     # ax.patch.set_alpha(0.0)
 
     # matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"])
     # matplotlib.rcParams['axes.formatter.useoffset'] = False
     # markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
-    ax.plot(dates, vals)
+    
     # ax.set_xticklabels([])
     # ax.set_xticks([])
 
@@ -205,13 +210,6 @@ def get_nw_plot(dates, vals, default=10000):
     # # plt.setp(markerline, markersize = 20)
     # plt.ylim([min_v-0.15*delta, max_v+0.15*delta])
     
-    fig_path = "plots/net_worth.png"
-    # fig.savefig(fig_path, transparent=True, bbox_inches='tight')
-    fig.savefig(fig_path, transparent=False, bbox_inches='tight')
-    plt.close()
-    return fig_path
-
-
 def shorten_portfolio(pf,N):
     if len(pf)<=N:
         return pf
@@ -332,6 +330,10 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
 
     all_net_worth_vals = all_net_worth_vals[-3:]
     all_net_worth_dates = all_net_worth_dates[-3:]
+
+    # debug
+    print("all_net_worth_dates", all_net_worth_dates)
+    print("all_net_worth_vals", all_net_worth_vals)
 
     graph_filepath = get_nw_plot(all_net_worth_dates, all_net_worth_vals)
 
