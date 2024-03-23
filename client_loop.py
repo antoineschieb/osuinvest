@@ -10,7 +10,7 @@ import asyncio
 from discord.ext import commands, tasks
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
-from routines import create_new_stock, log_all_net_worth, refresh_player_data_raw, update_stock, update_name_id
+from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
 from constants import name_id, id_name
 from utils import calculate_remaining_time, get_stock_by_id, split_msg
 from visual import get_richest_investor, print_investors_gains
@@ -64,6 +64,11 @@ async def update_static_stats():
         df_updates = pd.concat([df_updates, df_updates_appendice])
         df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
+
+        # log all_net_worth (continuous)
+        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging net worth..")
+        await run_blocking(log_all_net_worth_continuous)
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
         channel = await client.fetch_channel(FEED_CHANNEL_ID)
