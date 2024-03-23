@@ -27,7 +27,7 @@ def get_pilimg_of_pie(x, colors):
         t.set_horizontalalignment('center')
     pimg = buffer_plot_and_get(fig)
     plt.close()
-    return pimg
+    return pimg #jndfjnkdfnjk
 
 def get_profile_info_for_stock(uuid):
     u = api.user(uuid, mode='osu')
