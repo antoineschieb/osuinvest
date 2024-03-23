@@ -40,7 +40,7 @@ def buffer_plot_and_get(fig):
     return PIL.Image.open(buf)
 
 
-def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_rank, graph, avatar, pie, shareholders_list, colors):
+def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_rank, graph, avatar, pie, shareholders_list, colors, time_str):
     def draw_align_right(y, text, fontsize, color=(255,255,255)):
         lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
         draw.text((400-lgth-margin, y), text, font=ImageFont.truetype(file, fontsize), fill=color)
@@ -71,12 +71,14 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
 
 
     margin=10
-    draw.text((margin, 47), playername, font=ImageFont.truetype(file_bold, 30), fill=(255, 255, 255))
+    fontsize = int(26*sqrt(12/(len(playername)))) if len(playername)>12 else 30
+    draw.text((margin, 47), playername, font=ImageFont.truetype(file_bold, fontsize), fill=(255, 255, 255))
     draw.text((240, 230), f'#{global_rank}', font=ImageFont.truetype(file, 20), fill=(255, 255, 255))
 
-    draw_align_right(60, f'${value}',44)
+    draw_align_right(40, f'${value}',44)
     clr = (0,255,0) if evolution > 0 else (255,0,0)
-    draw_align_right(110, f'({beautify_float(evolution)})',30, color=clr)
+    draw_align_right(90, f'({beautify_float(evolution)})',30, color=clr)
+    draw_align_right(130,f'over the {time_str.lower()}',13, color=clr)
     draw_align_right(150,f'Dividends: {dividend_yield}% /day',14, color="#d0db97")
     draw_align_right(200, f'{round(pp)}pp', 20)
     draw_align_right(230, f'#{country_rank}', 20)
@@ -159,7 +161,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
 
 
-    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors)
+    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors, time_str)
     
     file_path = f'plots/card_{stock_id}.png'
     card.save(file_path)
