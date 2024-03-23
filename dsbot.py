@@ -242,7 +242,7 @@ async def sell(ctx: commands.Context, *args):
     try:
         stock_name, quantity = parse_args(args)
     except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: $buy <stock> <quantity>')
+        await ctx.reply(f'Could not parse arguments.\nUsage: $sell <stock> <quantity>')
         return 
 
     if quantity < 0.1:
