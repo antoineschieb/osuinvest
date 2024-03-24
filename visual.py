@@ -1,3 +1,4 @@
+import math
 import matplotlib
 from matplotlib.font_manager import FontProperties
 matplotlib.use('agg')  # For asynchronous use
@@ -139,7 +140,15 @@ def beautify_float(a: float) :
     a *= 100
     return f'{char} {abs(round(a,2))}%'
 
-def print_market(n_hours=0, n_days=0, sortby='value'):
+def beautify_big_number(n: float):
+    millnames = ['','k','M','B','T']
+    n = float(n)
+    millidx = max(0,min(len(millnames)-1,
+                        int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
+
+    return '{:.1f}{}'.format(n / 10**(3 * millidx), millnames[millidx])   
+
+def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     if n_hours==0 and n_days==0:
         n_days = 7
     
@@ -163,19 +172,28 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
 
+    # Compute columns that need to be computed (ones that include timedelta)
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
-    df['placeholder_name'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
-    df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
+    df['evolution'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
 
-    args_colname = {'value':'value', 'evolution':'placeholder_name','dividend':'Dividend yield (%)'}
+    # Link argument with column name
+    args_colname = {'value':'value',
+                    'evolution':'evolution',
+                    'market_cap':'market_cap',
+                    'marketcap':'market_cap',
+                    'dividend':'dividend_yield'}
     df = df.sort_values(by=args_colname[sortby], ascending=False)
 
-    df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
+    # Beautify some values
+    df['evolution'] = df.apply(lambda x: beautify_float(x.evolution), axis=1)
+    df['market_cap'] = df.apply(lambda x: beautify_big_number(x.market_cap), axis=1)
 
-    df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
-    return df[['Stock','value',new_col_str,'Dividend yield (%)']]
-    # ret_str = ret_df.to_string(index=False, col_space=20)
-    # return ret_str
+    # Rename columns nicely
+    df = df.rename(columns={'evolution': new_col_str,
+                            'market_cap':'Market cap ($)',
+                            'current_name':'Stock',
+                            'dividend_yield':'Dividend yield (%)'})
+    return df[['Stock','Market cap ($)','value',new_col_str,'Dividend yield (%)']]
 
 
 def print_profile(investor_name):
