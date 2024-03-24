@@ -194,7 +194,9 @@ def get_nw_plot(dates, vals, default=10000):
     # highest, lowest
     if len(dates) != 0:
         ax.plot(dates[vals.index(max_v)], max_v, marker=7, markersize=20, color='lime')
+        ax.annotate(str(round(max_v,2)),  xy=(dates[vals.index(max_v)], max_v+0.05*delta), color='lime',fontsize=24)
         ax.plot(dates[vals.index(min_v)], min_v, marker=6, markersize=20, color='red')
+        ax.annotate(str(round(min_v,2)),  xy=(dates[vals.index(min_v)], min_v-0.05*delta), color='red',fontsize=24)
 
     ax.set_xticklabels([])
     ax.set_xticks([])
