@@ -13,13 +13,13 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_pilimg_from_url, get_stock_by_id, pretty_time_delta, split_df, split_msg
+from utils import get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -85,7 +85,7 @@ async def market(ctx: commands.Context, *args):
         args = list(args)
         n_hours=0
         n_days=0
-        sortby='value'
+        sortby='market_cap'
         if '-d' in args:
             idx = args.index('-d')
             n_days = int(args[idx+1])
@@ -95,7 +95,7 @@ async def market(ctx: commands.Context, *args):
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
-            if sortby not in ['value','evolution','dividend']:
+            if sortby not in ['market_cap','value','evolution','dividend']:
                 raise NameError
         return n_hours, n_days, sortby
     try:
@@ -122,6 +122,14 @@ async def leaderboard(ctx: commands.Context):
 @bot.command()
 async def lb(ctx: commands.Context):
     await leaderboard(ctx)
+
+@bot.command()
+async def y(ctx: commands.Context):
+    await yes(ctx)
+
+@bot.command()
+async def n(ctx: commands.Context):
+    await no(ctx)
 
 @bot.command()
 async def stock(ctx: commands.Context, *args):
@@ -175,7 +183,7 @@ async def broadcast(msg :str, channel_id=FEED_CHANNEL_ID):
 async def buy(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
-        quantity = float(args[-1])
+        quantity = round(float(args[-1]), 1)
         args.pop()
         stock_name = ''
         for x in args:
@@ -221,7 +229,7 @@ async def buy(ctx: commands.Context, *args):
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, quantity)
 
     # ask for confirmation
-    await ctx.reply(f'Do you really want to buy {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
+    await ctx.reply(f'Do you really want to buy **{quantity} {id_name[stock_name]}** shares for **${abs(transaction_price)}**? ($y/$n)')
 
 
 
@@ -229,7 +237,10 @@ async def buy(ctx: commands.Context, *args):
 async def sell(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
-        quantity = float(args[-1])
+        if args[-1] == 'all':
+            quantity = 'all'
+        else:
+            quantity = round(float(args[-1]),1)
         args.pop()
         stock_name = ''
         for x in args:
@@ -242,8 +253,28 @@ async def sell(ctx: commands.Context, *args):
     try:
         stock_name, quantity = parse_args(args)
     except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: $buy <stock> <quantity>')
+        await ctx.reply(f'Could not parse arguments.\nUsage: $sell <stock> <quantity>')
         return 
+
+    if stock_name.lower() not in name_id.keys():
+        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
+        return
+    
+    stock_name = name_id[stock_name.lower()]
+
+    if quantity == 'all':
+        # check how many stocks there are. If it's more than 50, tell user all can't be sold
+        pf = get_portfolio(ctx.message.author.name)
+        if stock_name not in pf.index:
+            await ctx.reply(f'ERROR: You do not own any {id_name[stock_name]} shares yet.')
+            return
+        all_stocks_owned = pf.loc[stock_name,'shares_owned']
+        
+        if all_stocks_owned > 50:
+            await ctx.reply(f'ERROR: You are trying to sell {all_stocks_owned} shares, but you can only sell 50 shares maximum at once.')
+            return
+        else:
+            quantity = all_stocks_owned
 
     if quantity < 0.1:
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
@@ -252,11 +283,6 @@ async def sell(ctx: commands.Context, *args):
     if quantity > 50:
         await ctx.reply(f'ERROR: You can only sell 50 shares maximum at once.\nIf you want to sell {quantity} shares, do it in multiple transactions.')
         return
-
-    if stock_name.lower() not in name_id.keys():
-        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
-        return
-    stock_name = name_id[stock_name.lower()]
 
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
@@ -276,7 +302,7 @@ async def sell(ctx: commands.Context, *args):
     await run_blocking(add_pending_transaction, ctx.message.author.name, stock_name, -quantity)
 
     # ask for confirmation
-    await ctx.reply(f'[{round(100*tax_applied,2)}% of tax applied]\nDo you really want to sell {quantity} {id_name[stock_name]} shares for ${abs(transaction_price)}? ($yes/$no)')
+    await ctx.reply(f'[{round(100*tax_applied,2)}% of tax applied]\nDo you really want to sell **{quantity} {id_name[stock_name]}** shares for **${abs(transaction_price)}**? ($y/$n)')
 
 @bot.command()
 async def yes(ctx: commands.Context):
@@ -397,6 +423,69 @@ async def balance(ctx: commands.Context, *args):
 @bot.command()
 async def help(ctx: commands.Context, *args):
     await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
+
+
+@bot.command()
+async def adminsell(ctx: commands.Context, *args):
+    """
+    $adminsell <investor> <stock> <qty>
+    """
+    if ctx.message.author.name not in ADMINS:
+        await ctx.reply('Do not use admin commands!')
+        await ctx.message.author.timeout(timedelta(minutes=5))
+        return
+    
+    def parse_args(args):
+        args = list(args)
+        investor = args[0]
+        args.pop(0)
+
+        if args[-1] == 'all':
+            quantity = 'all'
+        else:
+            quantity = float(args[-1])  # Do not round the quantity for adminsell
+        args.pop()
+
+        stock_name = ''
+        for x in args:
+            stock_name += x
+            stock_name += ' '
+        stock_name = stock_name.strip()
+        stock_name = re.sub('"','',stock_name)
+        stock_name = re.sub("'",'',stock_name)
+        return investor, stock_name.lower(), quantity
+    try:
+        investor, stock_name, quantity = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $adminsell <investor> <stock> <quantity>')
+        return
+    
+    if stock_name.lower() not in name_id.keys():
+        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
+        return
+    
+    stock_name = name_id[stock_name.lower()]
+    
+    if quantity == 'all':
+        # check how many stocks there are. If it's more than 50, tell user all can't be sold
+        pf = get_portfolio(investor)
+        if stock_name not in pf.index:
+            await ctx.reply(f'ERROR: {investor} does not own any {id_name[stock_name]} shares yet.')
+            return
+        all_stocks_owned = pf.loc[stock_name,'shares_owned']
+        
+        if all_stocks_owned > 50:
+            await ctx.reply(f'ERROR: You are trying to sell {all_stocks_owned} shares, but you can only sell 50 shares maximum at once.')
+            return
+        else:
+            quantity = all_stocks_owned
+
+
+    ret_str = await run_blocking(buy_stock, investor, stock_name, -quantity)
+    await ctx.reply(ret_str)
+    await broadcast(ret_str)
+    return     
+
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)

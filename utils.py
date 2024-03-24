@@ -55,7 +55,8 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=N
     if not len(history_name_time_filtered) > 0:
         print(f'INFO: {stock_name} has no history yet. Returning 0 as first value.')
         return 0
-
+    # make sure it's sorted
+    history_name_time_filtered = history_name_time_filtered.sort_values(by='datetime')
     return history_name_time_filtered.iloc[0,:].value
 
 

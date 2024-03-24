@@ -62,6 +62,11 @@ async def update_static_stats():
         
         # update stock prices
         df_updates = pd.concat([df_updates, df_updates_appendice])
+        if 'Unnamed: 0' in df_updates.columns:
+            df_updates = df_updates.drop('Unnamed: 0', axis=1)
+        # df_updates = df_updates.dropna(axis=0)
+        df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
+        df_updates = df_updates.sort_values(by="datetime")
         df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")

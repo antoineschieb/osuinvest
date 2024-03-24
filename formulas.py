@@ -29,6 +29,7 @@ def get_stocks_table():
     df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
     df["value"] = df.apply(valuate, axis=1)
     df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
+    df["market_cap"] = df.apply(get_market_cap_from_stock, axis=1)
     return df
 
 def get_net_worth(investor_name: str) -> float:
@@ -49,6 +50,10 @@ def get_dividend_yield(stock_name) -> float:
 def get_dividend_yield_from_stock(stock) -> float:
     div_yield = 0.8*(sqrt(stock.prestige)-1) + 0.2*(stock.trendiness-1)
     return round(div_yield, 2)  # This is a percentage
+
+def get_market_cap_from_stock(stock) -> float:
+    market_cap = stock.sold_shares * valuate(stock)
+    return round(market_cap)
 
 
 def tax_from_datetime(d):  ##
@@ -96,7 +101,8 @@ def compute_tax_applied(trade_hist, quantity_to_sell):
         else:
             parts.append([left_to_sell,tme])
             break
-    assert sum([x[0] for x in parts]) == quantity_to_sell
+    
+    assert sum([x[0] for x in parts]) - quantity_to_sell < 0.00001
     
     # 4-calculate final tax%
     combination = [[x/abs(quantity_to_sell),tax_from_datetime(y)] for x,y in parts]

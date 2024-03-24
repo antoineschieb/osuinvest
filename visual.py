@@ -1,3 +1,4 @@
+import math
 import matplotlib
 from matplotlib.font_manager import FontProperties
 matplotlib.use('agg')  # For asynchronous use
@@ -139,7 +140,15 @@ def beautify_float(a: float) :
     a *= 100
     return f'{char} {abs(round(a,2))}%'
 
-def print_market(n_hours=0, n_days=0, sortby='value'):
+def beautify_big_number(n: float):
+    millnames = ['','k','M','B','T']
+    n = float(n)
+    millidx = max(0,min(len(millnames)-1,
+                        int(math.floor(0 if n == 0 else math.log10(abs(n))/3))))
+
+    return '{:.1f}{}'.format(n / 10**(3 * millidx), millnames[millidx])   
+
+def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     if n_hours==0 and n_days==0:
         n_days = 7
     
@@ -163,19 +172,28 @@ def print_market(n_hours=0, n_days=0, sortby='value'):
     history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
 
+    # Compute columns that need to be computed (ones that include timedelta)
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
-    df['placeholder_name'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
-    df['Dividend yield (%)'] = df.apply(lambda x:get_dividend_yield(x.name), axis=1)
+    df['evolution'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
 
-    args_colname = {'value':'value', 'evolution':'placeholder_name','dividend':'Dividend yield (%)'}
+    # Link argument with column name
+    args_colname = {'value':'value',
+                    'evolution':'evolution',
+                    'market_cap':'market_cap',
+                    'marketcap':'market_cap',
+                    'dividend':'dividend_yield'}
     df = df.sort_values(by=args_colname[sortby], ascending=False)
 
-    df['placeholder_name'] = df.apply(lambda x: beautify_float(x.placeholder_name), axis=1)
+    # Beautify some values
+    df['evolution'] = df.apply(lambda x: beautify_float(x.evolution), axis=1)
+    df['market_cap'] = df.apply(lambda x: beautify_big_number(x.market_cap), axis=1)
 
-    df = df.rename(columns={'placeholder_name': new_col_str, 'current_name':'Stock'})
-    return df[['Stock','value',new_col_str,'Dividend yield (%)']]
-    # ret_str = ret_df.to_string(index=False, col_space=20)
-    # return ret_str
+    # Rename columns nicely
+    df = df.rename(columns={'evolution': new_col_str,
+                            'market_cap':'Market cap ($)',
+                            'current_name':'Stock',
+                            'dividend_yield':'Dividend yield (%)'})
+    return df[['Stock','Market cap ($)','value',new_col_str,'Dividend yield (%)']]
 
 
 def print_profile(investor_name):
@@ -236,24 +254,26 @@ def get_richest_investor():
 def print_investors_gains(dividends_dict):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
-    ranking = pd.DataFrame(columns=['investor','Net worth ($)','Gains ($)'])
+    ranking = pd.DataFrame(columns=['Rank Today','investor','Gains (%)','Gains ($)'])
     for inv in df.index:
         hist_filtered = hist[hist['investor']==inv] 
         current = hist_filtered.iloc[-1,:].net_worth
         if len(hist_filtered)<2:
-            ranking.loc[len(ranking),:] = [inv, current, 0]
+            ranking.loc[len(ranking),:] = ['#', inv, 0, 0] 
             continue
         previous = hist_filtered.iloc[-2,:].net_worth
         
         gains = current - previous
         current = round(current, 2)
         gains = round(gains, 2)
-        ranking.loc[len(ranking),:] = [inv, current, gains]
-    ranking = ranking.sort_values(by='Gains ($)', ascending=False)
+        gains_percentage = round(100 * gains/previous, 2)
+        ranking.loc[len(ranking),:] = [f'#', inv, gains_percentage, gains]
+    ranking = ranking.sort_values(by='Gains (%)', ascending=False)
+    ranking['Rank Today'] = [f'#{x+1}' for x in range(len(df.index))]
     ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
     ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
     top_investor_otd = ranking.iloc[0,0]
-    return ranking.to_string(index=False, col_space=20), top_investor_otd
+    return ranking.to_string(index=False, col_space=16), top_investor_otd
 
 
 def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int, dpi: int=40):
