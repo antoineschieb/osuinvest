@@ -177,7 +177,6 @@ def get_nw_plot(dates, vals, default=10000):
         vals = [default]
         dates = [datetime.datetime.now()]
 
-    # last_7_values = [round(x/1000,3) for x in last_7_values]
     min_v = min(vals)
     max_v = max(vals)
     delta = max_v - min_v + 0.1
@@ -188,7 +187,6 @@ def get_nw_plot(dates, vals, default=10000):
 
     matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"])
     matplotlib.rcParams['axes.formatter.useoffset'] = False
-    # markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
     ax.plot(dates, vals, color='gold')
 
     # highest, lowest
@@ -207,24 +205,15 @@ def get_nw_plot(dates, vals, default=10000):
     ax.tick_params(axis='y', colors='white', labelsize=20)
     ax.set_ylabel('Net worth (k$)', fontsize=20, color='white')
     ax.set_xlabel('date', fontsize=20, color='white')
-    # plt.setp(markerline, markersize = 20)
     plt.ylim(min_v-0.15*delta, max_v+0.15*delta)
     plt.xlim(min(dates), max(dates))
 
     # will only display selected dates, here first and last
-    display_dates = []
-    for date in dates:
-        if date in display_dates:
-            pass
-        elif date == min(dates) or date == max(dates):
-            display_dates.append(date.strftime('%d-%b-%y'))
-        else:
-            display_dates.append("")
+    display_dates = [date.strftime('%d-%b-%y') if date == min(dates) or date == max(dates) else "" for date in dates]
 
     plt.xticks(dates, display_dates, color='white', fontsize='20')
 
     fig_path = "plots/net_worth.png"
-    # fig.savefig(fig_path, transparent=True, bbox_inches='tight')
     fig.savefig(fig_path, transparent=False, bbox_inches='tight')
     plt.close()
     return fig_path
