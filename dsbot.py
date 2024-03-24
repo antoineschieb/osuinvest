@@ -459,6 +459,27 @@ async def adminsell(ctx: commands.Context, *args):
     except:
         await ctx.reply(f'Could not parse arguments.\nUsage: $adminsell <investor> <stock> <quantity>')
         return
+    
+    if stock_name.lower() not in name_id.keys():
+        await ctx.reply(f'ERROR: Unknown stock {stock_name}')
+        return
+    
+    stock_name = name_id[stock_name.lower()]
+    
+    if quantity == 'all':
+        # check how many stocks there are. If it's more than 50, tell user all can't be sold
+        pf = get_portfolio(investor)
+        if stock_name not in pf.index:
+            await ctx.reply(f'ERROR: {investor} does not own any {id_name[stock_name]} shares yet.')
+            return
+        all_stocks_owned = pf.loc[stock_name,'shares_owned']
+        
+        if all_stocks_owned > 50:
+            await ctx.reply(f'ERROR: You are trying to sell {all_stocks_owned} shares, but you can only sell 50 shares maximum at once.')
+            return
+        else:
+            quantity = all_stocks_owned
+
 
     ret_str = await run_blocking(buy_stock, investor, stock_name, -quantity)
     await ctx.reply(ret_str)
