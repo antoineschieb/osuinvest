@@ -190,6 +190,12 @@ def get_nw_plot(dates, vals, default=10000):
     matplotlib.rcParams['axes.formatter.useoffset'] = False
     # markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
     ax.plot(dates, vals, color='gold')
+
+    # highest, lowest
+    if len(dates) != 0:
+        ax.plot(dates[vals.index(max_v)], max_v, marker=7, markersize=20, color='lime')
+        ax.plot(dates[vals.index(min_v)], min_v, marker=6, markersize=20, color='red')
+
     ax.set_xticklabels([])
     ax.set_xticks([])
 
@@ -202,8 +208,21 @@ def get_nw_plot(dates, vals, default=10000):
     ax.set_ylabel('Net worth (k$)', fontsize=20, color='white')
     ax.set_xlabel('date', fontsize=20, color='white')
     # plt.setp(markerline, markersize = 20)
-    plt.ylim([min_v-0.15*delta, max_v+0.15*delta])
-    
+    plt.ylim(min_v-0.15*delta, max_v+0.15*delta)
+    plt.xlim(min(dates), max(dates))
+
+    # will only display selected dates, here first and last
+    display_dates = []
+    for date in dates:
+        if date in display_dates:
+            pass
+        elif date == min(dates) or date == max(dates):
+            display_dates.append(date.strftime('%d-%b-%y'))
+        else:
+            display_dates.append("")
+
+    plt.xticks(dates, display_dates, color='white', fontsize='20')
+
     fig_path = "plots/net_worth.png"
     # fig.savefig(fig_path, transparent=True, bbox_inches='tight')
     fig.savefig(fig_path, transparent=False, bbox_inches='tight')
@@ -327,9 +346,6 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
     hist_filtered_investor["datetime"] = pd.to_datetime(hist_filtered_investor["datetime"], format="ISO8601")
     all_net_worth_vals = [round(x/1000,5) for x in hist_filtered_investor["net_worth"]]
     all_net_worth_dates = [x for x in hist_filtered_investor["datetime"]]
-
-    all_net_worth_vals = all_net_worth_vals[-3:]
-    all_net_worth_dates = all_net_worth_dates[-3:]
 
     graph_filepath = get_nw_plot(all_net_worth_dates, all_net_worth_vals)
 
