@@ -46,8 +46,6 @@ async def update_static_stats():
         df_updates_appendice = df_updates_appendice.set_index('update_id')
 
         for i,x in enumerate(df.index):
-            if i==3:
-                break
             pp,p,h = df.loc[x,:]
             stock = await run_blocking(get_stock_by_id, x)
             if stock is not None:
