@@ -47,30 +47,42 @@ async def on_ready():
 async def profile(ctx: commands.Context, *args):   
     def parse_args(args, ctx):
         args = list(args)
-        if len(args)>1:
-            raise RuntimeError
-        elif len(args) <= 0:
-            return ctx.message.author.name, ctx.message.author.display_avatar
+
+        n_hours=0
+        n_days=0
+        if '-d' in args:
+            idx = args.index('-d')
+            n_days = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        if '-h' in args:
+            idx = args.index('-h')
+            n_hours = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        
+        if len(args) <= 0:
+            return ctx.message.author.name, ctx.message.author.display_avatar, n_hours, n_days
         else:
             a = args[0]
             if a[0] == '<' and a[1] == '@' and a[-1] == '>':
                 investor_id = a.replace("<","").replace(">","").replace("@","")
                 u = bot.get_user(int(investor_id))               
-                return u.name, u.display_avatar
+                return u.name, u.display_avatar, n_hours, n_days
             else:
                 user = discord.utils.get(ctx.guild.members, name=a)
                 if user is None:
                     raise ValueError(f"ERROR: Unknown user {a}")
-                return a, user.display_avatar
+                return a, user.display_avatar, n_hours, n_days
 
     try:
-        investor_name, display_avatar = parse_args(args, ctx)
+        investor_name, display_avatar, n_hours, n_days = parse_args(args, ctx)
     except ValueError as e:
         await ctx.reply(e)
         return
 
     avatar = get_pilimg_from_url(str(display_avatar))
-    ret_str = await run_blocking(generate_profile_card, investor_name, avatar)
+    ret_str = await run_blocking(generate_profile_card, investor_name, avatar, n_hours, n_days)
     
     if ret_str.startswith('ERROR:'):
         await ctx.reply(ret_str)

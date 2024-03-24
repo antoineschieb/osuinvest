@@ -211,7 +211,7 @@ def get_nw_plot(dates, vals, default=10000):
     plt.xlim(min(dates), max(dates))
 
     # will only display selected dates, here first and last
-    display_dates = [date.strftime('%d-%b-%y') if date == min(dates) or date == max(dates) else "" for date in dates]
+    display_dates = [date.strftime('%d-%b-%y %H:%M') if date == min(dates) or date == max(dates) else "" for date in dates]
 
     plt.xticks(dates, display_dates, color='white', fontsize='20')
 
@@ -335,8 +335,11 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
     hist_filtered_investor = hist[hist.investor==investor_name].copy()
     hist_filtered_investor["datetime"] = pd.to_datetime(hist_filtered_investor["datetime"], format="ISO8601")
-    all_net_worth_vals = [round(x/1000,5) for x in hist_filtered_investor["net_worth"]]
-    all_net_worth_dates = [x for x in hist_filtered_investor["datetime"]]
+    td = datetime.timedelta(hours=n_hours, days=n_days)
+    hist_filtered_investor_time = hist_filtered_investor[hist_filtered_investor['datetime'] > datetime.datetime.now() - td]
+
+    all_net_worth_vals = [round(x/1000,5) for x in hist_filtered_investor_time["net_worth"]]
+    all_net_worth_dates = [x for x in hist_filtered_investor_time["datetime"]]
 
     graph_filepath = get_nw_plot(all_net_worth_dates, all_net_worth_vals)
 
