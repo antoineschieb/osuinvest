@@ -272,7 +272,7 @@ def print_investors_gains(dividends_dict):
     ranking['Rank Today'] = [f'#{x+1}' for x in range(len(df.index))]
     ranking['From dividends ($)'] = ranking.apply(lambda x:dividends_dict[x.investor], axis=1)
     ranking['From stocks ($)'] = ranking['Gains ($)'] - ranking['From dividends ($)']
-    top_investor_otd = ranking.iloc[0,0]
+    top_investor_otd = ranking['investor'].iloc[0]
     return ranking.to_string(index=False, col_space=16), top_investor_otd
 
 
