@@ -18,11 +18,15 @@ def main():
         '$sell 3 justman',
         '$sell flasteh 0.1',
         '$no',
+
         '$buy mrekk 4',
         '$buy flasteh 9999999',
         '$sell justman 2',
         '$sell flasteh all',
         '$yes',
+        '$buy "chokbar de bz" 0.15435',
+        '$buy Carbone 0.3',
+        '$y',
         '$buy justman sefuosebhfnoi',
         
         '$profile @Antoin',

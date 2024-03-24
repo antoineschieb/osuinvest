@@ -5,6 +5,7 @@ with open(f"config.json") as json_file:
     FEED_CHANNEL_ID = int(cfg['FEED_CHANNEL_ID'])
     GUILD_ID = int(cfg['GUILD_ID'])
     DETAILS_CHANNEL_ID = int(cfg['DETAILS_CHANNEL_ID'])
+    ADMINS = cfg['ADMINS']
 
 with open(f"{SEASON_ID}/id_name.json") as json_file:
     id_name = json.load(json_file)

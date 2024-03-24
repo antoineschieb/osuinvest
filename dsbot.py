@@ -13,7 +13,7 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor
@@ -276,7 +276,6 @@ async def sell(ctx: commands.Context, *args):
         else:
             quantity = all_stocks_owned
 
-
     if quantity < 0.1:
         await ctx.reply(f'ERROR: quantity must be at least 0.1')
         return
@@ -284,9 +283,6 @@ async def sell(ctx: commands.Context, *args):
     if quantity > 50:
         await ctx.reply(f'ERROR: You can only sell 50 shares maximum at once.\nIf you want to sell {quantity} shares, do it in multiple transactions.')
         return
-
-    
-    
 
     # calc price
     buyer = get_investor_by_name(ctx.message.author.name)
@@ -427,6 +423,48 @@ async def balance(ctx: commands.Context, *args):
 @bot.command()
 async def help(ctx: commands.Context, *args):
     await ctx.reply(f"Read <#{DETAILS_CHANNEL_ID}>")
+
+
+@bot.command()
+async def adminsell(ctx: commands.Context, *args):
+    """
+    $adminsell <investor> <stock> <qty>
+    """
+    if ctx.message.author.name not in ADMINS:
+        await ctx.reply('Do not use admin commands!')
+        await ctx.message.author.timeout(timedelta(minutes=5))
+        return
+    
+    def parse_args(args):
+        args = list(args)
+        investor = args[0]
+        args.pop(0)
+
+        if args[-1] == 'all':
+            quantity = 'all'
+        else:
+            quantity = float(args[-1])  # Do not round the quantity for adminsell
+        args.pop()
+
+        stock_name = ''
+        for x in args:
+            stock_name += x
+            stock_name += ' '
+        stock_name = stock_name.strip()
+        stock_name = re.sub('"','',stock_name)
+        stock_name = re.sub("'",'',stock_name)
+        return investor, stock_name.lower(), quantity
+    try:
+        investor, stock_name, quantity = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $adminsell <investor> <stock> <quantity>')
+        return
+
+    ret_str = await run_blocking(buy_stock, investor, stock_name, -quantity)
+    await ctx.reply(ret_str)
+    await broadcast(ret_str)
+    return     
+
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
