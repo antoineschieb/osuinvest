@@ -46,6 +46,8 @@ async def update_static_stats():
         df_updates_appendice = df_updates_appendice.set_index('update_id')
 
         for i,x in enumerate(df.index):
+            if i==3:
+                break
             pp,p,h = df.loc[x,:]
             stock = await run_blocking(get_stock_by_id, x)
             if stock is not None:
@@ -65,6 +67,7 @@ async def update_static_stats():
         if 'Unnamed: 0' in df_updates.columns:
             df_updates = df_updates.drop('Unnamed: 0', axis=1)
         # df_updates = df_updates.dropna(axis=0)
+        df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
         df_updates = df_updates.sort_values(by="datetime")
         df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
