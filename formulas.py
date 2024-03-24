@@ -48,19 +48,21 @@ def get_dividend_yield(stock_name) -> float:
 
 
 def get_dividend_yield_from_stock(stock) -> float:
-    div_yield = 0.8*(sqrt(stock.prestige)-1) + 0.2*(stock.trendiness-1)
+    div_yield = 0.8*(pow(stock.prestige, 0.38)-1) + 0.2*(stock.trendiness-1)
+    div_yield = 1.0*div_yield
     return round(div_yield, 2)  # This is a percentage
+
 
 def get_market_cap_from_stock(stock) -> float:
     market_cap = stock.sold_shares * valuate(stock)
     return round(market_cap)
 
 
-def tax_from_datetime(d):  ##
+def tax_from_datetime(d):
     now = datetime.now()
-    if (now-d) > timedelta(days=7):
+    if (now-d) > timedelta(days=4):
         return 0
-    elif (now-d) > timedelta(days=3):
+    elif (now-d) > timedelta(days=2):
         return 0.05
     elif (now-d) > timedelta(days=1):
         return 0.10

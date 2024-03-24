@@ -256,7 +256,7 @@ def print_investors_gains(dividends_dict):
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
     ranking = pd.DataFrame(columns=['Rank Today','investor','Gains (%)','Gains ($)'])
     for inv in df.index:
-        hist_filtered = hist[hist['investor']==inv] 
+        hist_filtered = hist[hist['investor']==inv]
         current = hist_filtered.iloc[-1,:].net_worth
         if len(hist_filtered)<2:
             ranking.loc[len(ranking),:] = ['#', inv, 0, 0] 
