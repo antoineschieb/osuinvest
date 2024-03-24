@@ -147,6 +147,7 @@ def check_for_alerts():
     ret_strs = []
     df_alerts = pd.read_csv(f"{SEASON_ID}/alerts.csv", index_col="alert_id")
     df_alerts = df_alerts.astype({"stock": int})
+    indices_to_drop = []
     for x in df_alerts.index:
         # Conveniently, we store investor's discord uuid and not investor's in-game name so it's easier to ping them
         investor, stock_id, is_greater_than, value = df_alerts.loc[x,:]
@@ -155,9 +156,11 @@ def check_for_alerts():
         if is_greater_than:
             if current_value > value:
                 ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now > {value}')
+                indices_to_drop.append(x)
         else:
             if current_value < value:
                 ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now < {value}')
-        df_alerts = df_alerts.drop(x)
+                indices_to_drop.append(x)
+        df_alerts = df_alerts.drop(index=indices_to_drop)
     df_alerts.to_csv(f"{SEASON_ID}/alerts.csv", index="alert_id")
     return ret_strs

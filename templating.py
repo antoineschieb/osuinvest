@@ -163,7 +163,7 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     colors= ['#181D27'] if shareholders_list[0][0] is None else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
 
-    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors)
+    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors, time_str)
     
     file_path = f'plots/card_{stock_id}.png'
     card.save(file_path)
