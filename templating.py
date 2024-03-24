@@ -121,7 +121,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
         else:
             l_main = l[:3]
             l_others = l[3:]
-            others_element = ['others',sum([x[1] for x in l_others])]
+            others_element = ['others', round(sum([x[1] for x in l_others]),1)]
             l_main.extend([others_element])
             return l_main
 
