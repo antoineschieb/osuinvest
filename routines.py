@@ -171,6 +171,17 @@ def log_all_net_worth():
     hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index="log_id")
     return
 
+
+def log_all_net_worth_continuous():
+    df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
+    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
+    for inv in df.index:
+        nw = get_net_worth(inv)
+        hist.loc[len(hist),:] = inv, nw, datetime.now()
+    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index="log_id")
+    return
+
+
 def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
     df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv", index_col="alert_id")
     df = df.astype({"stock": int})

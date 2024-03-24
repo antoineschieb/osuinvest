@@ -9,8 +9,11 @@ import datetime
 from matplotlib import font_manager
 from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
+import matplotlib
+from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
+from utils import get_stock_by_id
 
-from constants import SEASON_ID, name_id, id_name
+from constants import SEASON_ID, id_name, name_id, id_name
 from formulas import get_stocks_table
 from utils import get_pilimg_from_url, get_stock_value_timedelta
 from visual import beautify_float, plot_stock
@@ -111,7 +114,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
 
 
 
-def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
+def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     def shorten_shareholders_list(l):
         if len(l) == 0:
             return [[None,1]]
@@ -160,8 +163,7 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
     colors= ['#181D27'] if shareholders_list[0][0] is None else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
 
-
-    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors, time_str)
+    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, avatar, pie, shareholders_list, colors)
     
     file_path = f'plots/card_{stock_id}.png'
     card.save(file_path)
@@ -170,31 +172,30 @@ def generate_stock_card(stock_str_name, n_hours=24, n_days=0):
 
 ########################################################################################
 
-from matplotlib import font_manager
-import matplotlib
-from constants import id_name, name_id
-import pandas as pd
-from PIL import Image, ImageDraw, ImageFont
 
-from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_stock_by_id
+def get_nw_plot(dates, vals, default=10000):
+    
+    if len(dates) == 0 or len(vals) == 0:
+        vals = [default]
+        dates = [datetime.datetime.now()]
 
-
-def get_nw_plot(last_7_values, default=10000):
-    if len(last_7_values) == 0:
-        last_7_values = [default]
-
-    last_7_values = [round(x/1000,3) for x in last_7_values]
-    min_v = min(last_7_values)
-    max_v = max(last_7_values)
+    min_v = min(vals)
+    max_v = max(vals)
     delta = max_v - min_v + 0.1
+
     fig, ax = plt.subplots(figsize=(10,5))
     fig.patch.set_alpha(0.0)
     ax.patch.set_alpha(0.0)
 
     matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"])
     matplotlib.rcParams['axes.formatter.useoffset'] = False
-    markerline, stemline, baseline = ax.stem(last_7_values, linefmt='C1--', markerfmt='D',basefmt=" ")
+    ax.plot(dates, vals, color='gold')
+
+    # highest, lowest
+    if len(dates) != 0:
+        ax.plot(dates[vals.index(max_v)], max_v, marker=7, markersize=20, color='lime')
+        ax.plot(dates[vals.index(min_v)], min_v, marker=6, markersize=20, color='red')
+
     ax.set_xticklabels([])
     ax.set_xticks([])
 
@@ -205,19 +206,20 @@ def get_nw_plot(last_7_values, default=10000):
 
     ax.tick_params(axis='y', colors='white', labelsize=20)
     ax.set_ylabel('Net worth (k$)', fontsize=20, color='white')
-    ax.set_xlabel('Last 7 days', fontsize=20, color='white')
+    ax.set_xlabel('date', fontsize=20, color='white')
+    plt.ylim(min_v-0.15*delta, max_v+0.15*delta)
+    plt.xlim(min(dates), max(dates))
 
-    
+    # will only display selected dates, here first and last
+    display_dates = [date.strftime('%d-%b-%y') if date == min(dates) or date == max(dates) else "" for date in dates]
+
+    plt.xticks(dates, display_dates, color='white', fontsize='20')
 
     fig_path = "plots/net_worth.png"
-    plt.setp(markerline, markersize = 20)
-    plt.ylim([min_v-0.15*delta, max_v+0.15*delta])
-    
-    fig.savefig(fig_path, transparent=True, bbox_inches='tight')
+    fig.savefig(fig_path, transparent=False, bbox_inches='tight')
     plt.close()
     return fig_path
-
-
+    
 def shorten_portfolio(pf,N):
     if len(pf)<=N:
         return pf
@@ -228,7 +230,7 @@ def shorten_portfolio(pf,N):
 
 
 
-def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_balance, pf, last_7_values, server_rank, server_total_investors):
+def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_balance, pf, server_rank, server_total_investors):
     def draw_align_right(y, text, fontsize, color=(255,255,255), font='regular'):
         if font=='bold':
             font=ImageFont.truetype(file_bold, fontsize)
@@ -299,10 +301,20 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     
     return full
 
-def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
+def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_days: int=7):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     if investor_name not in df.index:
         return f'ERROR: Unknown investor "{investor_name}"'
+    
+    if n_hours==0 and n_days==0:
+        n_days = 7
+    if n_days<0 or (n_days==0 and n_hours<1):
+        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
+    time_str = f'Last '
+    if n_days>0:
+        time_str += f'{n_days} day(s) '
+    if n_hours>0:   
+        time_str += f'{n_hours} hour(s)'
 
     # CASH BALANCE
     cash_balance = df.loc[investor_name, 'cash_balance']
@@ -320,12 +332,14 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
 
     
     # NET WORTH HISTORY
-    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
-    hist_filtered_investor = hist[hist.investor==investor_name]
-    last_7_values = [round(x,2) for x in hist_filtered_investor["net_worth"][-7:]]
-    graph_filepath = get_nw_plot(last_7_values, default=get_net_worth(investor_name))
+    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
+    hist_filtered_investor = hist[hist.investor==investor_name].copy()
+    hist_filtered_investor["datetime"] = pd.to_datetime(hist_filtered_investor["datetime"], format="ISO8601")
+    all_net_worth_vals = [round(x/1000,5) for x in hist_filtered_investor["net_worth"]]
+    all_net_worth_dates = [x for x in hist_filtered_investor["datetime"]]
 
-    #retrieve these:: TODO
+    graph_filepath = get_nw_plot(all_net_worth_dates, all_net_worth_vals)
+
     all_invs = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     all_invs['net_worth'] = all_invs.apply(lambda x:get_net_worth(x.name), axis=1)
     all_invs = all_invs.sort_values(by='net_worth', ascending=False)
@@ -333,7 +347,7 @@ def generate_profile_card(investor_name: str, avatar:Image):  # take avatar as p
     server_rank = list(all_invs.index).index(investor_name)+1
     server_total_investors = len(all_invs.index)
 
-    card = profile_card(investor_name, avatar, graph_filepath, round(get_net_worth(investor_name)), round(cash_balance), pf, last_7_values, server_rank, server_total_investors)
+    card = profile_card(investor_name, avatar, graph_filepath, round(get_net_worth(investor_name)), round(cash_balance), pf, server_rank, server_total_investors)
     file_path = f'plots/card_{investor_name}.png'
     card.save(file_path)
     return file_path
