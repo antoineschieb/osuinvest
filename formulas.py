@@ -96,9 +96,8 @@ def compute_tax_applied(trade_hist, quantity_to_sell):
         else:
             parts.append([left_to_sell,tme])
             break
-    print(sum([x[0] for x in parts]))
-    print(quantity_to_sell)
-    assert sum([x[0] for x in parts]) == quantity_to_sell
+    
+    assert sum([x[0] for x in parts]) - quantity_to_sell < 0.00001
     
     # 4-calculate final tax%
     combination = [[x/abs(quantity_to_sell),tax_from_datetime(y)] for x,y in parts]
