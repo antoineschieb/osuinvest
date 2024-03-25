@@ -68,10 +68,12 @@ def new_season(new_season_id, N=52, set_as_default=True):
 
     # Finally, change season_id in config json
     if set_as_default:
-        cfg = {}
+        with open(f"config.json") as json_file:
+            cfg = json.load(json_file)
         cfg['SEASON_ID'] = str(new_season_id)
         with open(f"config.json", "w") as fp:
             json.dump(cfg , fp) 
+        print(f"New season by default is now {new_season_id}")
     return
 
 
