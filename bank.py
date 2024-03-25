@@ -61,7 +61,7 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
 
     log_transaction(buyer_name, stock_name, quantity)
 
-    return f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of {id_name[stock_name]} for ${abs(transaction_price)} !"
+    return f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of **{id_name[stock_name]}** for ${abs(transaction_price)} !"
 
 
 def sell_stock(buyer_name: str, stock_name: str, quantity: float):
