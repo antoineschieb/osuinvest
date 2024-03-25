@@ -59,7 +59,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
 
     # ADD ALL SUBLAYERS (GRAPH, AVATAR, PIE) TO TEMPLATE
     full = Image.new('RGB', (400, 700))
-    full.paste(graph, (7,407))
+    full.paste(graph, (12,400))
     full.paste(avatar, (18,87))
     full.paste(pie, (254-10,266-10))
     full.paste(tpl, (0, 0), tpl)
