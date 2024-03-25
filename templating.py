@@ -213,7 +213,7 @@ def get_nw_plot(dates, vals, default=10000):
     plt.xlim(min(dates), max(dates))
 
     # will only display selected dates, here first and last
-    display_dates = [date.strftime('%d-%b-%y %H:%M') if date == min(dates) or date == max(dates) else "" for date in dates]
+    display_dates = [date.strftime('%d-%b %H:%M') if date == min(dates) or date == max(dates) else "" for date in dates]
 
     plt.xticks(dates, display_dates, color='white', fontsize='20')
 

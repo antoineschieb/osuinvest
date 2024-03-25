@@ -69,10 +69,7 @@ async def update_static_stats():
         df_updates = df_updates.sort_values(by="datetime")
         df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
-
         # log all_net_worth (continuous)
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging net worth..")
         await run_blocking(log_all_net_worth_continuous)
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 

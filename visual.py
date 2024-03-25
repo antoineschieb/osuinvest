@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import datetime
+import matplotlib.dates as mdates
 
 from constants import SEASON_ID, name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
@@ -105,12 +106,18 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ymin = min(df['value'])
     ymax = max(df['value'])
     d = ymax - ymin + 0.1
-
-    # matplotlib.rcParams['font.family'] = font_prop.get_name()
-    # plt.rcParams['font.family'] = font_prop.get_name()
-    # plt.rcParams.update({'font.size': 10})
     
     ax = df.plot.area(x='datetime', y='value', color='#254D32',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{time_str}')
+    real_x_span = max(df['datetime']) - min(df['datetime'])
+
+    if real_x_span < datetime.timedelta(hours=24):
+        myFmt = mdates.DateFormatter('%H:%M')    
+    elif real_x_span < datetime.timedelta(hours=72):
+        myFmt = mdates.DateFormatter('%d %b %Hh')
+    else:
+        myFmt = mdates.DateFormatter('%d %b')
+    ax.xaxis.set_major_formatter(myFmt)
+    
     ax.xaxis.label.set_color('white')
     ax.set_xlabel(" ")
     ax.title.set_color('white')
