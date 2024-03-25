@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import matplotlib
 from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_stock_by_id
+from utils import get_portfolio, get_stock_by_id
 
 from constants import SEASON_ID, id_name, name_id, id_name
 from formulas import get_stocks_table
@@ -322,7 +322,7 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
     cash_balance = df.loc[investor_name, 'cash_balance']
 
     # PORTFOLIO
-    pf = pd.read_csv(f'{SEASON_ID}/portfolios/{investor_name}.csv', index_col='stock_name')
+    pf = get_portfolio(investor_name)
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)

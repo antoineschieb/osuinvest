@@ -28,9 +28,19 @@ def get_investor_by_name(name: str) -> pd.Series:
     return x
 
 
-def get_portfolio(buyer_name: str) -> pd.DataFrame:
-    buyer_portfolio = pd.read_csv(f'{SEASON_ID}/portfolios/{buyer_name}.csv', index_col='stock_name')
-    return buyer_portfolio
+def get_portfolio(investor: str) -> pd.DataFrame:
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+    transac_hist = transac_hist[transac_hist['investor'] == investor]
+
+    pf = pd.DataFrame(columns=['stock_name','shares_owned'])
+    pf = pf.set_index('stock_name')
+    for stock_ever_owned in transac_hist['stock_id'].unique():
+        all_trades_on_stock = transac_hist[transac_hist['stock_id']==stock_ever_owned]
+        shares_owned = sum(all_trades_on_stock['quantity'])
+        if shares_owned > 0:
+            pf.loc[stock_ever_owned] = shares_owned
+    return pf
 
 
 def get_balance(investor_name: str) -> float:

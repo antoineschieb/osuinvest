@@ -14,7 +14,6 @@ def new_season(new_season_id, N=52, set_as_default=True):
     
     # 0 - create portoflios/ and ownerships/ (empty)
     os.mkdir(f'{new_season_id}/')
-    os.mkdir(f'{new_season_id}/portfolios/')
     os.mkdir(f'{new_season_id}/ownerships/')
 
     # 1 - create name_id and id_name jsons

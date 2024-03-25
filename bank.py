@@ -3,7 +3,7 @@ import pandas as pd
 from constants import SEASON_ID, name_id, id_name
 from formulas import compute_tax_applied, valuate, get_dividend_yield
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
-from routines import update_buyer, update_buyer_portfolio, update_stock, update_stock_ownership, log_transaction
+from routines import update_buyer, update_stock, update_stock_ownership, log_transaction
 
 
 def calc_price(buyer, stock, quantity: float, return_tax=False):
@@ -54,8 +54,6 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
         return transaction_price  
     
     update_stock_ownership(buyer_name, stock_name, quantity)
-
-    update_buyer_portfolio(buyer_name, stock_name, quantity)
 
     buyer.cash_balance -= transaction_price
     update_buyer(buyer)

@@ -68,22 +68,8 @@ def update_stock_ownership(buyer_name, stock_name, quantity):
     return 
 
 
-def update_buyer_portfolio(buyer_name, stock_name, quantity):
-    buyer_portfolio = pd.read_csv(f'{constants.SEASON_ID}/portfolios/{buyer_name}.csv', index_col='stock_name')
-    if stock_name in buyer_portfolio.index:
-        buyer_portfolio.loc[stock_name,:] += float(quantity)
-    else:
-        buyer_portfolio.loc[stock_name,:] = float(quantity)
-
-    # remove stocks where qty<=0
-    buyer_portfolio = buyer_portfolio[buyer_portfolio['shares_owned']>0]
-
-    buyer_portfolio.to_csv(f'{constants.SEASON_ID}/portfolios/{buyer_name}.csv', index='stock_name')
-    return 
-
 
 def create_new_investor(name, initial_balance):
-
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
     if name in df.index:
         return f'ERROR: You are already registered'
@@ -91,9 +77,6 @@ def create_new_investor(name, initial_balance):
     df.loc[name,:] = initial_balance
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
-    df = pd.DataFrame(columns=['stock_name','shares_owned'])
-    df = df.set_index('stock_name')
-    df.to_csv(f'{constants.SEASON_ID}/portfolios/{name}.csv', index='stock_name')
     return f'{name} has entered the market with ${initial_balance}!'
 
 
@@ -120,6 +103,7 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     return
 
 
+# Deprecated since season.py exists
 def reset_all_trades():
     files = glob.glob(f'{constants.SEASON_ID}/portfolios/*.csv')
     for f in files:
