@@ -13,7 +13,7 @@ import datetime
 
 from constants import SEASON_ID, name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
-from utils import get_balance, get_stock_by_id, get_stock_value_timedelta, split_df
+from utils import get_balance, get_ownership, get_stock_by_id, get_stock_value_timedelta, split_df
 
 
 
@@ -26,12 +26,6 @@ def print_all():
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     print(df)
 
-
-    # print('\n\nOWNERSHIPS')
-    # for x in glob.glob(f"{SEASON_ID}/ownerships/*.csv"):
-    #     print(x)
-    #     df = pd.read_csv(x, index_col='investor_name')
-    #     print(df)
 
     print("\n\nHISTORY")
     df = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
@@ -213,7 +207,7 @@ def print_stock(stock_name):
     df = get_stocks_table()
     s = df.loc[stock_name]
 
-    own = pd.read_csv(f"{SEASON_ID}/ownerships/{stock_name}.csv", index_col='investor_name')
+    own = get_ownership(stock_name)
     own.insert(0,'Investor', own.index)
     own['Proportion owned (%)'] = own.apply(lambda x: round(100*x.shares_owned/s.sold_shares,2), axis=1)
 

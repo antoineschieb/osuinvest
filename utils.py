@@ -43,6 +43,22 @@ def get_portfolio(investor: str) -> pd.DataFrame:
     return pf
 
 
+def get_ownership(stock_id: int) -> pd.DataFrame:
+    stock_id = int(stock_id)
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+    transac_hist = transac_hist[transac_hist['stock_id'] == stock_id]
+
+    own = pd.DataFrame(columns=['investor_name','shares_owned'])
+    own = own.set_index('investor_name')
+    for inv in transac_hist['investor'].unique():
+        all_trades_of_investor = transac_hist[transac_hist['investor']==inv]
+        shares_owned = sum(all_trades_of_investor['quantity'])
+        if shares_owned > 0:
+            own.loc[inv] = shares_owned
+    return own
+
+
 def get_balance(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)
     return round(investor.cash_balance,2)

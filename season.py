@@ -12,9 +12,8 @@ def new_season(new_season_id, N=52, set_as_default=True):
     if os.path.exists(f'{new_season_id}/'):
         raise ValueError("Season already exists!")
     
-    # 0 - create portoflios/ and ownerships/ (empty)
+    # 0 - create empty folder
     os.mkdir(f'{new_season_id}/')
-    os.mkdir(f'{new_season_id}/ownerships/')
 
     # 1 - create name_id and id_name jsons
     id_name = {}

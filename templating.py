@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import matplotlib
 from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_portfolio, get_stock_by_id
+from utils import get_ownership, get_portfolio, get_stock_by_id
 
 from constants import SEASON_ID, id_name, name_id, id_name
 from formulas import get_stocks_table
@@ -151,7 +151,7 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     value_previous=get_stock_value_timedelta(s.current_name, td)
     evolution = 0 if value_previous==0 else (s.value - value_previous)/value_previous
 
-    own = pd.read_csv(f"{SEASON_ID}/ownerships/{stock_id}.csv", index_col='investor_name')
+    own = get_ownership(stock_id)
     shareholders_list = [[x, own.loc[x].shares_owned] for x in own.index]
     shareholders_list = shorten_shareholders_list(shareholders_list)
 

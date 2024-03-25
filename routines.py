@@ -26,7 +26,7 @@ def refresh_player_data_raw(verbose=False):
 
 def update_stock(stock: pd.Series, log_price=True):
     """
-    This function updates all static and dynamic values that define a stock, but doesn't update its ownership
+    This function updates all static and dynamic values that define a stock
     """
     # 1-update dynamic values
     df = pd.read_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
@@ -53,21 +53,6 @@ def update_buyer(buyer: pd.Series):
     return 
 
 
-def update_stock_ownership(buyer_name, stock_name, quantity):
-    stock_name = int(stock_name)
-    ownership_df = pd.read_csv(f'{constants.SEASON_ID}/ownerships/{stock_name}.csv', index_col='investor_name')
-    if buyer_name in ownership_df.index:
-        ownership_df.loc[buyer_name,:] += quantity
-    else:
-        ownership_df.loc[buyer_name,:] = quantity
-    
-    # remove buyers where qty<=0
-    ownership_df = ownership_df[ownership_df['shares_owned']>0]
-
-    ownership_df.to_csv(f'{constants.SEASON_ID}/ownerships/{stock_name}.csv', index='investor_name')
-    return 
-
-
 
 def create_new_investor(name, initial_balance):
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
@@ -90,10 +75,6 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     df_d.loc[name,:] = [total_shares, sold_shares]
     df_d.to_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index='name')
 
-    df = pd.DataFrame(columns=['investor_name','shares_owned'])
-    df = df.set_index('investor_name')
-    df.to_csv(f'{constants.SEASON_ID}/ownerships/{name}.csv', index='stock_name')
-
     # log initial stock price in stocks_prices_history
     d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
     stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
@@ -103,15 +84,8 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     return
 
 
-# Deprecated since season.py exists
+# Deprecated since season.py exists, just create a new season.
 def reset_all_trades():
-    files = glob.glob(f'{constants.SEASON_ID}/portfolios/*.csv')
-    for f in files:
-        os.remove(f)
-    files = glob.glob(f'{constants.SEASON_ID}/ownerships/*.csv')
-    for f in files:
-        os.remove(f)
-
     df = pd.read_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     df = df.iloc[0:0]
     df.to_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index='name')
