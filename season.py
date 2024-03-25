@@ -1,3 +1,4 @@
+import argparse
 import json
 from osuapi import api, top_i
 import csv
@@ -75,4 +76,10 @@ def new_season(new_season_id, N=52, set_as_default=True):
 
 
 if __name__=='__main__':
-    new_season('beta1', N=100)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('season_name')
+    parser.add_argument('player_count')
+    args = parser.parse_args()
+    print(f"Creating new season {args.season_name} with the top {int(args.player_count)} players")
+    new_season(args.season_name, N=int(args.player_count))
