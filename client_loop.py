@@ -14,6 +14,9 @@ from routines import create_new_stock, log_all_net_worth, log_all_net_worth_cont
 from constants import name_id, id_name
 from utils import calculate_remaining_time, get_stock_by_id, split_msg
 from visual import get_richest_investor, print_investors_gains
+from game_related import create_id_list
+from utils import get_pilimg_from_url
+from osuapi import api
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -29,11 +32,13 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 @client.event
 async def on_ready():
     print("Client loop started.")
-    update_static_stats.start()
-    seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
-    await asyncio.sleep(seconds)
-    pay_all_dividends_async.start()
-
+    # cache_discord.start()
+    cache_osu.start()
+    # update_static_stats.start()
+    # seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
+    # await asyncio.sleep(seconds)
+    # pay_all_dividends_async.start()
+    
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
@@ -153,5 +158,28 @@ async def pay_all_dividends_async():
 
     # Check for renames
     await run_blocking(update_name_id, name_id, id_name)
+
+
+@tasks.loop(minutes=5)
+async def cache_discord():
+    if not os.path.exists("cache_discord"):
+        os.makedirs("cache_discord")
+    investors = [p for p in pd.read_csv(f"{SEASON_ID}/all_investors.csv")['name']]
+    for member in client.get_guild(1218296260344414247).members:
+        if member.name in investors:
+            with open(os.path.join("cache_discord", f"{member.name}.png"), 'wb') as f:
+                f.write(await member.avatar.read())
+    print("Saved discord avatars in cache.")
+
+@tasks.loop(minutes=5)
+async def cache_osu():
+    if not os.path.exists("cache_osu"):
+        os.makedirs("cache_osu")
+    id_list = [id for id in name_id.values()]
+    for id in id_list:
+        u = api.user(id, mode='osu')
+        with open(os.path.join("cache_osu", f"{id}.png"), 'wb') as f:
+            f.write(get_pilimg_from_url(str(u.avatar_url))) #### pb ici
+    print("Saved osu avatars in cache.")
 
 client.run(discord_bot_token)
