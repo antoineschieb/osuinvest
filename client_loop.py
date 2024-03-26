@@ -34,11 +34,11 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     cache_discord.start()
-    # cache_osu.start()
-    # update_static_stats.start()
-    # seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
-    # await asyncio.sleep(seconds)
-    # pay_all_dividends_async.start()
+    cache_osu.start()
+    update_static_stats.start()
+    seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
+    await asyncio.sleep(seconds)
+    pay_all_dividends_async.start()
     
 
 @tasks.loop(seconds=300)
@@ -169,7 +169,7 @@ async def cache_discord():
     guild = client.get_guild(587790834754125868)
     for member in guild.members:
         if member.name in investors:
-            im = (get_pilimg_from_url(member.avatar.url))
+            im = get_pilimg_from_url(member.avatar.url)
             im.save(f"cache_discord/{member.name}.png") # pb pour eux qui ont pas de pp
     print("Saved discord avatars in cache.")
 
@@ -181,8 +181,8 @@ async def cache_osu():
     id_list = [id for id in name_id.values()]
     for id in id_list:
         u = api.user(id, mode='osu')
-        with open(os.path.join("cache_osu", f"{id}.png"), 'wb') as f:
-            f.write(get_pilimg_from_url(str(u.avatar_url))) #### pb ici
+        im = get_pilimg_from_url(u.avatar_url)
+        im.save(f"cache_osu/{id}.png") # might not work properly
     print("Saved osu avatars in cache.")
 
 client.run(discord_bot_token)
