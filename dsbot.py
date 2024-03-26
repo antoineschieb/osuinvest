@@ -525,7 +525,9 @@ async def generate_investorsjson(ctx):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     for x in df.index:
         user = discord.utils.get(ctx.guild.members, name=x)
-        print(user.id)
+        if user is not None:
+            print(x)
+            print(user.id)
 
 
 if __name__ == "__main__":
