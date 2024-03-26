@@ -3,7 +3,7 @@ import functools
 import typing
 import discord
 import pandas as pd
-from bank import check_for_alerts, pay_all_dividends
+from bank import check_for_alerts, check_for_zero_tax_alerts, pay_all_dividends
 from constants import FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio

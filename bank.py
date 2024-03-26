@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 import pandas as pd
-from constants import SEASON_ID, name_id, id_name
+from constants import SEASON_ID, name_id, id_name, investor_uuid, uuid_investor
 from formulas import compute_tax_applied, valuate, get_dividend_yield
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_stock, log_transaction, update_zta
@@ -165,5 +165,18 @@ def check_for_alerts():
     return ret_strs
 
 def check_for_zero_tax_alerts():
-
+    ret_strs = []
+    df_zta = pd.read_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index_col=['investor','stock'])
+    df_zta['last_bought'] = pd.to_datetime(df_zta['last_bought'], format="ISO8601")
+    indices_to_drop = []
+    now = datetime.now()
+    for inv,stock_id in df_zta.index:
+        last_bought = df_zta.loc[(inv,stock_id),'last_bought']
+        if now - last_bought > timedelta(days=4):
+            # remove line from file
+            indices_to_drop.append((inv,stock_id))
+            # Generate return message
+            ret_strs.append(f"@<{investor_uuid[inv]}>, you can now sell {id_name[stock_id]} for 0.0% tax!")
+    df_zta = df_zta.drop(index=indices_to_drop)
+    df_zta.to_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index=['investor','stock'])
     return ret_strs
