@@ -107,7 +107,7 @@ async def market(ctx: commands.Context, *args):
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
-            if sortby not in ['market_cap','value','evolution','dividend']:
+            if sortby not in ['market_cap','m','value','v','evolution','e','dividend','d']:
                 raise NameError
         return n_hours, n_days, sortby
     try:

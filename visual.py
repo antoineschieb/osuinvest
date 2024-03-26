@@ -172,12 +172,16 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
     df['evolution'] = df.apply(lambda x: 0 if x.value_previous==0 else (x.value - x.value_previous)/x.value_previous, axis=1)
 
-    # Link argument with column name
+    # -sortby : Link argument with column name
     args_colname = {'value':'value',
+                    'v':'value',
                     'evolution':'evolution',
+                    'e':'evolution',
                     'market_cap':'market_cap',
                     'marketcap':'market_cap',
-                    'dividend':'dividend_yield'}
+                    'm':'market_cap',
+                    'dividend':'dividend_yield',
+                    'd':'dividend_yield'}
     df = df.sort_values(by=args_colname[sortby], ascending=False)
 
     # Beautify some values
