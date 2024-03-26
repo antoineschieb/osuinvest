@@ -4,7 +4,7 @@ import typing
 import discord
 import pandas as pd
 from bank import check_for_alerts, check_for_zero_tax_alerts, pay_all_dividends
-from constants import FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
+from constants import ALERTS_CHANNEL_ID, FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
@@ -92,19 +92,21 @@ async def update_static_stats():
                 await user.add_roles(role, reason='Added automatically for having highest net worth')      
                 await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
+
+        alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
         # Check for alerts
         ret_strs = await run_blocking(check_for_alerts)
         for s in ret_strs:
             print(s)
             # s = "```"+s+"```"
-            await channel.send(s)
+            await alerts_channel.send(s)
 
         # Check for zero tax alerts
         ret_strs = await run_blocking(check_for_zero_tax_alerts)
         for s in ret_strs:
             print(s)
             # s = "```"+s+"```"
-            await channel.send(s)
+            await alerts_channel.send(s)
 
 
     except Exception as e:
