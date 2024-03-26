@@ -92,12 +92,21 @@ async def update_static_stats():
                 await user.add_roles(role, reason='Added automatically for having highest net worth')      
                 await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
-        # Now check for alerts
+        # Check for alerts
         ret_strs = await run_blocking(check_for_alerts)
         for s in ret_strs:
             print(s)
             # s = "```"+s+"```"
             await channel.send(s)
+
+        # Check for zero tax alerts
+        ret_strs = await run_blocking(check_for_zero_tax_alerts)
+        for s in ret_strs:
+            print(s)
+            # s = "```"+s+"```"
+            await channel.send(s)
+
+
     except Exception as e:
         print(e)
     return 

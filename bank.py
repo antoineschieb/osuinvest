@@ -3,7 +3,7 @@ import pandas as pd
 from constants import SEASON_ID, name_id, id_name
 from formulas import compute_tax_applied, valuate, get_dividend_yield
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
-from routines import update_buyer, update_stock, log_transaction
+from routines import update_buyer, update_stock, log_transaction, update_zta
 
 
 def calc_price(buyer, stock, quantity: float, return_tax=False):
@@ -60,6 +60,9 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     update_stock(stock)
 
     log_transaction(buyer_name, stock_name, quantity)
+
+    if quantity > 0 and buyer.zero_tax_alerts == 1:
+        update_zta(buyer_name, stock_name, datetime.now())
 
     return f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of **{id_name[stock_name]}** for ${abs(transaction_price)} !"
 
@@ -159,4 +162,8 @@ def check_for_alerts():
                 indices_to_drop.append(x)
         df_alerts = df_alerts.drop(index=indices_to_drop)
     df_alerts.to_csv(f"{SEASON_ID}/alerts.csv", index="alert_id")
+    return ret_strs
+
+def check_for_zero_tax_alerts():
+
     return ret_strs

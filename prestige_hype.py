@@ -25,9 +25,9 @@ def compute_hype(x: pd.Series) -> float:
         2.0 * x.rank_current_to_highest_ever +\
         1.5 * x.last_month_activity +\
         1.5 * x.activity +\
-        1.0 * x.scores_recent_count +\
-        1.0 * x.is_silenced +\
-        1.0 * x.is_active        
+        0.4 * x.scores_recent_count +\
+        0.3 * x.is_silenced +\
+        0.2 * x.is_active        
     return h
 
 

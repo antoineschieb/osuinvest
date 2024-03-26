@@ -22,6 +22,7 @@ def get_stock_by_id(name: int) -> pd.Series:
 
 def get_investor_by_name(name: str) -> pd.Series:
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    df = df.astype({"cash_balance": float, "zero_tax_alerts": int})
     if name not in df.index:
         return f'ERROR: Unknown investor: {name}'
     x = df.loc[name,:]
@@ -31,15 +32,22 @@ def get_investor_by_name(name: str) -> pd.Series:
 def get_portfolio(investor: str) -> pd.DataFrame:
     transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+    transac_hist['datetime'] = pd.to_datetime(transac_hist['datetime'], format="ISO8601")
     transac_hist = transac_hist[transac_hist['investor'] == investor]
 
-    pf = pd.DataFrame(columns=['stock_name','shares_owned'])
+
+    pf = pd.DataFrame(columns=['stock_name','shares_owned','last_bought'])
     pf = pf.set_index('stock_name')
     for stock_ever_owned in transac_hist['stock_id'].unique():
         all_trades_on_stock = transac_hist[transac_hist['stock_id']==stock_ever_owned]
+        # Shares owned
         shares_owned = sum(all_trades_on_stock['quantity'])
+
+        # Last bought
+        only_positive = all_trades_on_stock[all_trades_on_stock['quantity'] > 0]
+        last_bought = max(only_positive['datetime'])
         if shares_owned > 0:
-            pf.loc[stock_ever_owned] = shares_owned
+            pf.loc[stock_ever_owned] = shares_owned, last_bought
     return pf
 
 

@@ -38,7 +38,7 @@ def new_season(new_season_id, N=52, set_as_default=True):
 
     with open(f"{new_season_id}/all_investors.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["name","cash_balance"])
+        writer.writerow(["name","cash_balance","zero_tax_alerts"])
 
     with open(f"{new_season_id}/all_stocks_dynamic.csv", "w", newline='') as file:
         writer = csv.writer(file)
@@ -63,6 +63,10 @@ def new_season(new_season_id, N=52, set_as_default=True):
     with open(f"{new_season_id}/transactions_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['transaction_id','investor','stock_id','quantity','datetime'])
+    
+    with open(f"{new_season_id}/zero_tax_alerts.csv", "w", newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['investor','stock','last_bought'])
 
     # Finally, change season_id in config json
     if set_as_default:

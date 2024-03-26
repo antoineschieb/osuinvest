@@ -8,7 +8,7 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import get_stock_by_id
+from utils import get_portfolio, get_stock_by_id
 
 
 def refresh_player_data_raw(verbose=False):
@@ -59,7 +59,7 @@ def create_new_investor(name, initial_balance):
     if name in df.index:
         return f'ERROR: You are already registered'
 
-    df.loc[name,:] = initial_balance
+    df.loc[name,:] = initial_balance, 0   # Initial balance (float), zero_tax_alerts (bool)
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
     return f'{name} has entered the market with ${initial_balance}!'
@@ -165,4 +165,35 @@ def update_name_id(name_id, id_name):
         json.dump(name_id , fp)
     with open(f"{constants.SEASON_ID}/id_name.json", "w") as fp:
         json.dump(id_name , fp) 
+    return
+
+
+def update_zero_tax_preferences(investor, zero_tax_bool):
+    # Step 1: update the bool in all_investors.csv
+    df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
+    df.loc[investor,'zero_tax_alerts'] = zero_tax_bool
+    df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
+
+    # Step 2: Add or remove all alerts for investor's current stocks in zta.csv
+    if zero_tax_bool == 0:
+        # Remove all (open by hand)
+        df_zta = pd.read_csv(f"{constants.SEASON_ID}/zero_tax_alerts.csv", index_col=['investor','stock'])
+        df_zta['last_bought'] = pd.to_datetime(df_zta['last_bought'], format="ISO8601")
+        df_zta = df_zta.drop(investor)
+        df_zta.to_csv(f"{constants.SEASON_ID}/zero_tax_alerts.csv", index=['investor','stock'])
+    
+    elif zero_tax_bool == 1:
+        # Add all (use existing update_zta function for the sake of clarity)
+        pf = get_portfolio(investor)
+        for stock_id in pf.index:
+            last_bought = pf.loc[stock_id,'last_bought']
+            update_zta(investor, stock_id, last_bought)
+    return
+
+
+def update_zta(investor, stock_id, last_bought):
+    df = pd.read_csv(f"{constants.SEASON_ID}/zero_tax_alerts.csv", index_col=['investor','stock'])
+    df['last_bought'] = pd.to_datetime(df['last_bought'], format="ISO8601")
+    df.loc[(investor,stock_id),'last_bought'] = last_bought
+    df.to_csv(f"{constants.SEASON_ID}/zero_tax_alerts.csv", index=['investor','stock'])
     return
