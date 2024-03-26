@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import functools
+import json
 from math import ceil
 import re
 import time
@@ -523,12 +524,18 @@ async def pingmezerotax(ctx: commands.Context, *args):
 @bot.command()
 async def generate_investorsjson(ctx):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    d0 = dict()
+    d1 = dict()
     for x in df.index:
         user = discord.utils.get(ctx.guild.members, name=x)
         if user is not None:
-            print(x)
-            print(user.id)
+            d0[x] = user.id
+            d1[user.id] = x
+    with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
+        json.dump(d0, outfile)
 
+    with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
+        json.dump(d1, outfile)
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
