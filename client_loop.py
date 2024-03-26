@@ -33,8 +33,6 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 @client.event
 async def on_ready():
     print("Client loop started.")
-    cache_discord.start()
-    cache_osu.start()
     update_static_stats.start()
     seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
     await asyncio.sleep(seconds)
@@ -80,7 +78,7 @@ async def update_static_stats():
         print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
         channel = await client.fetch_channel(FEED_CHANNEL_ID)
-
+        
         # Find richest investor
         elon, net_worth = await run_blocking(get_richest_investor)
         guild = client.get_guild(GUILD_ID)
@@ -114,6 +112,8 @@ async def update_static_stats():
             # s = "```"+s+"```"
             await alerts_channel.send(s)
 
+        # update discord avatar cache
+        update_cache_discord()
 
     except Exception as e:
         print(e)
@@ -160,29 +160,18 @@ async def pay_all_dividends_async():
     # Check for renames
     await run_blocking(update_name_id, name_id, id_name)
 
-
-@tasks.loop(minutes=5)
-async def cache_discord():
+def update_cache_discord():
     if not os.path.exists("cache_discord"):
         os.makedirs("cache_discord")
-    investors = [p for p in pd.read_csv(f"{SEASON_ID}/all_investors.csv")['name']]
-    guild = client.get_guild(587790834754125868)
-    for member in guild.members:
-        if member.name in investors:
-            im = get_pilimg_from_url(member.avatar.url)
-            im.save(f"cache_discord/{member.name}.png") # pb pour eux qui ont pas de pp
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    investors = df.index
+    guild = client.get_guild(GUILD_ID)
+    for investor in investors:
+        user = discord.utils.get(guild.members, name=investor)
+        if user is not None:
+            im = get_pilimg_from_url(user.display_avatar)
+            im.save(f"cache_discord/{investor}.png")
+        
     print("Saved discord avatars in cache.")
-
-
-@tasks.loop(minutes=5)
-async def cache_osu():
-    if not os.path.exists("cache_osu"):
-        os.makedirs("cache_osu")
-    id_list = [id for id in name_id.values()]
-    for id in id_list:
-        u = api.user(id, mode='osu')
-        im = get_pilimg_from_url(u.avatar_url)
-        im.save(f"cache_osu/{id}.png") # might not work properly
-    print("Saved osu avatars in cache.")
 
 client.run(discord_bot_token)
