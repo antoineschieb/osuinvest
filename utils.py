@@ -6,6 +6,7 @@ from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
 from constants import SEASON_ID, name_id, id_name
+import os
 
 
 def get_stock_by_id(name: int) -> pd.Series:
@@ -162,3 +163,15 @@ def pretty_time_delta(seconds):
         return '%s%dm %ds' % (sign_string, minutes, seconds)
     else:
         return '%s%ds' % (sign_string, seconds)
+    
+def get_avatar_from_discord_cache(investor: str):
+    if os.path.exists(f'cache_discord/{investor}.png'):
+        return Image.load(f'cache_discord/{investor}.png')
+    else:
+        return None
+    
+def get_avatar_from_osu_cache(stock: str):
+    if os.path.exists(f'cache_osu/{stock}.png'):
+        return Image.load(f'cache_osu/{stock}.png')
+    else:
+        return None
