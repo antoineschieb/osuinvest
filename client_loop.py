@@ -8,6 +8,7 @@ from constants import ALERTS_CHANNEL_ID, FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
+from discord import Member, Guild
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
@@ -32,8 +33,8 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 @client.event
 async def on_ready():
     print("Client loop started.")
-    # cache_discord.start()
-    cache_osu.start()
+    cache_discord.start()
+    # cache_osu.start()
     # update_static_stats.start()
     # seconds = calculate_remaining_time(datetime.now().time(), time(hour=20))
     # await asyncio.sleep(seconds)
@@ -165,11 +166,13 @@ async def cache_discord():
     if not os.path.exists("cache_discord"):
         os.makedirs("cache_discord")
     investors = [p for p in pd.read_csv(f"{SEASON_ID}/all_investors.csv")['name']]
-    for member in client.get_guild(1218296260344414247).members:
+    guild = client.get_guild(587790834754125868)
+    for member in guild.members:
         if member.name in investors:
-            with open(os.path.join("cache_discord", f"{member.name}.png"), 'wb') as f:
-                f.write(await member.avatar.read())
+            im = (get_pilimg_from_url(member.avatar.url))
+            im.save(f"cache_discord/{member.name}.png") # pb pour eux qui ont pas de pp
     print("Saved discord avatars in cache.")
+
 
 @tasks.loop(minutes=5)
 async def cache_osu():
