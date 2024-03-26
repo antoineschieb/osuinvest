@@ -13,10 +13,10 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, SEASON_ID, id_name, name_id
 from creds import discord_bot_token
 from formulas import valuate
-from routines import create_alert, create_new_investor
+from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
 from utils import get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
@@ -127,7 +127,7 @@ async def market(ctx: commands.Context, *args):
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
-    ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)),dpi=70)
+    ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)), dpi=70)
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
 
 
@@ -497,6 +497,35 @@ async def adminsell(ctx: commands.Context, *args):
     await ctx.reply(ret_str)
     await broadcast(ret_str)
     return     
+
+
+@bot.command()
+async def pingmezerotax(ctx: commands.Context, *args):
+    def parse_args(args, ctx):
+        args = list(args)
+        if len(args)!=1:
+            raise ValueError(f"Could not parse arguments.\nUsage: `$pingmezerotax < ON | OFF >`")
+        a = args[0].lower()
+        if a not in ['on','off']:
+            raise ValueError(f"Could not parse arguments.\nUsage: `$pingmezerotax < ON | OFF >`")
+        return 1 if a=='on' else 0
+    try:
+        zero_tax_bool = parse_args(args, ctx)
+    except ValueError as e:
+        await ctx.reply(e)
+        return
+    
+    await run_blocking(update_zero_tax_preferences, ctx.message.author.name, zero_tax_bool)
+    await ctx.reply(f"You will {'' if zero_tax_bool else 'not '}be pinged when your stocks can be sold for 0.0% tax.")
+
+
+
+@bot.command()
+async def generate_investorsjson(ctx):
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    for x in df.index:
+        user = discord.utils.get(ctx.guild.members, name=x)
+        print(user.id)
 
 
 if __name__ == "__main__":
