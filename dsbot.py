@@ -580,21 +580,32 @@ async def pingmezerotax(ctx: commands.Context, *args):
 
 
 
-@bot.command()
-async def generate_investorsjson(ctx):
-    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
-    d0 = dict()
-    d1 = dict()
-    for x in df.index:
-        user = discord.utils.get(ctx.guild.members, name=x)
-        if user is not None:
-            d0[x] = user.id
-            d1[user.id] = x
-    with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
-        json.dump(d0, outfile)
+# @bot.command()
+# async def generate_investorsjson(ctx):
+#     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+#     d0 = dict()
+#     d1 = dict()
+#     for x in df.index:
+#         user = discord.utils.get(ctx.guild.members, name=x)
+#         if user is not None:
+#             d0[x] = user.id
+#             d1[user.id] = x
+#     with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
+#         json.dump(d0, outfile)
 
-    with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
-        json.dump(d1, outfile)
+#     with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
+#         json.dump(d1, outfile)
+
+
+@bot.command()
+async def retrieve_hist(ctx: commands.Context):
+    messages = ctx.channel.history(limit=1000)
+    with open("test.txt", "a", encoding="utf-8") as myfile:
+        async for m in messages:
+            if 'share(s)' in m.content:
+                myfile.write(m.content + '\n')
+    print("done")
+    
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
