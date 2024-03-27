@@ -37,77 +37,77 @@ async def on_ready():
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
-    try:
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
-        await run_blocking(refresh_player_data_raw)
-        df = await run_blocking(compute_prestige_and_hype)
-        df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
-        df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
-        df_updates_appendice = df_updates_appendice.set_index('update_id')
+    # try:
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
+    await run_blocking(refresh_player_data_raw)
+    df = await run_blocking(compute_prestige_and_hype)
+    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
+    df_updates_appendice = df_updates_appendice.set_index('update_id')
 
-        for i,x in enumerate(df.index):
-            pp,p,h = df.loc[x,:]
-            stock = await run_blocking(get_stock_by_id, x)
-            if stock is not None:
-                stock.raw_skill = pp
-                stock.trendiness = h
-                stock.prestige = p
+    for i,x in enumerate(df.index):
+        pp,p,h = df.loc[x,:]
+        stock = await run_blocking(get_stock_by_id, x)
+        if stock is not None:
+            stock.raw_skill = pp
+            stock.trendiness = h
+            stock.prestige = p
 
-                df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
+            df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
 
-                await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
-            else:
-                print("Need to create new stock....")
-                await run_blocking(create_new_stock, x, pp, h, p)
-        
-        # update stock prices
-        df_updates = pd.concat([df_updates, df_updates_appendice])
-        df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
-        df_updates = df_updates.sort_values(by="datetime")
-        df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
-
-        # log all_net_worth (continuous)
-        await run_blocking(log_all_net_worth_continuous)
-        print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
-
-        channel = await client.fetch_channel(FEED_CHANNEL_ID)
-
-        # Find richest investor
-        elon, net_worth = await run_blocking(get_richest_investor)
-        guild = client.get_guild(GUILD_ID)
-        user = discord.utils.get(guild.members, name=elon)
-        if user is None:
-            print(f"ERROR: Unknown user {elon}")    
+            await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
         else:
-            role = discord.utils.get(guild.roles, name="Elon Musk")
-            if role not in user.roles:
-                # First, remove current richest investor role
-                for m in role.members:
-                    await m.remove_roles(role, reason=f'Has been taken over by {elon}!')
+            print("Need to create new stock....")
+            await run_blocking(create_new_stock, x, pp, h, p)
+    
+    # update stock prices
+    df_updates = pd.concat([df_updates, df_updates_appendice])
+    df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
+    df_updates = df_updates.sort_values(by="datetime")
+    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
 
-                # Then, give role to the new richest investor
-                await user.add_roles(role, reason='Added automatically for having highest net worth')      
-                await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
+    # log all_net_worth (continuous)
+    await run_blocking(log_all_net_worth_continuous)
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
+
+    channel = await client.fetch_channel(FEED_CHANNEL_ID)
+
+    # Find richest investor
+    elon, net_worth = await run_blocking(get_richest_investor)
+    guild = client.get_guild(GUILD_ID)
+    user = discord.utils.get(guild.members, name=elon)
+    if user is None:
+        print(f"ERROR: Unknown user {elon}")    
+    else:
+        role = discord.utils.get(guild.roles, name="Elon Musk")
+        if role not in user.roles:
+            # First, remove current richest investor role
+            for m in role.members:
+                await m.remove_roles(role, reason=f'Has been taken over by {elon}!')
+
+            # Then, give role to the new richest investor
+            await user.add_roles(role, reason='Added automatically for having highest net worth')      
+            await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
 
-        alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
-        # Check for alerts
-        ret_strs = await run_blocking(check_for_alerts)
-        for s in ret_strs:
-            print(s)
-            # s = "```"+s+"```"
-            await alerts_channel.send(s)
+    alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
+    # Check for alerts
+    ret_strs = await run_blocking(check_for_alerts)
+    for s in ret_strs:
+        print(s)
+        # s = "```"+s+"```"
+        await alerts_channel.send(s)
 
-        # Check for zero tax alerts
-        ret_strs = await run_blocking(check_for_zero_tax_alerts)
-        for s in ret_strs:
-            print(s)
-            # s = "```"+s+"```"
-            await alerts_channel.send(s)
+    # Check for zero tax alerts
+    ret_strs = await run_blocking(check_for_zero_tax_alerts)
+    for s in ret_strs:
+        print(s)
+        # s = "```"+s+"```"
+        await alerts_channel.send(s)
 
 
-    except Exception as e:
-        print(e)
+    # except Exception as e:
+    #     print(e)
     return 
 
 

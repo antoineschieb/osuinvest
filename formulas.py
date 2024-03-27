@@ -35,7 +35,7 @@ def get_stocks_table():
 def get_net_worth(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)
     net_worth = investor.cash_balance
-    portfolio = get_portfolio(investor_name)
+    portfolio = get_portfolio(investor_name, short=True)
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
         stock = get_stock_by_id(s)

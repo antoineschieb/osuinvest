@@ -29,7 +29,7 @@ def get_investor_by_name(name: str) -> pd.Series:
     return x
 
 
-def get_portfolio(investor: str) -> pd.DataFrame:
+def get_portfolio(investor: str, short=False) -> pd.DataFrame:
     transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
     transac_hist['datetime'] = pd.to_datetime(transac_hist['datetime'], format="ISO8601")
@@ -44,16 +44,20 @@ def get_portfolio(investor: str) -> pd.DataFrame:
         # Shares owned
         shares_owned = sum(all_trades_on_stock['quantity'])
 
-        # Last bought
-        only_positive = all_trades_on_stock[all_trades_on_stock['quantity'] > 0]
-        last_bought = max(only_positive['datetime'])
+        if not short:
+            # Last bought
+            only_positive = all_trades_on_stock[all_trades_on_stock['quantity'] > 0]
+            last_bought = max(only_positive['datetime'])
         
-        # Bought for
-        quantities = list(all_trades_on_stock['quantity'])
-        datetimes = list(all_trades_on_stock['datetime'])
-        prices = list(all_trades_on_stock['price'])
-        trade_hist = list(zip(quantities, datetimes, prices))
-        p = compute_price_bought_for(trade_hist)
+            # Bought for
+            quantities = list(all_trades_on_stock['quantity'])
+            datetimes = list(all_trades_on_stock['datetime'])
+            prices = list(all_trades_on_stock['price'])
+            trade_hist = list(zip(quantities, datetimes, prices))
+            p = compute_price_bought_for(trade_hist)
+        else:
+            last_bought = 0
+            p = 0
 
         # Write
         if shares_owned > 0:
