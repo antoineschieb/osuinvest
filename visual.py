@@ -1,6 +1,7 @@
 import math
 import matplotlib
 from matplotlib.font_manager import FontProperties
+import mplcyberpunk
 import numpy as np
 matplotlib.use('agg')  # For asynchronous use
 import matplotlib.pyplot as plt
@@ -61,8 +62,8 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
+
     plt.rcParams['font.family'] = "Aller"
-    # plt.rcParams.update({'font.size': 10})
     
     font = {'family' : 'Aller',
             'weight' : 'bold',
@@ -75,6 +76,8 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
              "axes.labelcolor" : "w",
              "axes.edgecolor" : "w"}
     plt.rcParams.update(params)
+
+    
 
     stock = name_id[stock_str_name.lower()] 
 
@@ -107,8 +110,12 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ymin = min(df['value'])
     ymax = max(df['value'])
     d = ymax - ymin + 0.1
+    # '#254D32'
+    # stronger version: #0f4d24
+    # stronger & brighter version:  #18803b
     
-    ax = df.plot.area(x='datetime', y='value', color='#254D32',ylim=(ymin-0.2*d, ymax+0.2*d), stacked=False, title=f'{time_str}')
+    fig, ax = plt.subplots()
+    ax.plot(df['datetime'], df['value'], color='#18803b')#,ylim=(ymin-0.2*d, ymax+0.2*d), title=f'{time_str}')
     real_x_span = max(df['datetime']) - min(df['datetime'])
 
     if real_x_span < datetime.timedelta(hours=24):
@@ -122,10 +129,13 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     ax.xaxis.label.set_color('white')
     ax.set_xlabel(" ")
     ax.title.set_color('white')
-    ax.get_legend().remove()
+    # ax.get_legend().remove()
     ax.margins(x=0)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
+    
+    mplcyberpunk.make_lines_glow(ax)
+    mplcyberpunk.add_gradient_fill(ax, alpha_gradientglow=0.5)
 
     plt.savefig(f'plots/{stock_str_name}.png')
     plt.close()

@@ -1,6 +1,10 @@
 from math import sqrt
 from urllib.request import Request, urlopen
 from io import BytesIO
+
+import mplcyberpunk
+import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 from game_related import api
 import io
 import PIL
@@ -189,14 +193,14 @@ def get_nw_plot(dates, vals, default=10000):
 
     matplotlib.rcParams['axes.prop_cycle'] = matplotlib.cycler(color=["gray", "gold", "#181D27","#00ff00"])
     matplotlib.rcParams['axes.formatter.useoffset'] = False
-    ax.plot(dates, vals, color='gold')
+    ax.plot(dates, vals, color="#fffb00")
 
-    # highest, lowest
+    # markers for highest and lowest
     if len(dates) != 0:
         ax.plot(dates[vals.index(max_v)], max_v, marker=7, markersize=20, color='lime')
-        ax.annotate(str(round(max_v,2)),  xy=(dates[vals.index(max_v)], max_v+0.05*delta), color='lime',fontsize=24)
+        ax.annotate(int(1000*(round(max_v,3))),  xy=(dates[vals.index(max_v)], max_v+0.12*delta), color='lime',fontsize=24)
         ax.plot(dates[vals.index(min_v)], min_v, marker=6, markersize=20, color='red')
-        ax.annotate(str(round(min_v,2)),  xy=(dates[vals.index(min_v)], min_v-0.05*delta), color='red',fontsize=24)
+        ax.annotate(int(1000*(round(min_v,3))),  xy=(dates[vals.index(min_v)], min_v-0.12*delta), color='red',fontsize=24)
 
     ax.set_xticklabels([])
     ax.set_xticks([])
@@ -216,6 +220,9 @@ def get_nw_plot(dates, vals, default=10000):
     display_dates = [date.strftime('%d-%b %H:%M') if date == min(dates) or date == max(dates) else "" for date in dates]
 
     plt.xticks(dates, display_dates, color='white', fontsize='20')
+
+    mplcyberpunk.make_lines_glow(ax)
+    mplcyberpunk.add_gradient_fill(ax, alpha_gradientglow=(0.05,0.2), gradient_start='bottom')
 
     fig_path = "plots/net_worth.png"
     fig.savefig(fig_path, transparent=False, bbox_inches='tight')

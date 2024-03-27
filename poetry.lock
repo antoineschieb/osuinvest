@@ -1005,6 +1005,20 @@ files = [
 traitlets = "*"
 
 [[package]]
+name = "mplcyberpunk"
+version = "0.7.1"
+description = "Add-on for Matplotlib to produce 'Cyberpunk' style plots"
+optional = false
+python-versions = "*"
+files = [
+    {file = "mplcyberpunk-0.7.1-py3-none-any.whl", hash = "sha256:09d7081ed413df253681baddebaebb5558dd143d737a695f4ed59eba9ba2cf3f"},
+    {file = "mplcyberpunk-0.7.1.tar.gz", hash = "sha256:d689560b86eacd428abb4f965df1d27249a86dbb1337666e985baf386e376194"},
+]
+
+[package.dependencies]
+matplotlib = "*"
+
+[[package]]
 name = "multidict"
 version = "6.0.5"
 description = "multidict implementation"
@@ -4808,4 +4822,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "9636df5d70c0280684b560de2e0e13e15b2432d7a86cbff0a69c09aa57324a1e"
+content-hash = "71dfaedbd638bf9729b92534775744e2ba3e96170d9e9e0d6cf5848637862f18"
