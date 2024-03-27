@@ -124,7 +124,7 @@ async def market(ctx: commands.Context, *args):
         return 
     ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
 
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
 
 
 @bot.command()
@@ -177,18 +177,14 @@ async def portfolio(ctx: commands.Context, *args):
     result = await run_blocking(print_portfolio, investor_name, n_hours=n_hours, n_days=n_days, sortby=sortby)
     ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
 
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
-
-
-
-
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
 
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
     ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)), dpi=70)
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
 
 
 @bot.command()
