@@ -74,7 +74,8 @@ async def profile(ctx: commands.Context, *args):
             else:
                 user = discord.utils.get(ctx.guild.members, name=a)
                 if user is None:
-                    raise ValueError(f"ERROR: Unknown user {a}")
+                    # raise ValueError(f"ERROR: Unknown user {a}")
+                    return a, None, n_hours, n_days
                 return a, user.display_avatar, n_hours, n_days
 
     try:
@@ -83,7 +84,10 @@ async def profile(ctx: commands.Context, *args):
         await ctx.reply(e)
         return
 
-    avatar = get_pilimg_from_url(str(display_avatar))
+    if display_avatar is not None:
+        avatar = get_pilimg_from_url(str(display_avatar))
+    else:
+        avatar = None
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar, n_hours, n_days)
     
     if ret_str.startswith('ERROR:'):
@@ -162,9 +166,9 @@ async def portfolio(ctx: commands.Context, *args):
                 u = bot.get_user(int(investor_id))               
                 return u.name, n_hours, n_days, sortby
             else:
-                user = discord.utils.get(ctx.guild.members, name=a)
-                if user is None:
-                    raise ValueError(f"ERROR: Unknown user {a}")
+                # user = discord.utils.get(ctx.guild.members, name=a)
+                # if user is None:
+                #     raise ValueError(f"ERROR: Unknown user {a}")
                 return a, n_hours, n_days, sortby
 
     try:

@@ -254,14 +254,17 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     tpl = Image.open('templates/profile_400_fond_rouge.png')
 
     # RESIZE ALL SUBLAYERS
-    avatar = avatar.resize((102,102))
-    graph = Image.open(graph_filepath).resize((360,180))
+    
+    
 
 
     # ADD ALL SUBLAYERS (GRAPH, AVATAR, PIE) TO TEMPLATE
     full = Image.new('RGB', (400, 700), color="#181D27")
-    full.paste(avatar, (27,80), avatar)
+    if avatar is not None:
+        avatar = avatar.resize((102,102))
+        full.paste(avatar, (27,80), avatar)
     full.paste(tpl, (0, 0), tpl)
+    graph = Image.open(graph_filepath).resize((360,180))
     full.paste(graph, (margin,210), graph)
     
 
@@ -324,7 +327,7 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
     cash_balance = df.loc[investor_name, 'cash_balance']
 
     # PORTFOLIO
-    pf = get_portfolio(investor_name)
+    pf = get_portfolio(investor_name, short=True)
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)

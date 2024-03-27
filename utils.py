@@ -54,6 +54,7 @@ def get_portfolio(investor: str, short=False) -> pd.DataFrame:
             datetimes = list(all_trades_on_stock['datetime'])
             prices = list(all_trades_on_stock['price'])
             trade_hist = list(zip(quantities, datetimes, prices))
+            
             p = compute_price_bought_for(trade_hist)
         else:
             last_bought = 0
