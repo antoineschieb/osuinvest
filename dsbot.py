@@ -20,7 +20,7 @@ from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
-from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
+from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
 from utils import get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
 
 
@@ -179,11 +179,7 @@ async def portfolio(ctx: commands.Context, *args):
         return 
     
     # Filter df to show only the investor's stocks
-    pf = await run_blocking(get_portfolio,investor_name)
-    result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
-    result = result.drop(columns=['key_0','last_bought'])
-    # result = result[["Stock","Market cap ($)","value","Last 7 day(s)","Dividend yield (%)","shares_owned"]]
-    result.index = np.arange(1, len(result)+1)
+    result = await run_blocking(print_portfolio, investor_name)
     ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))

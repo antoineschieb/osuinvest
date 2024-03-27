@@ -36,10 +36,11 @@ def get_portfolio(investor: str) -> pd.DataFrame:
     transac_hist = transac_hist[transac_hist['investor'] == investor]
 
 
-    pf = pd.DataFrame(columns=['stock_name','shares_owned','last_bought'])
+    pf = pd.DataFrame(columns=['stock_name','shares_owned','last_bought','bought_for'])
     pf = pf.set_index('stock_name')
     for stock_ever_owned in transac_hist['stock_id'].unique():
         all_trades_on_stock = transac_hist[transac_hist['stock_id']==stock_ever_owned]
+
         # Shares owned
         shares_owned = sum(all_trades_on_stock['quantity'])
 
@@ -48,11 +49,15 @@ def get_portfolio(investor: str) -> pd.DataFrame:
         last_bought = max(only_positive['datetime'])
         
         # Bought for
-
+        quantities = list(all_trades_on_stock['quantity'])
+        datetimes = list(all_trades_on_stock['datetime'])
+        prices = list(all_trades_on_stock['price'])
+        trade_hist = list(zip(quantities, datetimes, prices))
+        p = compute_price_bought_for(trade_hist)
 
         # Write
         if shares_owned > 0:
-            pf.loc[stock_ever_owned] = shares_owned, last_bought
+            pf.loc[stock_ever_owned] = shares_owned, last_bought, p
     return pf
 
 
@@ -173,3 +178,37 @@ def pretty_time_delta(seconds):
         return '%s%dm %ds' % (sign_string, minutes, seconds)
     else:
         return '%s%ds' % (sign_string, seconds)
+    
+# TODO: rewrite this nicely as df
+def get_stack_from_trade_hist(trade_hist):
+    stack = []  # will contain only positive values
+    for qty,tme in trade_hist:  # chronological order
+        if qty>0:
+            # add layer to stack
+            stack.append([qty,tme])
+        else:
+            # "scrape off" layers from top to bottom
+            qty_left = abs(qty)
+            while qty_left > 0:
+                top_layer_qty = stack[-1][0]
+                if qty_left > top_layer_qty:  # remove this layer and decrease qty
+                    qty_left -= top_layer_qty
+                    del stack[-1]
+                    
+                else:  #modify value of top_layer
+                    new_qty = top_layer_qty - qty_left
+                    stack[-1][0] = new_qty
+                    break   # break because we are done scraping
+    return stack
+
+def compute_price_bought_for(trade_hist):
+    trade_hist_short = [x[0:2] for x in trade_hist]
+    stack = get_stack_from_trade_hist(trade_hist_short)
+    p = 0
+    all_timestamps = [x[1] for x in trade_hist]
+    for layer in stack:
+        i = all_timestamps.index(layer[1])
+        inferred_stock_value = trade_hist[i][2] / trade_hist[i][0]
+        price_of_this_layer = inferred_stock_value * layer[0]
+        p+=price_of_this_layer
+    return p

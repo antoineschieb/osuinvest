@@ -104,7 +104,8 @@ def get_trade_history(buyer_name, stock_id):
     filtered = history[(history['investor']==buyer_name) & (history['stock_id']==stock_id)]
     quantities = list(filtered['quantity'])
     datetimes = list(filtered['datetime'])
-    return list(zip(quantities, datetimes))
+    prices = list(filtered['price'])
+    return list(zip(quantities, datetimes, prices))
 
 
 def add_pending_transaction(investor, stock_id, quantity):

@@ -1,6 +1,7 @@
 import math
 import matplotlib
 from matplotlib.font_manager import FontProperties
+import numpy as np
 matplotlib.use('agg')  # For asynchronous use
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,7 +15,7 @@ import matplotlib.dates as mdates
 
 from constants import SEASON_ID, name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_net_worth, get_stocks_table, valuate
-from utils import get_balance, get_ownership, get_stock_by_id, get_stock_value_timedelta, split_df
+from utils import get_balance, get_ownership, get_portfolio, get_stock_by_id, get_stock_value_timedelta, split_df
 
 
 
@@ -131,7 +132,12 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     return f'plots/{stock_str_name}.png'
 
 
-def beautify_float(a: float) :
+def beautify_float(a: float):
+    char = '+' if a>=0 else '-'
+    return f'{char}{abs(round(a,2))}'
+
+
+def beautify_float_percentage(a: float):
     char = '+' if a>=0 else '-'
     a *= 100
     return f'{char} {abs(round(a,2))}%'
@@ -185,7 +191,7 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     df = df.sort_values(by=args_colname[sortby], ascending=False)
 
     # Beautify some values
-    df['evolution'] = df.apply(lambda x: beautify_float(x.evolution), axis=1)
+    df['evolution'] = df.apply(lambda x: beautify_float_percentage(x.evolution), axis=1)
     df['market_cap'] = df.apply(lambda x: beautify_big_number(x.market_cap), axis=1)
 
     # Rename columns nicely
@@ -308,6 +314,7 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
                 t = ax.text(x=x, y=row+0.5, s=s, va='center', ha=ha, weight=weight, fontsize=fontsize)
                 
                 t.set_color('white')
+                # if text in cell is str
                 if isinstance(elem, str):
                     if elem[0] == '+' and i!=0:
                         t.set_color('green')
@@ -349,3 +356,18 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
         plt.close()
         ret_files.append(dest_file)
     return ret_files
+
+
+def print_portfolio(investor):
+    df = print_market()
+    pf = get_portfolio(investor)
+    result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
+    result['Current total value ($)'] = result['value'] * result['shares_owned']
+    result['Profit ($)'] = result['Current total value ($)'] - result['bought_for']
+    result['Profit ($)'] = result.apply(lambda x: beautify_float(x['Profit ($)']), axis=1)
+    result = result.drop(columns=['key_0','last_bought','Market cap ($)',])
+    result = result.rename(columns={'shares_owned': "Shares owned",
+                                    'bought_for': "Bought for ($)",})
+    result.index = np.arange(1, len(result)+1)
+    result = result.round(2)
+    return result
