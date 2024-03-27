@@ -597,14 +597,14 @@ async def pingmezerotax(ctx: commands.Context, *args):
 #         json.dump(d1, outfile)
 
 
-@bot.command()
-async def retrieve_hist(ctx: commands.Context):
-    messages = ctx.channel.history(limit=1000)
-    with open("test.txt", "a", encoding="utf-8") as myfile:
-        async for m in messages:
-            if 'share(s)' in m.content:
-                myfile.write(m.content + '\n')
-    print("done")
+# @bot.command()
+# async def retrieve_hist(ctx: commands.Context):
+#     messages = ctx.channel.history(limit=1000)
+#     with open("test.txt", "a", encoding="utf-8") as myfile:
+#         async for m in messages:
+#             if 'share(s)' in m.content:
+#                 myfile.write(m.content + '\n')
+#     print("done")
     
 
 if __name__ == "__main__":
