@@ -77,7 +77,7 @@ def pay_all_dividends():
     ret_str = 'Paying all dividends...\n'
     ret_dict = {}
     for investor_name in df.index:        
-        portfolio = get_portfolio(investor_name)
+        portfolio = get_portfolio(investor_name, short=True)
         investor = get_investor_by_name(investor_name)
         sum_of_dividends = 0
         for s in portfolio.index:
