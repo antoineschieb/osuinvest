@@ -20,7 +20,7 @@ def calc_price(buyer, stock, quantity: float, return_tax=False):
             return f'ERROR: The total number of available shares {stock.total_shares - stock.sold_shares} is not sufficient to perform this transaction.'
     elif quantity < 0:
         # check if seller has enough shares, and then compute transaction price (with tax)
-        portfolio = get_portfolio(buyer.name)
+        portfolio = get_portfolio(buyer.name, short=True)
         if stock.name not in portfolio.index:
             return f'ERROR: {buyer.name} does not have any {id_name[stock.name]} shares yet.'
 

@@ -72,7 +72,8 @@ def tax_from_datetime(d):
 
 def compute_tax_applied(trade_hist, quantity_to_sell):
     assert quantity_to_sell>0
-
+    if len(trade_hist[0])==3:
+        trade_hist = [x[0:2] for x in trade_hist]
     # 1-create stack where 1 layer = 1 quantity of shares owned and an associated datetime
     stack = []  # will contain only positive values
     for qty,tme in trade_hist:  # chronological order
