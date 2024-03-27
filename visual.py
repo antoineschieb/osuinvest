@@ -153,7 +153,7 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
         return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
     
     if n_days>0:
-        new_col_str += f'{n_days} day(s) '
+        new_col_str += f'{n_days} day(s)'
     if n_hours>0:
         new_col_str += f'{n_hours} hour(s)'
     
@@ -275,11 +275,13 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
     df['row_index'] = range(1, len(df)+1)
     list_of_dfs = split_df(df, rows_per_page)
     ret_files = []
-    
     for page,df in enumerate(list_of_dfs):
         df = df.reindex(index=df.index[::-1])
         # set the number of rows and cols for our table
-        rows = rows_per_page
+        if len(list_of_dfs) > 1:
+            rows = rows_per_page
+        else:
+            rows = len(df)
         cols = len(list(df.columns)) - 1   # -1 because we have one hidden column (row_index)
 
         # first, we'll create a new figure and axis object

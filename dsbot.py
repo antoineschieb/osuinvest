@@ -7,6 +7,7 @@ import time
 import typing
 import discord
 from discord.ext import commands
+import numpy as np
 import pandas as pd
 
 from discord.ui import Button, View
@@ -124,6 +125,73 @@ async def market(ctx: commands.Context, *args):
     ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+
+
+@bot.command()
+async def portfolio(ctx: commands.Context, *args):
+    def parse_args(args, ctx):
+        args = list(args)
+
+        n_hours=0
+        n_days=0
+        sortby='market_cap'
+        if '-d' in args:
+            idx = args.index('-d')
+            n_days = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        if '-h' in args:
+            idx = args.index('-h')
+            n_hours = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        if '-sortby' in args:
+            idx = args.index('-sortby')
+            sortby = args[idx+1]
+            if sortby not in ['market_cap','m','value','v','evolution','e','dividend','d']:
+                raise NameError
+            args.pop(idx+1)
+            args.pop(idx)
+        
+        if len(args) <= 0:
+            return ctx.message.author.name, n_hours, n_days, sortby
+        else:
+            a = args[0]
+            if a[0] == '<' and a[1] == '@' and a[-1] == '>':
+                investor_id = a.replace("<","").replace(">","").replace("@","")
+                u = bot.get_user(int(investor_id))               
+                return u.name, n_hours, n_days, sortby
+            else:
+                user = discord.utils.get(ctx.guild.members, name=a)
+                if user is None:
+                    raise ValueError(f"ERROR: Unknown user {a}")
+                return a, n_hours, n_days, sortby
+
+    try:
+        investor_name,  n_hours, n_days, sortby = parse_args(args, ctx)
+    except ValueError as e:
+        await ctx.reply(e)
+        return
+    
+    df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    if isinstance(df,str) and df.startswith('ERROR:'):
+        await ctx.reply(df)
+        return 
+    
+    # Filter df to show only the investor's stocks
+    pf = await run_blocking(get_portfolio,investor_name)
+    result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
+    result = result.drop(columns=['key_0','last_bought'])
+    # result = result[["Stock","Market cap ($)","value","Last 7 day(s)","Dividend yield (%)","shares_owned"]]
+    result.index = np.arange(1, len(result)+1)
+    ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
+
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+
+
+
+
+
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):

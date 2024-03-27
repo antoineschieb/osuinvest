@@ -59,7 +59,7 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     stock.sold_shares += quantity
     update_stock(stock)
 
-    log_transaction(buyer_name, stock_name, quantity)
+    log_transaction(buyer_name, stock_name, quantity, transaction_price)
 
     if quantity > 0 and buyer.zero_tax_alerts == 1:
         update_zta(buyer_name, stock_name, datetime.now())

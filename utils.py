@@ -46,6 +46,11 @@ def get_portfolio(investor: str) -> pd.DataFrame:
         # Last bought
         only_positive = all_trades_on_stock[all_trades_on_stock['quantity'] > 0]
         last_bought = max(only_positive['datetime'])
+        
+        # Bought for
+
+
+        # Write
         if shares_owned > 0:
             pf.loc[stock_ever_owned] = shares_owned, last_bought
     return pf
@@ -72,16 +77,19 @@ def get_balance(investor_name: str) -> float:
     return round(investor.cash_balance,2)
 
 
-def get_stock_value_timedelta(stock_name, td: timedelta, history_time_filtered=None):
+def get_stock_value_timedelta(stock_name, td: timedelta, history=None, history_time_filtered=None):
     # if history_time_filtered is not None, td will be ignored
 
     if isinstance(stock_name, str):
         stock_name = name_id[stock_name.lower()]
-    if history_time_filtered is None:
-        d = datetime.now() - td
+    
+    if history is None and history_time_filtered is None:
         history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
         history = history.astype({"stock_id": int})
         history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
+
+    if history_time_filtered is None:
+        d = datetime.now() - td
         history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
 
@@ -105,6 +113,9 @@ def split_msg(msg, max_len=1999):
 
 
 def split_df(df: pd.DataFrame, rows_per_page: int):
+    if len(df) <= rows_per_page:
+        return [df]
+
     pages=ceil(len(df.index)/rows_per_page)
 
     # add blank rows at the end if the length of total df is not divisible by pages

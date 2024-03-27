@@ -108,14 +108,14 @@ def reset_all_trades():
 
     return
 
-def log_transaction(investor, stock_id, quantity):
+def log_transaction(investor, stock_id, quantity, price):
     # Read column types properly
     history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv", index_col='transaction_id')
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
     
     t_id = len(history)
-    history.loc[t_id,:] = [investor, int(stock_id), quantity, datetime.now()]
+    history.loc[t_id,:] = [investor, int(stock_id), quantity, price, datetime.now()]
     history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index='transaction_id')
     return
 
