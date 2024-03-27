@@ -177,7 +177,7 @@ def check_for_zero_tax_alerts():
             # remove line from file
             indices_to_drop.append((inv,stock_id))
             # Generate return message
-            ret_strs.append(f"<@{investor_uuid[inv]:.0f}> , you can now sell {id_name[stock_id]} for 0.0% tax!")
+            ret_strs.append(f"<@{investor_uuid[inv]}> , you can now sell {id_name[stock_id]} for 0.0% tax!")
     df_zta = df_zta.drop(index=indices_to_drop)
     df_zta.to_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index=['investor','stock'])
     return ret_strs
