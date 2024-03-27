@@ -134,7 +134,7 @@ async def portfolio(ctx: commands.Context, *args):
 
         n_hours=0
         n_days=0
-        sortby='market_cap'
+        sortby='profit'
         if '-d' in args:
             idx = args.index('-d')
             n_days = int(args[idx+1])
@@ -148,7 +148,7 @@ async def portfolio(ctx: commands.Context, *args):
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
-            if sortby not in ['market_cap','m','value','v','evolution','e','dividend','d']:
+            if sortby not in ['value','v','current_total_value','c','dividend','d','profit','p']: 
                 raise NameError
             args.pop(idx+1)
             args.pop(idx)
@@ -173,13 +173,8 @@ async def portfolio(ctx: commands.Context, *args):
         await ctx.reply(e)
         return
     
-    df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
-    if isinstance(df,str) and df.startswith('ERROR:'):
-        await ctx.reply(df)
-        return 
-    
     # Filter df to show only the investor's stocks
-    result = await run_blocking(print_portfolio, investor_name)
+    result = await run_blocking(print_portfolio, investor_name, n_hours=n_hours, n_days=n_days, sortby=sortby)
     ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
@@ -199,6 +194,10 @@ async def leaderboard(ctx: commands.Context):
 @bot.command()
 async def lb(ctx: commands.Context):
     await leaderboard(ctx)
+
+@bot.command()
+async def pf(ctx: commands.Context, *args):
+    await portfolio(ctx, *args)
 
 @bot.command()
 async def y(ctx: commands.Context):

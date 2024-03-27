@@ -358,16 +358,45 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
     return ret_files
 
 
-def print_portfolio(investor):
-    df = print_market()
+def print_portfolio(investor, n_hours=0, n_days=0, sortby='profit'):
+    if n_hours==0 and n_days==0:
+        n_days = 7
+    
+    new_col_str = 'Last '
+    if n_days<0 or (n_days==0 and n_hours<1):
+        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
+    
+    if n_days>0:
+        new_col_str += f'{n_days} day(s)'
+    if n_hours>0:
+        new_col_str += f'{n_hours} hour(s)'
+    
+    df = print_market(n_hours=n_hours, n_days=n_days)
     pf = get_portfolio(investor)
     result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
     result['Current total value ($)'] = result['value'] * result['shares_owned']
     result['Profit ($)'] = result['Current total value ($)'] - result['bought_for']
-    result['Profit ($)'] = result.apply(lambda x: beautify_float(x['Profit ($)']), axis=1)
     result = result.drop(columns=['key_0','last_bought','Market cap ($)',])
+    
+    
+    # -sortby : Link argument with column name
+    args_colname = {'value':'value',
+                    'v':'value',
+                    # 'evolution':new_col_str,
+                    # 'e':new_col_str,
+                    'dividend':'Dividend yield (%)',
+                    'd':'Dividend yield (%)',
+                    'current_total_value':'Current total value ($)',
+                    'c':'Current total value ($)',
+                    'profit':'Profit ($)',
+                    'p':'Profit ($)',
+                    }
+    result = result.sort_values(by=args_colname[sortby], ascending=False)    
+    
+    result['Profit ($)'] = result.apply(lambda x: beautify_float(x['Profit ($)']), axis=1)
     result = result.rename(columns={'shares_owned': "Shares owned",
                                     'bought_for': "Bought for ($)",})
+    
     result.index = np.arange(1, len(result)+1)
     result = result.round(2)
     return result
