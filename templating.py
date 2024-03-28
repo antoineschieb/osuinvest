@@ -295,7 +295,7 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     for i,x in enumerate(pf.index):
         s = pf.loc[x]
         draw.text((30, 450 + 24*i), x if x=='Others' else id_name[x], font=ImageFont.truetype(file, 15))
-        draw.text((210, 450 + 24*i), str(s['Shares owned']), font=ImageFont.truetype(file, 15))
+        draw.text((210, 450 + 24*i), round(s['Shares owned'],1), font=ImageFont.truetype(file, 15))
         draw.text((295, 450 + 24*i), f"${round(s['Total value ($)'])}", font=ImageFont.truetype(file, 15))
 
 
