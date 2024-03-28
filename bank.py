@@ -86,8 +86,13 @@ def pay_all_dividends():
                 continue
             stock = get_stock_by_id(s)
             volume = qty * valuate(stock)
-            if stock.sold_shares == 0:
-                raise ValueError
+            
+            # if stock.sold_shares == 0:
+            #     print("ok")
+            #     print(stock)
+            #     print(qty)
+            #     print(portfolio.loc[s])
+            #     raise ValueError
             dividend = round(get_dividend_yield(s) * 0.01 * volume, 2)
             investor.cash_balance += dividend
             sum_of_dividends += dividend
