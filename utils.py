@@ -127,17 +127,20 @@ def split_df(df: pd.DataFrame, rows_per_page: int):
         return [df]
 
     pages=ceil(len(df.index)/rows_per_page)
-
+    # Save column types
+    dtypes = df.dtypes
     # add blank rows at the end if the length of total df is not divisible by pages
     if len(df.index) < rows_per_page * pages:
         nb_blank_rows = rows_per_page * pages - len(df.index)
         for i in range(nb_blank_rows):
             df.loc[-i,:] = [0]*len(df.columns)   # Quick hack since uuids cannot be negative. draw_table will mark these rows as blank
+    df = df.astype(dtype=dtypes)
 
     idx_start = 0
     list_of_dfs = []
     while idx_start < len(df.index):
-        list_of_dfs.append(df[idx_start:min(idx_start+rows_per_page, len(df.index))])
+        df_to_append = df[idx_start:min(idx_start+rows_per_page, len(df.index))]
+        list_of_dfs.append(df_to_append)
         idx_start+=rows_per_page
     return list_of_dfs
 
