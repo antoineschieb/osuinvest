@@ -145,7 +145,7 @@ def remove_transaction_from_pending(investor):
 
 def check_for_alerts():
     ret_strs = []
-    df_alerts = pd.read_csv(f"{SEASON_ID}/alerts.csv", index_col="alert_id")
+    df_alerts = pd.read_csv(f"{SEASON_ID}/alerts.csv")
     df_alerts = df_alerts.astype({"stock": int})
     indices_to_drop = []
     for x in df_alerts.index:
@@ -162,7 +162,7 @@ def check_for_alerts():
                 ret_strs.append(f'<@{investor:.0f}> {id_name[stock_id]} is now < {value}')
                 indices_to_drop.append(x)
         df_alerts = df_alerts.drop(index=indices_to_drop)
-    df_alerts.to_csv(f"{SEASON_ID}/alerts.csv", index="alert_id")
+    df_alerts.to_csv(f"{SEASON_ID}/alerts.csv", index=None)
     return ret_strs
 
 def check_for_zero_tax_alerts():

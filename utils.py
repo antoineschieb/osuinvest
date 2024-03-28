@@ -94,7 +94,7 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history=None, history_t
         stock_name = name_id[stock_name.lower()]
     
     if history is None and history_time_filtered is None:
-        history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+        history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
         history = history.astype({"stock_id": int})
         history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
 

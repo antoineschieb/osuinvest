@@ -41,9 +41,9 @@ async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
     await run_blocking(refresh_player_data_raw)
     df = await run_blocking(compute_prestige_and_hype)
-    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
-    df_updates_appendice = pd.DataFrame(columns=['update_id','stock_id','value','datetime'])
-    df_updates_appendice = df_updates_appendice.set_index('update_id')
+    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
+    df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
+    # df_updates_appendice = df_updates_appendice.set_index('update_id')
 
     for i,x in enumerate(df.index):
         pp,p,h = df.loc[x,:]
@@ -64,7 +64,7 @@ async def update_static_stats():
     df_updates = pd.concat([df_updates, df_updates_appendice])
     df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
     df_updates = df_updates.sort_values(by="datetime")
-    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index='update_id')
+    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
 
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)

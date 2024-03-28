@@ -40,9 +40,9 @@ def update_stock(stock: pd.Series, log_price=True):
 
     if log_price:
         # 3-log price update in stocks_prices_history
-        df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+        df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
         df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
-        df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='update_id')
+        df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
     return
 
 
@@ -78,9 +78,9 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     # log initial stock price in stocks_prices_history
     d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
     stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
-    df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
     df_updates.loc[len(df_updates),:] = [name, valuate(stock_object), datetime.now()]
-    df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='name')
+    df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
     return
 
 
@@ -102,9 +102,9 @@ def reset_all_trades():
     df = df.iloc[0:0]
     df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
 
-    df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
     df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='update_id')
+    df.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
 
     return
 
@@ -122,29 +122,29 @@ def log_transaction(investor, stock_id, quantity, price):
 
 def log_all_net_worth():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index_col="log_id")
+    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history.csv")
     for inv in df.index:
         nw = get_net_worth(inv)
         hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index="log_id")
+    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index=None)
     return
 
 
 def log_all_net_worth_continuous():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
+    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv")
     for inv in df.index:
         nw = get_net_worth(inv)
         hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index="log_id")
+    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index=None)
     return
 
 
 def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
-    df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv", index_col="alert_id")
+    df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv")
     df = df.astype({"stock": int})
     df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
-    df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index="alert_id")
+    df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index=None)
     return f'You will be pinged when {constants.id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
 
 

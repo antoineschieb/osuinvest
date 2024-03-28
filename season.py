@@ -34,7 +34,7 @@ def new_season(new_season_id, N=52, set_as_default=True):
     # 2 - create all necessary CSVs (empty) except player_data_raw
     with open(f"{new_season_id}/alerts.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['alert_id','investor','stock','greater','value'])
+        writer.writerow(['investor','stock','greater','value'])
 
     with open(f"{new_season_id}/all_investors.csv", "w", newline='') as file:
         writer = csv.writer(file)
@@ -54,15 +54,15 @@ def new_season(new_season_id, N=52, set_as_default=True):
 
     with open(f"{new_season_id}/net_worth_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["log_id","investor","net_worth","datetime"])
+        writer.writerow(["investor","net_worth","datetime"])
 
     with open(f"{new_season_id}/stock_prices_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["update_id","stock_id","value","datetime"])
+        writer.writerow(["stock_id","value","datetime"])
     
     with open(f"{new_season_id}/transactions_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['transaction_id','investor','stock_id','quantity','datetime'])
+        writer.writerow(['investor','stock_id','quantity','datetime'])
     
     with open(f"{new_season_id}/zero_tax_alerts.csv", "w", newline='') as file:
         writer = csv.writer(file)

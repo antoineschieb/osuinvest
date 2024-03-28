@@ -101,7 +101,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     
     # Read csv properly
-    df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")
     df = df.astype({"stock_id": int})
 
@@ -190,7 +190,7 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     
     df = get_stocks_table()
     
-    history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    history = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
 
@@ -278,7 +278,7 @@ def get_richest_investor():
 
 def print_investors_gains(dividends_dict):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv", index_col="log_id")
+    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv")
     ranking = pd.DataFrame(columns=['Rank Today','investor','Gains (%)','Gains ($)'])
     for inv in df.index:
         hist_filtered = hist[hist['investor']==inv]

@@ -340,7 +340,7 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
 
     
     # NET WORTH HISTORY
-    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
+    hist = pd.read_csv(f"{SEASON_ID}/net_worth_history_continuous.csv")
     hist_filtered_investor = hist[hist.investor==investor_name].copy()
     hist_filtered_investor["datetime"] = pd.to_datetime(hist_filtered_investor["datetime"], format="ISO8601")
     td = datetime.timedelta(hours=n_hours, days=n_days)
