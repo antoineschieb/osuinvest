@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from math import exp, sqrt
-import pandas as pd
-from constants import SEASON_ID, id_name, name_id
+from constants import name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 
 
@@ -17,20 +16,6 @@ def valuate(stock):
     intrinsic_value = valuate_intrinsic(stock)
     return round(supply_demand_ratio * intrinsic_value,2)
 
-
-def get_stocks_table():
-    df1 = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
-    df2 = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
-    df = pd.concat([df1, df2], axis=1)
-
-    current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
-    df.insert(0,'current_name', current_name_column)
-
-    df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
-    df["value"] = df.apply(valuate, axis=1)
-    df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
-    df["market_cap"] = df.apply(get_market_cap_from_stock, axis=1)
-    return df
 
 def get_net_worth(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)

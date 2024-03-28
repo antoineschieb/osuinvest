@@ -18,7 +18,7 @@ from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
 from utils import get_ownership, get_portfolio, get_stock_by_id
 
 from constants import SEASON_ID, id_name, name_id, id_name
-from formulas import get_stocks_table
+from visual import get_stocks_table
 from utils import get_pilimg_from_url, get_stock_value_timedelta
 from visual import beautify_float_percentage, plot_stock
 
