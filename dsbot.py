@@ -173,7 +173,7 @@ async def portfolio(ctx: commands.Context, *args):
 
     try:
         investor_name,  n_hours, n_days, sortby = parse_args(args, ctx)
-    except ValueError as e:
+    except Exception as e:
         await ctx.reply(e)
         return
     

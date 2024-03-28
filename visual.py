@@ -46,7 +46,7 @@ def print_all():
 
 
     print("\n\nHISTORY")
-    df = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    df = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
     print(df)
     return 
 

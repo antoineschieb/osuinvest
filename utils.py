@@ -30,7 +30,7 @@ def get_investor_by_name(name: str) -> pd.Series:
 
 
 def get_portfolio(investor: str, short=False) -> pd.DataFrame:
-    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
     transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
     transac_hist['datetime'] = pd.to_datetime(transac_hist['datetime'], format="ISO8601")
     transac_hist = transac_hist[transac_hist['investor'] == investor]
@@ -68,7 +68,7 @@ def get_portfolio(investor: str, short=False) -> pd.DataFrame:
 
 def get_ownership(stock_id: int) -> pd.DataFrame:
     stock_id = int(stock_id)
-    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
     transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
     transac_hist = transac_hist[transac_hist['stock_id'] == stock_id]
 

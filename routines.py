@@ -98,9 +98,9 @@ def reset_all_trades():
     df = df.iloc[0:0]
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
-    df = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    df = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
     df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index='transaction_id')
+    df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
 
     df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
     df = df.iloc[0:0]
@@ -110,13 +110,13 @@ def reset_all_trades():
 
 def log_transaction(investor, stock_id, quantity, price):
     # Read column types properly
-    history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
     
     t_id = len(history)
     history.loc[t_id,:] = [investor, int(stock_id), quantity, price, datetime.now()]
-    history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index='transaction_id')
+    history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
     return
 
 
