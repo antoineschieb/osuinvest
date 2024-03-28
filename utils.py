@@ -220,3 +220,38 @@ def compute_price_bought_for(trade_hist):
         price_of_this_layer = inferred_stock_value * layer[0]
         p+=price_of_this_layer
     return p
+
+
+def get_sold_shares(stock_id):
+    if isinstance(stock_id, int):
+        own = get_ownership(stock_id)
+    elif isinstance(stock_id, pd.Series):
+        own = get_ownership(stock_id.name)
+    return sum(own['shares_owned'])
+
+
+def ban_user(investor_name):
+    # 1-all_investors
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv")
+    df = df.drop(df[df['name'] == investor_name].index)
+    df.to_csv(f"{SEASON_ID}/all_investors.csv", index=None)
+    
+    # 2- all jsons    
+    # banned_uuid = investor_uuid[investor_name]
+    # del investor_uuid[investor_name]
+    # del uuid_investor[banned_uuid]
+    # Export the new jsons
+    # TODO: take care of this too
+
+    # 3- all csvs (loop)
+    files = ["alerts","confirmations","net_worth_history_continuous","net_worth_history","transactions_history","zero_tax_alerts"]
+    for f in files:
+        df = pd.read_csv(f"{SEASON_ID}/{f}.csv")
+        df = df.drop(df[df['investor'] == investor_name].index)
+        df.to_csv(f"{SEASON_ID}/{f}.csv", index=None)
+
+    # 4 - recompute all stocks sold_shares
+    df = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
+    df['sold_shares'] = df.apply(lambda x:get_sold_shares(x.name), axis=1)
+    df.to_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index='name')
+    return 
