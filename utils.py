@@ -6,8 +6,6 @@ from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
 from constants import SEASON_ID, name_id, id_name
-from routines import update_stock
-
 
 def get_stock_by_id(name: int) -> pd.Series:
     assert isinstance(name, int)
