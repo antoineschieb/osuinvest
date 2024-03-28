@@ -172,12 +172,14 @@ def check_for_zero_tax_alerts():
     indices_to_drop = []
     now = datetime.now()
     for inv,stock_id in df_zta.index:
+        pf = get_portfolio(inv, short=True)
         last_bought = df_zta.loc[(inv,stock_id),'last_bought']
         if now - last_bought > timedelta(days=4):
             # remove line from file
             indices_to_drop.append((inv,stock_id))
-            # Generate return message
-            ret_strs.append(f"<@{investor_uuid[inv]}> , you can now sell {id_name[stock_id]} for 0.0% tax!")
+            # Generate return message, only if investor has more than 0 shares of the stock
+            if stock_id in pf.index:
+                ret_strs.append(f"<@{investor_uuid[inv]}> , you can now sell {id_name[stock_id]} for 0.0% tax!")
     df_zta = df_zta.drop(index=indices_to_drop)
     df_zta.to_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index=['investor','stock'])
     return ret_strs
