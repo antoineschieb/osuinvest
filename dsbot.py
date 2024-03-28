@@ -21,7 +21,7 @@ from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
+from utils import ban_user, get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -581,6 +581,32 @@ async def pingmezerotax(ctx: commands.Context, *args):
     
     await run_blocking(update_zero_tax_preferences, ctx.message.author.name, zero_tax_bool)
     await ctx.reply(f"You will {'' if zero_tax_bool else 'not '}be pinged when your stocks can be sold for 0.0% tax.")
+
+
+
+@bot.command()
+async def ban(ctx: commands.Context, *args):
+    """
+    $ban <investor>
+    """
+    if ctx.message.author.name not in ADMINS:
+        await ctx.reply('Do not use admin commands!')
+        await ctx.message.author.timeout(timedelta(minutes=5))
+        return
+    
+    def parse_args(args):
+        args = list(args)
+        assert len(args)==1
+        investor = args[0]
+        return investor
+    try:
+        investor = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $ban <investor>')
+        return
+    
+    ret_str = await run_blocking(ban_user, investor)
+    await ctx.reply(ret_str)
 
 
 

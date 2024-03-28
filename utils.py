@@ -6,6 +6,7 @@ from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
 from constants import SEASON_ID, name_id, id_name
+from routines import update_stock
 
 
 def get_stock_by_id(name: int) -> pd.Series:
@@ -254,4 +255,5 @@ def ban_user(investor_name):
     df = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     df['sold_shares'] = df.apply(lambda x:get_sold_shares(x.name), axis=1)
     df.to_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index='name')
-    return 
+
+    return f"Successfully removed {investor_name} from the game."
