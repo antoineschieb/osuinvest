@@ -54,13 +54,30 @@ def update_buyer(buyer: pd.Series):
 
 
 
-def create_new_investor(name, initial_balance):
+def create_new_investor(name, discord_uuid, initial_balance):
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
     if name in df.index:
         return f'ERROR: You are already registered'
 
     df.loc[name,:] = initial_balance, 0   # Initial balance (float), zero_tax_alerts (bool)
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
+
+    # Load, edit and write jsons
+    with open(f"{constants.SEASON_ID}/uuid_investor.json") as json_file:
+        uuid_investor = json.load(json_file)
+        uuid_investor = {k:int(v) for k,v in uuid_investor.items()}
+    
+    with open(f"{constants.SEASON_ID}/investor_uuid.json") as json_file:
+        investor_uuid = json.load(json_file)
+        investor_uuid = {k:int(v) for k,v in investor_uuid.items()}
+
+    uuid_investor[discord_uuid] = name
+    investor_uuid[name] = discord_uuid
+
+    with open(f"{constants.SEASON_ID}/uuid_investor.json", "w") as fp:
+        json.dump(uuid_investor , fp)
+    with open(f"{constants.SEASON_ID}/investor_uuid.json", "w") as fp:
+        json.dump(investor_uuid , fp) 
 
     return f'{name} has entered the market with ${initial_balance}!'
 

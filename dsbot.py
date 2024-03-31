@@ -406,7 +406,7 @@ async def register(ctx: commands.Context):
         td = season_start_date - datetime.now()
         await ctx.reply(f"You can't register before season starts!\nSeason will start in {pretty_time_delta(td.total_seconds())}")
     else:
-        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, 10000)
+        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, ctx.message.author.id, 10000)
         await ctx.reply(ret_str)
         await broadcast(ret_str)
 

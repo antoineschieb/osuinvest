@@ -66,7 +66,7 @@ def new_season(new_season_id, N=52, set_as_default=True):
     
     with open(f"{new_season_id}/transactions_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['investor','stock_id','quantity','datetime'])
+        writer.writerow(['investor','stock_id','quantity','price','datetime'])
     
     with open(f"{new_season_id}/zero_tax_alerts.csv", "w", newline='') as file:
         writer = csv.writer(file)
