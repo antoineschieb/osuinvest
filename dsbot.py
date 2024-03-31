@@ -63,6 +63,11 @@ async def profile(ctx: commands.Context, *args):
             args.pop(idx+1)
             args.pop(idx)
         
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
         if len(args) <= 0:
             return ctx.message.author.name, ctx.message.author.display_avatar, n_hours, n_days
         else:
@@ -110,6 +115,10 @@ async def market(ctx: commands.Context, *args):
         if '-h' in args:
             idx = args.index('-h')
             n_hours = int(args[idx+1])
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
@@ -149,6 +158,11 @@ async def portfolio(ctx: commands.Context, *args):
             n_hours = int(args[idx+1])
             args.pop(idx+1)
             args.pop(idx)
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
@@ -224,6 +238,11 @@ async def stock(ctx: commands.Context, *args):
             n_hours = int(args[idx+1])
             args.pop(idx+1)
             args.pop(idx)
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
         stock_name = ''
         for x in args:
             stock_name += x
