@@ -56,6 +56,10 @@ def new_season(new_season_id, N=52, set_as_default=True):
         writer = csv.writer(file)
         writer.writerow(["investor","net_worth","datetime"])
 
+    with open(f"{new_season_id}/net_worth_history_continuous.csv", "w", newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["investor","net_worth","datetime"])
+
     with open(f"{new_season_id}/stock_prices_history.csv", "w", newline='') as file:
         writer = csv.writer(file)
         writer.writerow(["stock_id","value","datetime"])
@@ -67,6 +71,14 @@ def new_season(new_season_id, N=52, set_as_default=True):
     with open(f"{new_season_id}/zero_tax_alerts.csv", "w", newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['investor','stock','last_bought'])
+
+
+    #Create empty investors_uuid and uuid_investors
+    with open(f"{new_season_id}/uuid_investor.json", "w") as fp:
+        json.dump(dict() , fp)
+    with open(f"{new_season_id}/investor_uuid.json", "w") as fp:
+        json.dump(dict() , fp) 
+
 
     # Finally, change season_id in config json
     if set_as_default:

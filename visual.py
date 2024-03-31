@@ -265,6 +265,8 @@ def print_stock(stock_name):
 
 def print_leaderboard():
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    if df.empty:
+        return pd.DataFrame(columns=['Name','Net worth ($)','Cash balance ($)'])
     df['Cash balance ($)'] = df.apply(lambda x:int(round(get_balance(x.name))), axis=1)
     df['Net worth ($)'] = df.apply(lambda x:int(round(get_net_worth(x.name))), axis=1)
     df = df.sort_values(by='Net worth ($)', ascending=False)
