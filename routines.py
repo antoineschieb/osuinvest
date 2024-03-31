@@ -65,7 +65,7 @@ def create_new_investor(name, discord_uuid, initial_balance):
     # Load, edit and write jsons
     with open(f"{constants.SEASON_ID}/uuid_investor.json") as json_file:
         uuid_investor = json.load(json_file)
-        uuid_investor = {k:int(v) for k,v in uuid_investor.items()}
+        uuid_investor = {int(k):v for k,v in uuid_investor.items()}
     
     with open(f"{constants.SEASON_ID}/investor_uuid.json") as json_file:
         investor_uuid = json.load(json_file)
