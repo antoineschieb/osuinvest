@@ -31,7 +31,7 @@ async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
     seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
-    await asyncio.sleep(seconds)
+    # await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
 
 
@@ -74,20 +74,21 @@ async def update_static_stats():
 
     # Find richest investor
     elon, net_worth = await run_blocking(get_richest_investor)
-    guild = client.get_guild(GUILD_ID)
-    user = discord.utils.get(guild.members, name=elon)
-    if user is None:
-        print(f"ERROR: Unknown user {elon}")    
-    else:
-        role = discord.utils.get(guild.roles, name="Elon Musk")
-        if role not in user.roles:
-            # First, remove current richest investor role
-            for m in role.members:
-                await m.remove_roles(role, reason=f'Has been taken over by {elon}!')
+    if elon is not None:
+        guild = client.get_guild(GUILD_ID)
+        user = discord.utils.get(guild.members, name=elon)
+        if user is None:
+            print(f"ERROR: Unknown user {elon}")    
+        else:
+            role = discord.utils.get(guild.roles, name="Elon Musk")
+            if role not in user.roles:
+                # First, remove current richest investor role
+                for m in role.members:
+                    await m.remove_roles(role, reason=f'Has been taken over by {elon}!')
 
-            # Then, give role to the new richest investor
-            await user.add_roles(role, reason='Added automatically for having highest net worth')      
-            await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
+                # Then, give role to the new richest investor
+                await user.add_roles(role, reason='Added automatically for having highest net worth')      
+                await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
 
     alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
@@ -127,26 +128,27 @@ async def pay_all_dividends_async():
 
     # Print net gains since last day
     ret_str, top_investor = await run_blocking(print_investors_gains, ret_dict)
-    message_bits = split_msg(ret_str)
-    for x in message_bits:
-        x = "```"+x+"```"
-        await channel.send(x)
+    if top_investor is not None:
+        message_bits = split_msg(ret_str)
+        for x in message_bits:
+            x = "```"+x+"```"
+            await channel.send(x)
 
-    # Give Trader of the day role
-    guild = client.get_guild(GUILD_ID)
-    user = discord.utils.get(guild.members, name=top_investor)
-    if user is None:
-        print(f"ERROR: Unknown user {top_investor}")    
-    else:
-        role = discord.utils.get(guild.roles, name="Trader of the day")
+        # Give Trader of the day role
+        guild = client.get_guild(GUILD_ID)
+        user = discord.utils.get(guild.members, name=top_investor)
+        if user is None:
+            print(f"ERROR: Unknown user {top_investor}")    
+        else:
+            role = discord.utils.get(guild.roles, name="Trader of the day")
 
-        if role not in user.roles:
-            # Remove current top investor role
-            for m in role.members:
-                await m.remove_roles(role, reason=f'Has been taken over by {top_investor}!')
+            if role not in user.roles:
+                # Remove current top investor role
+                for m in role.members:
+                    await m.remove_roles(role, reason=f'Has been taken over by {top_investor}!')
 
-            await user.add_roles(role, reason='Added automatically for best net gains today')        
-        await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
+                await user.add_roles(role, reason='Added automatically for best net gains today')        
+            await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
 
     # Check for renames
     await run_blocking(update_name_id, name_id, id_name)

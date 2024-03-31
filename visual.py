@@ -275,11 +275,15 @@ def print_leaderboard():
 
 def get_richest_investor():
     d = print_leaderboard()
+    if d.empty:
+        return None, None
     return d['Name'].iloc[0], d['Net worth ($)'].iloc[0]
 
 
 def print_investors_gains(dividends_dict):
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    if df.empty:
+        return pd.DataFrame(columns=["Rank Today","investor","Gains (%)","Gains ($)","From dividends ($)","From stocks ($)"]), None
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history.csv")
     ranking = pd.DataFrame(columns=['Rank Today','investor','Gains (%)','Gains ($)'])
     for inv in df.index:
