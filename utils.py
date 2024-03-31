@@ -171,21 +171,28 @@ def get_pilimg_from_url(url):
     pilimg = Image.open(BytesIO(webpage)).convert("RGBA")
     return pilimg
 
-def pretty_time_delta(seconds):
+def pretty_time_delta(seconds, include_seconds=True):
     sign_string = '-' if seconds < 0 else ''
     seconds = abs(int(seconds))
     days, seconds = divmod(seconds, 86400)
     hours, seconds = divmod(seconds, 3600)
     minutes, seconds = divmod(seconds, 60)
-    if days > 0:
-        return '%s%dd %dh %dm %ds' % (sign_string, days, hours, minutes, seconds)
-    elif hours > 0:
-        return '%s%dh %dm %ds' % (sign_string, hours, minutes, seconds)
-    elif minutes > 0:
-        return '%s%dm %ds' % (sign_string, minutes, seconds)
-    else:
-        return '%s%ds' % (sign_string, seconds)
     
+    
+    if days > 0:
+        ret_str = '%s%dd %dh %dm %ds' % (sign_string, days, hours, minutes, seconds)
+    elif hours > 0:
+        ret_str = '%s%dh %dm %ds' % (sign_string, hours, minutes, seconds)
+    elif minutes > 0:
+        ret_str = '%s%dm %ds' % (sign_string, minutes, seconds)
+    else:
+        ret_str = '%s%ds' % (sign_string, seconds)
+    
+    if not include_seconds:
+        ret_str = ret_str.split( )[:-1]
+        ret_str = ' '.join(ret_str)
+    return ret_str
+
 # TODO: rewrite this nicely as df
 def get_stack_from_trade_hist(trade_hist):
     stack = []  # will contain only positive values

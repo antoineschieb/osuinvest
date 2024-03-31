@@ -119,6 +119,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     
     # Important to avoid visual glitches: sort the df by datetime
     df = df.sort_values(by='datetime')
+    td = datetime.datetime.now() - df['datetime'].iloc[0]
 
     df[''] = df.apply(lambda x:id_name[x['stock_id']], axis=1)  #naming hack so that the graph looks cleaner
     # sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel=f'last {since}')
@@ -154,7 +155,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
 
     plt.savefig(f'plots/{stock_str_name}.png')
     plt.close()
-    return f'plots/{stock_str_name}.png'
+    return f'plots/{stock_str_name}.png', td
 
 
 def beautify_float(a: float):
