@@ -171,7 +171,7 @@ def get_pilimg_from_url(url):
     pilimg = Image.open(BytesIO(webpage)).convert("RGBA")
     return pilimg
 
-def pretty_time_delta(seconds, include_seconds=True):
+def beautify_time_delta(seconds, include_seconds=True):
     sign_string = '-' if seconds < 0 else ''
     seconds = abs(int(seconds))
     days, seconds = divmod(seconds, 86400)
@@ -189,7 +189,7 @@ def pretty_time_delta(seconds, include_seconds=True):
         ret_str = '%s%ds' % (sign_string, seconds)
     
     if not include_seconds:
-        ret_str = ret_str.split( )[:-1]
+        ret_str = ret_str.split( )[:2]
         ret_str = ' '.join(ret_str)
     return ret_str
 

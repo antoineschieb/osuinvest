@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import matplotlib
 from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_ownership, get_portfolio, get_stock_by_id, pretty_time_delta
+from utils import get_ownership, get_portfolio, get_stock_by_id, beautify_time_delta
 
 from constants import SEASON_ID, id_name, name_id, id_name
 from visual import get_stocks_table
@@ -47,7 +47,7 @@ def buffer_plot_and_get(fig):
     return PIL.Image.open(buf)
 
 
-def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_rank, graph, td, avatar, pie, shareholders_list, colors, time_str):
+def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_rank, graph, td, avatar, pie, shareholders_list, colors):
     def draw_align_right(y, text, fontsize, color=(255,255,255)):
         lgth = draw.textlength(text, font=ImageFont.truetype(file, fontsize))
         draw.text((400-lgth-margin, y), text, font=ImageFont.truetype(file, fontsize), fill=color)
@@ -85,7 +85,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
     draw_align_right(40, f'${value}',44)
     clr = (0,255,0) if evolution > 0 else (255,0,0)
     draw_align_right(90, f'({beautify_float_percentage(evolution)})',30, color=clr)
-    draw_align_right(130,f'over the last {pretty_time_delta(td.total_seconds(), include_seconds=False)}',13, color=clr)
+    draw_align_right(130,f'over the last {beautify_time_delta(td.total_seconds(), include_seconds=False)}',13, color=clr)
     draw_align_right(150,f'Dividends: {dividend_yield}% /day',14, color="#d0db97")
     draw_align_right(200, f'{round(pp)}pp', 20)
     draw_align_right(230, f'#{country_rank}', 20)
@@ -141,12 +141,6 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
         n_days = 7
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
-    time_str = f'Last '
-    if n_days>0:
-        time_str += f'{n_days} day(s) '
-    if n_hours>0:   
-        time_str += f'{n_hours} hour(s)'
-
     
     df = get_stocks_table()
     s = df.loc[stock_id]
@@ -167,7 +161,7 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     colors= ['#181D27'] if shareholders_list[0][0] is None else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
 
-    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, td, avatar, pie, shareholders_list, colors, time_str)
+    card = stock_card(s.current_name,global_rank,s.value,evolution,s.dividend_yield,pp,country_rank,graph, td, avatar, pie, shareholders_list, colors)
     
     file_path = f'plots/card_{stock_id}.png'
     card.save(file_path)
@@ -318,11 +312,7 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
         n_days = 7
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
-    time_str = f'Last '
-    if n_days>0:
-        time_str += f'{n_days} day(s) '
-    if n_hours>0:   
-        time_str += f'{n_hours} hour(s)'
+    
 
     # CASH BALANCE
     cash_balance = df.loc[investor_name, 'cash_balance']

@@ -16,7 +16,7 @@ import matplotlib.dates as mdates
 
 from constants import SEASON_ID, name_id, id_name
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_market_cap_from_stock, get_net_worth, valuate, valuate_intrinsic
-from utils import get_balance, get_ownership, get_portfolio, get_stock_by_id, get_stock_value_timedelta, split_df
+from utils import beautify_time_delta, get_balance, get_ownership, get_portfolio, get_stock_by_id, get_stock_value_timedelta, split_df
 
 
 def get_stocks_table():
@@ -66,14 +66,9 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     if n_hours==0 and n_days==0:
         n_days = 7
 
-    time_str = f'Last '
+    
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'n_days must be >= 0 and n_hours must be >=1'
-    
-    if n_days>0:
-        time_str += f'{n_days} day(s) '
-    if n_hours>0:   
-        time_str += f'{n_hours} hour(s)'
     
 
     since=datetime.timedelta(hours=n_hours, days=n_days)
@@ -122,7 +117,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     td = datetime.datetime.now() - df['datetime'].iloc[0]
 
     df[''] = df.apply(lambda x:id_name[x['stock_id']], axis=1)  #naming hack so that the graph looks cleaner
-    # sns.lineplot(data=df, x='datetime', y='value',hue='').set(xticklabels=[],xlabel=f'last {since}')
+
     ymin = min(df['value'])
     ymax = max(df['value'])
     d = ymax - ymin + 0.1
@@ -131,7 +126,7 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     # stronger & brighter version:  #18803b
     
     fig, ax = plt.subplots()
-    ax.plot(df['datetime'], df['value'], color='#18803b')#,ylim=(ymin-0.2*d, ymax+0.2*d), title=f'{time_str}')
+    ax.plot(df['datetime'], df['value'], color='#18803b')
     real_x_span = max(df['datetime']) - min(df['datetime'])
 
     if real_x_span < datetime.timedelta(hours=24):
@@ -180,14 +175,8 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     if n_hours==0 and n_days==0:
         n_days = 7
     
-    new_col_str = 'Last '
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
-    
-    if n_days>0:
-        new_col_str += f'{n_days} day(s)'
-    if n_hours>0:
-        new_col_str += f'{n_hours} hour(s)'
     
     df = get_stocks_table()
     
@@ -199,6 +188,10 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     d = datetime.datetime.now() - td
     history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
+    # Figure out over how long the values span
+    real_td = datetime.datetime.now() - history_time_filtered["datetime"].iloc[0]
+    new_col_str = 'Last ' + beautify_time_delta(real_td.total_seconds(), include_seconds=False)
+
 
     # Compute columns that need to be computed (ones that include timedelta)
     df['value_previous'] = df.apply(lambda x: get_stock_value_timedelta(x.current_name, td, history_time_filtered=history_time_filtered), axis=1)
@@ -219,6 +212,8 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     # Beautify some values
     df['evolution'] = df.apply(lambda x: beautify_float_percentage(x.evolution), axis=1)
     df['market_cap'] = df.apply(lambda x: beautify_big_number(x.market_cap), axis=1)
+
+    
 
     # Rename columns nicely
     df = df.rename(columns={'evolution': new_col_str,
@@ -394,15 +389,9 @@ def print_portfolio(investor, n_hours=0, n_days=0, sortby='profit'):
     if n_hours==0 and n_days==0:
         n_days = 7
     
-    new_col_str = 'Last '
     if n_days<0 or (n_days==0 and n_hours<1):
         return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
-    
-    if n_days>0:
-        new_col_str += f'{n_days} day(s)'
-    if n_hours>0:
-        new_col_str += f'{n_hours} hour(s)'
-    
+        
     df = print_market(n_hours=n_hours, n_days=n_days)
     pf = get_portfolio(investor)
     result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
