@@ -6,7 +6,7 @@ from math import ceil
 from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
-from constants import SEASON_ID, name_id, id_name
+from constants import SEASON_ID
 
 def get_stock_by_id(name: int) -> pd.Series:
     assert isinstance(name, int)
@@ -91,6 +91,7 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history=None, history_t
     # if history_time_filtered is not None, td will be ignored
 
     if isinstance(stock_name, str):
+        name_id = get_name_id()
         stock_name = name_id[stock_name.lower()]
     
     if history is None and history_time_filtered is None:

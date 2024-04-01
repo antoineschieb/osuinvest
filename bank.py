@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta
 import json
 import pandas as pd
-from constants import SEASON_ID, name_id, id_name
+from constants import SEASON_ID
 from formulas import compute_tax_applied, valuate, get_dividend_yield
-from utils import get_investor_by_name, get_portfolio, get_stock_by_id
+from utils import get_id_name, get_investor_by_name, get_name_id, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_stock, log_transaction, update_zta
 
 
@@ -20,6 +20,7 @@ def calc_price(buyer, stock, quantity: float, return_tax=False):
         if stock.total_shares - stock.sold_shares < quantity:
             return f'ERROR: The total number of available shares {stock.total_shares - stock.sold_shares} is not sufficient to perform this transaction.'
     elif quantity < 0:
+        id_name = get_id_name()
         # check if seller has enough shares, and then compute transaction price (with tax)
         portfolio = get_portfolio(buyer.name, short=True)
         if stock.name not in portfolio.index:
@@ -40,6 +41,8 @@ def calc_price(buyer, stock, quantity: float, return_tax=False):
 
 
 def buy_stock(buyer_name: str, stock_name, quantity: float):
+    name_id = get_name_id()
+    id_name = get_id_name()
     if isinstance(stock_name, str):
         if stock_name not in name_id.keys():
             return f'ERROR: Unknown stock "{stock_name}"'
@@ -150,6 +153,7 @@ def remove_transaction_from_pending(investor):
 
 
 def check_for_alerts():
+    id_name = get_id_name()
     ret_strs = []
     df_alerts = pd.read_csv(f"{SEASON_ID}/alerts.csv")
     df_alerts = df_alerts.astype({"stock": int})
@@ -172,6 +176,7 @@ def check_for_alerts():
     return ret_strs
 
 def check_for_zero_tax_alerts():
+    id_name = get_id_name()
     ret_strs = []
     df_zta = pd.read_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index_col=['investor','stock'])
     df_zta['last_bought'] = pd.to_datetime(df_zta['last_bought'], format="ISO8601")

@@ -15,9 +15,9 @@ from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import matplotlib
 from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_ownership, get_portfolio, get_stock_by_id, beautify_time_delta
+from utils import get_id_name, get_name_id, get_ownership, get_portfolio, get_stock_by_id, beautify_time_delta
 
-from constants import SEASON_ID, id_name, name_id, id_name
+from constants import SEASON_ID
 from visual import get_stocks_table
 from utils import get_pilimg_from_url, get_stock_value_timedelta
 from visual import beautify_float_percentage, plot_stock
@@ -133,6 +133,7 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
             return l_main
 
     assert isinstance(stock_str_name, str)
+    name_id = get_name_id()
     if stock_str_name.lower() not in name_id.keys():
         return f'ERROR: Unknown stock "{stock_str_name}"'
     stock_id = name_id[stock_str_name.lower()]
@@ -286,6 +287,7 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     draw_align_right(160, f'${cash_balance} from cash balance',16)
     draw_align_right(180, f'${current_networth - cash_balance} from stocks value',16)
     # DRAW PORTFOLIO TXT
+    id_name = get_id_name()
     for i,x in enumerate(pf.index):
         s = pf.loc[x]
         shares_owned = float(s['Shares owned'])
@@ -319,6 +321,7 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
 
     # PORTFOLIO
     pf = get_portfolio(investor_name, short=True)
+    id_name = get_id_name()
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)

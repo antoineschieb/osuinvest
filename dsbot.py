@@ -15,13 +15,13 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, SEASON_ID, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
-from utils import ban_user, get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
+from utils import ban_user, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -303,6 +303,8 @@ async def buy(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: You can only buy 50 shares maximum at once.\nIf you want to buy {quantity} shares, do it in multiple transactions.')
         return
 
+    name_id = get_name_id()
+    id_name = get_id_name()
     if stock_name.lower() not in name_id.keys():
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
@@ -351,6 +353,8 @@ async def sell(ctx: commands.Context, *args):
         await ctx.reply(f'Could not parse arguments.\nUsage: $sell <stock> <quantity>')
         return 
 
+    id_name = get_id_name()
+    name_id = get_name_id()
     if stock_name.lower() not in name_id.keys():
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
@@ -459,7 +463,7 @@ async def pingmeif(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
         assert len(args) == 3
-        
+        name_id = get_name_id()
         if args[0].lower() not in name_id.keys():
             raise KeyError(f'ERROR: Unknown stock {args[0]}')
         stock_id = name_id[args[0].lower()]
@@ -559,6 +563,8 @@ async def adminsell(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
     
+    id_name = get_id_name()
+    name_id = get_name_id()
     stock_name = name_id[stock_name.lower()]
     
     if quantity == 'all':

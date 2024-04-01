@@ -14,16 +14,16 @@ import seaborn as sns
 import datetime
 import matplotlib.dates as mdates
 
-from constants import SEASON_ID, name_id, id_name
+from constants import SEASON_ID
 from formulas import get_dividend_yield, get_dividend_yield_from_stock, get_market_cap_from_stock, get_net_worth, valuate, valuate_intrinsic
-from utils import beautify_time_delta, get_balance, get_ownership, get_portfolio, get_stock_by_id, get_stock_value_timedelta, split_df
+from utils import beautify_time_delta, get_balance, get_id_name, get_name_id, get_ownership, get_portfolio, get_stock_by_id, get_stock_value_timedelta, split_df
 
 
 def get_stocks_table():
     df1 = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
     df2 = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     df = pd.concat([df1, df2], axis=1)
-
+    id_name = get_id_name()
     current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
     df.insert(0,'current_name', current_name_column)
 
@@ -53,6 +53,7 @@ def print_all():
 
 def add_current_name_col(df):
     df=df.copy()
+    id_name = get_id_name()
     cnc = df.apply(lambda x:id_name[x.name], axis=1)
     df.insert(0,'current_name', cnc)
     return df
@@ -60,6 +61,8 @@ def add_current_name_col(df):
 
 def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
     assert isinstance(stock_str_name, str)
+    id_name = get_id_name()
+    name_id = get_name_id()
     if stock_str_name not in name_id.keys():
         return f'ERROR: Unknown stock "{stock_str_name}"'
 
@@ -240,6 +243,8 @@ def print_profile(investor_name):
 
 
 def print_stock(stock_name):
+    id_name = get_id_name()
+    name_id = get_name_id()
     if isinstance(stock_name, str):
         stock_name = name_id[stock_name.lower()]
     df = get_stocks_table()

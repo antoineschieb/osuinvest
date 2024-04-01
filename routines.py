@@ -8,15 +8,15 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import get_portfolio, get_stock_by_id
+from utils import get_id_name, get_portfolio
 
 
 def refresh_player_data_raw(verbose=False):
-    reload(constants)
     cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity','last_month_activity','topplay_activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
-    for uuid in constants.id_name.keys():
+    id_name = get_id_name()
+    for uuid in id_name.keys():
         d = all_user_info(uuid)
         df_raw.loc[uuid,:] = d
     df_raw.to_csv(f"{constants.SEASON_ID}/player_data_raw.csv", index='id')
@@ -162,7 +162,8 @@ def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: flo
     df = df.astype({"stock": int})
     df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
     df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index=None)
-    return f'You will be pinged when {constants.id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
+    id_name = get_id_name()
+    return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
 
 
 def update_name_id(name_id, id_name):

@@ -11,7 +11,6 @@ from discord.ext import commands, tasks
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
-from constants import name_id, id_name
 from utils import calculate_remaining_time, get_id_name, get_name_id, get_stock_by_id, liquidate, split_msg
 from visual import get_richest_investor, print_investors_gains
 
