@@ -8,7 +8,7 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import get_id_name, get_portfolio
+from utils import get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
 
 
 def refresh_player_data_raw(verbose=False):
@@ -63,14 +63,9 @@ def create_new_investor(name, discord_uuid, initial_balance):
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
     # Load, edit and write jsons
-    with open(f"{constants.SEASON_ID}/uuid_investor.json") as json_file:
-        uuid_investor = json.load(json_file)
-        uuid_investor = {int(k):v for k,v in uuid_investor.items()}
+    uuid_investor = get_uuid_investor()
+    investor_uuid = get_investor_uuid()
     
-    with open(f"{constants.SEASON_ID}/investor_uuid.json") as json_file:
-        investor_uuid = json.load(json_file)
-        investor_uuid = {k:int(v) for k,v in investor_uuid.items()}
-
     uuid_investor[discord_uuid] = name
     investor_uuid[name] = discord_uuid
 

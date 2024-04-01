@@ -244,12 +244,19 @@ def ban_user(investor_name):
     df = df.drop(df[df['name'] == investor_name].index)
     df.to_csv(f"{SEASON_ID}/all_investors.csv", index=None)
     
-    # 2- all jsons    
-    # banned_uuid = investor_uuid[investor_name]
-    # del investor_uuid[investor_name]
-    # del uuid_investor[banned_uuid]
-    # Export the new jsons
-    # TODO: take care of this too
+    # 2- all jsons
+    ## Open
+    investor_uuid = get_investor_uuid()
+    uuid_investor = get_uuid_investor()
+    ## Remove
+    banned_uuid = investor_uuid[investor_name]
+    del investor_uuid[investor_name]
+    del uuid_investor[banned_uuid]
+    ## Export 
+    with open(f"{SEASON_ID}/uuid_investor.json", "w") as fp:
+        json.dump(uuid_investor , fp)
+    with open(f"{SEASON_ID}/investor_uuid.json", "w") as fp:
+        json.dump(investor_uuid , fp) 
 
     # 3- all csvs (loop)
     files = ["alerts","confirmations","net_worth_history_continuous","net_worth_history","transactions_history","zero_tax_alerts"]
@@ -306,3 +313,14 @@ def get_name_id():
         name_id = {k:int(v) for k,v in name_id.items()}
     return name_id
 
+def get_uuid_investor():
+    with open(f"{SEASON_ID}/uuid_investor.json") as json_file:
+        uuid_investor = json.load(json_file)
+        uuid_investor = {int(k):v for k,v in uuid_investor.items()}
+    return uuid_investor
+
+def get_investor_uuid():
+    with open(f"{SEASON_ID}/investor_uuid.json") as json_file:
+        investor_uuid = json.load(json_file)
+        investor_uuid = {k:int(v) for k,v in investor_uuid.items()}
+    return investor_uuid

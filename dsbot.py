@@ -167,7 +167,7 @@ async def portfolio(ctx: commands.Context, *args):
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['value','v','current_total_value','c','dividend','d','profit','p']: 
-                raise NameError
+                raise NameError("-sortby argument must be one of [value (v), current_total_value (c), dividend (d), profit (p)]")
             args.pop(idx+1)
             args.pop(idx)
         
