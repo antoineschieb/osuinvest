@@ -169,20 +169,42 @@ def update_name_id(name_id, id_name):
     """
     Updates names : id correspondences for the top N players, taking renames into account. 
     """
-    N = len(id_name)
-    for i in range(N):
+    with open(f"{constants.SEASON_ID}/season_config.json") as json_file:
+        cfg = json.load(json_file)
+        N_in = cfg['N_in']
+        N_out = cfg['N_out']
+
+    top_N_out = []
+    # Update all players from top N_in, no matter what
+    for i in range(N_in):
         uuid = top_i(i, country='FR')
+        top_N_out.append(uuid)
         u = api.user(uuid, mode='osu')
         current_username = u.username
         id_name[uuid] = current_username
         name_id[current_username.lower()] = uuid
         for n in u.previous_usernames:
             name_id[n.lower()] = uuid
+
+    
+    for i in range(N_in, N_out):
+        uuid = top_i(i, country='FR')
+        top_N_out.append(uuid)
+
+    # Check that every player in id_name is still within the top N_out. If not, liquidate
+    stocks_to_liquidate = [k for k in id_name.keys() if k not in top_N_out]
+
+    # Remove stocks from id_name
+    for s in stocks_to_liquidate:
+        del id_name[s]
+    # Remove stocks from name_id
+    name_id = {k:v for k,v in name_id.items() if v not in stocks_to_liquidate}
+
     with open(f"{constants.SEASON_ID}/name_id.json", "w") as fp:
         json.dump(name_id , fp)
     with open(f"{constants.SEASON_ID}/id_name.json", "w") as fp:
         json.dump(id_name , fp) 
-    return
+    return stocks_to_liquidate
 
 
 def update_zero_tax_preferences(investor, zero_tax_bool):

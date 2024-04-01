@@ -5,10 +5,7 @@ import csv
 import os
 
 
-def new_season(new_season_id, N=52, set_as_default=True):
-    """
-    Remember to change the SEASON_ID variable in constants.py after running this
-    """
+def new_season(new_season_id, N_in=100, N_out=105, set_as_default=True):
     if os.path.exists(f'{new_season_id}/'):
         raise ValueError("Season already exists!")
     
@@ -18,7 +15,7 @@ def new_season(new_season_id, N=52, set_as_default=True):
     # 1 - create name_id and id_name jsons
     id_name = {}
     name_id = {}
-    for i in range(N):
+    for i in range(N_in):
         uuid = top_i(i, country='FR')
         u = api.user(uuid, mode='osu')
         current_username = u.username
@@ -29,7 +26,7 @@ def new_season(new_season_id, N=52, set_as_default=True):
     with open(f"{new_season_id}/name_id.json", "w") as fp:
         json.dump(name_id , fp)
     with open(f"{new_season_id}/id_name.json", "w") as fp:
-        json.dump(id_name , fp) 
+        json.dump(id_name , fp)
 
     # 2 - create all necessary CSVs (empty) except player_data_raw
     with open(f"{new_season_id}/alerts.csv", "w", newline='') as file:
@@ -78,6 +75,11 @@ def new_season(new_season_id, N=52, set_as_default=True):
         json.dump(dict() , fp)
     with open(f"{new_season_id}/investor_uuid.json", "w") as fp:
         json.dump(dict() , fp) 
+
+    #Create season_config.json
+    d = {"N_in":N_in, "N_out":N_out}
+    with open(f"{new_season_id}/season_config.json", "w") as fp:
+        json.dump(d, fp)
 
 
     # Finally, change season_id in config json

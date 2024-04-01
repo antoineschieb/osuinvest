@@ -1,6 +1,7 @@
 from csv import writer
 from datetime import date, datetime, timedelta
 from io import BytesIO
+import json
 from math import ceil
 from urllib.request import Request, urlopen
 from PIL import Image
@@ -262,3 +263,45 @@ def ban_user(investor_name):
     df.to_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index='name')
 
     return f"Successfully removed {investor_name} from the game."
+
+
+def liquidate(stocks_to_liquidate, old_id_name):
+    ret_msgs = []
+    for s in stocks_to_liquidate:
+        # remove from all_stocks CSVs
+    
+        df = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
+        df = df.drop(index=[s])
+        df.to_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index='name')
+
+        df = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
+        df = df.drop(index=[s])
+        df.to_csv(f"{SEASON_ID}/all_stocks_static.csv", index='name')
+
+        # remove from transactions history
+        transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+        transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+        transac_hist['datetime'] = pd.to_datetime(transac_hist['datetime'], format="ISO8601")
+        transac_hist = transac_hist.drop(transac_hist[transac_hist["stock_id"] == s].index)
+        transac_hist.to_csv(f"{SEASON_ID}/transactions_history.csv", index=None)
+
+        # remove from price history 
+        df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
+        df = df.drop(df[df["stock_id"] == s].index)
+        df.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
+
+        ret_msgs.append(f"{old_id_name[s]} has gone bankrupt and has disappeared from the market!")
+    return ret_msgs
+
+def get_id_name():
+    with open(f"{SEASON_ID}/id_name.json") as json_file:
+        id_name = json.load(json_file)
+        id_name = {int(k):v for k,v in id_name.items()}
+    return id_name
+
+def get_name_id():
+    with open(f"{SEASON_ID}/name_id.json") as json_file:
+        name_id = json.load(json_file)
+        name_id = {k:int(v) for k,v in name_id.items()}
+    return name_id
+

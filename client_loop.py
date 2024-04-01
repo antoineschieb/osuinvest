@@ -12,7 +12,7 @@ from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
 from constants import name_id, id_name
-from utils import calculate_remaining_time, get_stock_by_id, split_msg
+from utils import calculate_remaining_time, get_id_name, get_name_id, get_stock_by_id, liquidate, split_msg
 from visual import get_richest_investor, print_investors_gains
 
 intents = discord.Intents().all()
@@ -31,19 +31,31 @@ async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
     seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
-    # await asyncio.sleep(seconds)
+    await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
 
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
-    # try:
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
+
+    name_id = get_name_id()
+    id_name = get_id_name()
+
+    old_id_name = {k:v for k,v in id_name.items()}
+    # Update name_id, liquidate stocks if needed
+    stocks_to_liquidate = await run_blocking(update_name_id, name_id, id_name)
+    ret_msgs = await run_blocking(liquidate, stocks_to_liquidate, old_id_name)
+    if len(ret_msgs)>0:
+        channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+        for m in ret_msgs:
+            await channel.send(m)
+    
+    # Refresh all player data
     await run_blocking(refresh_player_data_raw)
     df = await run_blocking(compute_prestige_and_hype)
     df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
-    # df_updates_appendice = df_updates_appendice.set_index('update_id')
 
     for i,x in enumerate(df.index):
         pp,p,h = df.loc[x,:]
@@ -57,8 +69,11 @@ async def update_static_stats():
 
             await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
         else:
-            print("Need to create new stock....")
             await run_blocking(create_new_stock, x, pp, h, p)
+            print(f"New stock **{id_name[x]}** has entered the market!")
+            channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+            await channel.send(f"New stock **{id_name[x]}** has entered the market!")
+            
     
     # update stock prices
     df_updates = pd.concat([df_updates, df_updates_appendice])
@@ -106,9 +121,6 @@ async def update_static_stats():
         # s = "```"+s+"```"
         await alerts_channel.send(s)
 
-
-    # except Exception as e:
-    #     print(e)
     return 
 
 
@@ -150,7 +162,5 @@ async def pay_all_dividends_async():
                 await user.add_roles(role, reason='Added automatically for best net gains today')        
             await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
 
-    # Check for renames
-    await run_blocking(update_name_id, name_id, id_name)
 
 client.run(discord_bot_token)

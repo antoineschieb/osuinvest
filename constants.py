@@ -8,13 +8,6 @@ with open(f"config.json") as json_file:
     DETAILS_CHANNEL_ID = int(cfg['DETAILS_CHANNEL_ID'])
     ADMINS = cfg['ADMINS']
 
-with open(f"{SEASON_ID}/id_name.json") as json_file:
-    id_name = json.load(json_file)
-    id_name = {int(k):v for k,v in id_name.items()}
-
-with open(f"{SEASON_ID}/name_id.json") as json_file:
-    name_id = json.load(json_file)
-    name_id = {k:int(v) for k,v in name_id.items()}
 
 with open(f"{SEASON_ID}/uuid_investor.json") as json_file:
     uuid_investor = json.load(json_file)
