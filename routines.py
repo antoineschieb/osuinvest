@@ -11,14 +11,16 @@ from game_related import all_user_info, top_i, api
 from utils import get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
 
 
-def refresh_player_data_raw(verbose=False):
+def refresh_player_data_raw(in_market_users, verbose=False):
     cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity','last_month_activity','topplay_activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
-    id_name = get_id_name()
-    for uuid in id_name.keys():
-        d = all_user_info(uuid)
-        df_raw.loc[uuid,:] = d
+    print('OKOK')
+    print(len(in_market_users))
+    for u in in_market_users:
+        print(u.username)
+        d = all_user_info(u)
+        df_raw.loc[u.id,:] = d
     df_raw.to_csv(f"{constants.SEASON_ID}/player_data_raw.csv", index='id')
     if verbose:
         print(f'Refreshed all stats for top50 players')
@@ -165,17 +167,22 @@ def update_name_id(name_id, id_name):
     """
     Updates names : id correspondences for the top N players, taking renames into account. 
     """
+
+    old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
+
     with open(f"{constants.SEASON_ID}/season_config.json") as json_file:
         cfg = json.load(json_file)
         N_in = cfg['N_in']
         N_out = cfg['N_out']
 
     top_N_out = []
+    in_market_users = []  # Store user objects in a list for later so we dont have to call osu API twice
     # Update all players from top N_in, no matter what
     for i in range(N_in):
         uuid = top_i(i, country='FR')
         top_N_out.append(uuid)
         u = api.user(uuid, mode='osu')
+        in_market_users.append(u)
         current_username = u.username
         id_name[uuid] = current_username
         name_id[current_username.lower()] = uuid
@@ -186,6 +193,8 @@ def update_name_id(name_id, id_name):
     for i in range(N_in, N_out):
         uuid = top_i(i, country='FR')
         top_N_out.append(uuid)
+        if uuid in id_name.keys():  # player is not bankrupt yet
+            in_market_users.append(api.user(uuid, mode='osu'))
 
     # Check that every player in id_name is still within the top N_out. If not, liquidate
     stocks_to_liquidate = [k for k in id_name.keys() if k not in top_N_out]
@@ -200,7 +209,7 @@ def update_name_id(name_id, id_name):
         json.dump(name_id , fp)
     with open(f"{constants.SEASON_ID}/id_name.json", "w") as fp:
         json.dump(id_name , fp) 
-    return stocks_to_liquidate
+    return stocks_to_liquidate, in_market_users
 
 
 def update_zero_tax_preferences(investor, zero_tax_bool):

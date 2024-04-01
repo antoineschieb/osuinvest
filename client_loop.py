@@ -43,7 +43,7 @@ async def update_static_stats():
 
     old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
     # Update name_id, liquidate stocks if needed
-    stocks_to_liquidate = await run_blocking(update_name_id, name_id, id_name)
+    stocks_to_liquidate, in_market_users = await run_blocking(update_name_id, name_id, id_name)
     ret_msgs = await run_blocking(liquidate, stocks_to_liquidate, old_id_name)
     if len(ret_msgs)>0:
         channel = await client.fetch_channel(FEED_CHANNEL_ID) 
@@ -52,7 +52,7 @@ async def update_static_stats():
             await channel.send(m)
     
     # Refresh all player data
-    await run_blocking(refresh_player_data_raw)
+    await run_blocking(refresh_player_data_raw, in_market_users)
     df = await run_blocking(compute_prestige_and_hype)
     df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
