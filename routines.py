@@ -15,10 +15,7 @@ def refresh_player_data_raw(in_market_users, verbose=False):
     cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity','last_month_activity','topplay_activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
-    print('OKOK')
-    print(len(in_market_users))
     for u in in_market_users:
-        print(u.username)
         d = all_user_info(u)
         df_raw.loc[u.id,:] = d
     df_raw.to_csv(f"{constants.SEASON_ID}/player_data_raw.csv", index='id')
