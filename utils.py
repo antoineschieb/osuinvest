@@ -291,7 +291,7 @@ def liquidate(stocks_to_liquidate, old_id_name):
         df = df.drop(df[df["stock_id"] == s].index)
         df.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
 
-        ret_msgs.append(f"{old_id_name[s]} has gone bankrupt and has disappeared from the market!")
+        ret_msgs.append(f"**{old_id_name[s]}** has gone bankrupt and has disappeared from the market!")
     return ret_msgs
 
 def get_id_name():

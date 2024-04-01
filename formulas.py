@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from math import exp, sqrt
-from constants import name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 
 

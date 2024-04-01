@@ -41,13 +41,14 @@ async def update_static_stats():
     name_id = get_name_id()
     id_name = get_id_name()
 
-    old_id_name = {k:v for k,v in id_name.items()}
+    old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
     # Update name_id, liquidate stocks if needed
     stocks_to_liquidate = await run_blocking(update_name_id, name_id, id_name)
     ret_msgs = await run_blocking(liquidate, stocks_to_liquidate, old_id_name)
     if len(ret_msgs)>0:
         channel = await client.fetch_channel(FEED_CHANNEL_ID) 
         for m in ret_msgs:
+            print(m)
             await channel.send(m)
     
     # Refresh all player data
