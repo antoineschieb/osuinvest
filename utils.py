@@ -198,14 +198,14 @@ def beautify_time_delta(seconds, include_seconds=True):
 
 
 def get_avatar_from_discord_cache(investor: str):
-    if os.path.exists(f'cache_discord/{investor}.png'):
-        return Image.load(f'cache_discord/{investor}.png')
+    if os.path.exists(f'plots/discordavatar_{investor}.png'):
+        return Image.load(f'plots/discordavatar_{investor}.png')
     else:
         return None
     
-def get_avatar_from_osu_cache(stock: str):
-    if os.path.exists(f'cache_osu/{stock}.png'):
-        return Image.load(f'cache_osu/{stock}.png')
+def get_avatar_from_osu_cache(stock):
+    if os.path.exists(f"plots/osuavatar_{stock}.png"): #
+        return Image.load(f"plots/osuavatar_{stock}.png")
     else:
         return None
 

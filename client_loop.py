@@ -42,10 +42,9 @@ async def on_ready():
 @tasks.loop(seconds=300)
 async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
-
+    
     name_id = get_name_id()
     id_name = get_id_name()
-
     old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
     # Update name_id, liquidate stocks if needed
     stocks_to_liquidate, in_market_users = await run_blocking(update_name_id, name_id, id_name)
@@ -55,13 +54,11 @@ async def update_static_stats():
         for m in ret_msgs:
             print(m)
             await channel.send(m)
-    
     # Refresh all player data
     await run_blocking(refresh_player_data_raw, in_market_users)
     df = await run_blocking(compute_prestige_and_hype)
     df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
-
     for i,x in enumerate(df.index):
         pp,p,h = df.loc[x,:]
         stock = await run_blocking(get_stock_by_id, x)
@@ -79,13 +76,11 @@ async def update_static_stats():
             channel = await client.fetch_channel(FEED_CHANNEL_ID) 
             await channel.send(f"New stock **{id_name[x]}** has entered the market!")
             
-    
     # update stock prices
     df_updates = pd.concat([df_updates, df_updates_appendice])
     df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
     df_updates = df_updates.sort_values(by="datetime")
     df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
-
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
@@ -171,8 +166,6 @@ async def pay_all_dividends_async():
 
 
 def update_cache_discord():
-    if not os.path.exists("cache_discord"):
-        os.makedirs("cache_discord")
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     investors = df.index
     guild = client.get_guild(GUILD_ID)
@@ -180,8 +173,6 @@ def update_cache_discord():
         user = discord.utils.get(guild.members, name=investor)
         if user is not None:
             im = get_pilimg_from_url(user.display_avatar)
-            im.save(f"cache_discord/{investor}.png")
-        
-    print("Saved discord avatars in cache.")
+            im.save(f'plots/discordavatar_{investor}.png')
 
 client.run(discord_bot_token)

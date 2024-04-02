@@ -69,7 +69,7 @@ def all_user_info(u):
 
     # update cache osu
     im = get_pilimg_from_url(u.avatar_url)
-    im.save(f"cache_osu/{uuid}.png")
+    im.save(f"plots/osuavatar_{u.id}.png")
 
     all_info = {}
     # first add all u.statistics
