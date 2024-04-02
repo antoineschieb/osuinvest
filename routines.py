@@ -8,17 +8,16 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import get_portfolio, get_stock_by_id
+from utils import get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
 
 
-def refresh_player_data_raw(verbose=False):
-    reload(constants)
+def refresh_player_data_raw(in_market_users, verbose=False):
     cols = ['pp', 'hit_accuracy', 'play_count', 'play_time', 'replays_watched_by_others', 'maximum_combo', 'badges', 'follower_count', 'is_active', 'is_silenced', 'join_date', 'mapping_follower_count', 'scores_first_count', 'scores_recent_count', 'support_level', 'id', 'rank_peak', 'rank_current_to_worst', 'rank_current_to_mean', 'rank_current_to_highest_ever', 'activity','last_month_activity','topplay_activity']
     df_raw = pd.DataFrame(columns=cols)
     df_raw = df_raw.set_index('id')
-    for uuid in constants.id_name.keys():
-        d = all_user_info(uuid)
-        df_raw.loc[uuid,:] = d
+    for u in in_market_users:
+        d = all_user_info(u)
+        df_raw.loc[u.id,:] = d
     df_raw.to_csv(f"{constants.SEASON_ID}/player_data_raw.csv", index='id')
     if verbose:
         print(f'Refreshed all stats for top50 players')
@@ -40,9 +39,9 @@ def update_stock(stock: pd.Series, log_price=True):
 
     if log_price:
         # 3-log price update in stocks_prices_history
-        df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+        df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
         df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
-        df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='update_id')
+        df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
     return
 
 
@@ -54,13 +53,25 @@ def update_buyer(buyer: pd.Series):
 
 
 
-def create_new_investor(name, initial_balance):
+def create_new_investor(name, discord_uuid, initial_balance):
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
     if name in df.index:
         return f'ERROR: You are already registered'
 
     df.loc[name,:] = initial_balance, 0   # Initial balance (float), zero_tax_alerts (bool)
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
+
+    # Load, edit and write jsons
+    uuid_investor = get_uuid_investor()
+    investor_uuid = get_investor_uuid()
+    
+    uuid_investor[discord_uuid] = name
+    investor_uuid[name] = discord_uuid
+
+    with open(f"{constants.SEASON_ID}/uuid_investor.json", "w") as fp:
+        json.dump(uuid_investor , fp)
+    with open(f"{constants.SEASON_ID}/investor_uuid.json", "w") as fp:
+        json.dump(investor_uuid , fp) 
 
     return f'{name} has entered the market with ${initial_balance}!'
 
@@ -78,9 +89,9 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     # log initial stock price in stocks_prices_history
     d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
     stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
-    df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
     df_updates.loc[len(df_updates),:] = [name, valuate(stock_object), datetime.now()]
-    df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='name')
+    df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
     return
 
 
@@ -98,74 +109,104 @@ def reset_all_trades():
     df = df.iloc[0:0]
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
-    df = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    df = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
     df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index='transaction_id')
+    df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
 
-    df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index_col='update_id')
+    df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
     df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index='update_id')
+    df.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
 
     return
 
-def log_transaction(investor, stock_id, quantity):
+def log_transaction(investor, stock_id, quantity, price):
     # Read column types properly
-    history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv", index_col='transaction_id')
+    history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
     
     t_id = len(history)
-    history.loc[t_id,:] = [investor, int(stock_id), quantity, datetime.now()]
-    history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index='transaction_id')
+    history.loc[t_id,:] = [investor, int(stock_id), quantity, price, datetime.now()]
+    history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
     return
 
 
 def log_all_net_worth():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index_col="log_id")
+    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history.csv")
     for inv in df.index:
         nw = get_net_worth(inv)
         hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index="log_id")
+    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index=None)
     return
 
 
 def log_all_net_worth_continuous():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index_col="log_id")
+    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv")
     for inv in df.index:
         nw = get_net_worth(inv)
         hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index="log_id")
+    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index=None)
     return
 
 
 def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
-    df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv", index_col="alert_id")
+    df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv")
     df = df.astype({"stock": int})
     df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
-    df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index="alert_id")
-    return f'You will be pinged when {constants.id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
+    df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index=None)
+    id_name = get_id_name()
+    return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
 
 
 def update_name_id(name_id, id_name):
     """
     Updates names : id correspondences for the top N players, taking renames into account. 
     """
-    N = len(id_name)
-    for i in range(N):
+
+    old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
+
+    with open(f"{constants.SEASON_ID}/season_config.json") as json_file:
+        cfg = json.load(json_file)
+        N_in = cfg['N_in']
+        N_out = cfg['N_out']
+
+    top_N_out = []
+    in_market_users = []  # Store user objects in a list for later so we dont have to call osu API twice
+    # Update all players from top N_in, no matter what
+    for i in range(N_in):
         uuid = top_i(i, country='FR')
+        top_N_out.append(uuid)
         u = api.user(uuid, mode='osu')
+        in_market_users.append(u)
         current_username = u.username
         id_name[uuid] = current_username
         name_id[current_username.lower()] = uuid
         for n in u.previous_usernames:
             name_id[n.lower()] = uuid
+
+    
+    for i in range(N_in, N_out):
+        uuid = top_i(i, country='FR')
+        top_N_out.append(uuid)
+        if uuid in id_name.keys():  # player is not bankrupt yet
+            in_market_users.append(api.user(uuid, mode='osu'))
+
+    # Check that every player in id_name is still within the top N_out. If not, liquidate
+    stocks_to_liquidate = [k for k in id_name.keys() if k not in top_N_out]
+
+    # Remove stocks from id_name
+    for s in stocks_to_liquidate:
+        del id_name[s]
+    # Remove stocks from name_id
+    name_id = {k:v for k,v in name_id.items() if v not in stocks_to_liquidate}
+
     with open(f"{constants.SEASON_ID}/name_id.json", "w") as fp:
         json.dump(name_id , fp)
     with open(f"{constants.SEASON_ID}/id_name.json", "w") as fp:
         json.dump(id_name , fp) 
-    return
+    return stocks_to_liquidate, in_market_users
 
 
 def update_zero_tax_preferences(investor, zero_tax_bool):

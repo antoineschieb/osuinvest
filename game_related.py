@@ -64,8 +64,8 @@ def get_topplay_activity(uuid):
     return topplay_activity
 
 
-def all_user_info(uuid=5189431):
-    u = api.user(uuid, mode='osu')
+def all_user_info(u):
+    # u = api.user(uuid, mode='osu')
 
     # update cache osu
     im = get_pilimg_from_url(u.avatar_url)
@@ -86,7 +86,7 @@ def all_user_info(uuid=5189431):
     all_info['badges'] = len(all_info['badges'])
     all_info['is_active'] = int(all_info['is_active'])
     all_info['join_date'] = (datetime.now(tz=timezone.utc) - all_info['join_date']).days   # Days since account creation
-    all_info['id'] = uuid
+    all_info['id'] = u.id
     all_info['is_silenced'] = 0 if all_info['is_silenced'] is None else 1
 
     # log columns
@@ -122,9 +122,9 @@ def all_user_info(uuid=5189431):
 
     # More specific activity stats
     # /!\ requires more requests /!\
-    all_info['last_month_activity'] = get_last_month_activity(uuid)  
+    all_info['last_month_activity'] = get_last_month_activity(u.id)  
 
-    all_info['topplay_activity'] = get_topplay_activity(uuid)
+    all_info['topplay_activity'] = get_topplay_activity(u.id)
 
 
     return all_info

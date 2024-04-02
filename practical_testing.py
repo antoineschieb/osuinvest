@@ -11,7 +11,6 @@ def main():
         '$profile',
         '$profile uoifnbsiuef',
     
-
         '$buy flasteh 0.1',
         '$yes',
         '$buy 2 flasteh',
@@ -44,6 +43,18 @@ def main():
         '$market -h 5 -sortby dividend',
         '$market -h 5 -sortby gdrtdrgsdegrf',
         '$market -h 1 -tdrgsdegrf',
+
+        '$pf -sortby d',
+        '$pf -sortby e',
+        '$pf -sortby v',
+        '$pf -sortby w',
+        '$pf -d 2 -h 3',
+        '$pf -d -2 -h -3',
+
+        '$pingmezerotax',
+        '$pingmezerotax  ',
+        '$pingmezerotax On',
+        '$pingmezerotax off',
 
         '$lb',
         '$lb -oisrdefoisef',

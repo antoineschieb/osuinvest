@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
 from math import exp, sqrt
-import pandas as pd
-from constants import SEASON_ID, id_name, name_id
 from utils import get_investor_by_name, get_portfolio, get_stock_by_id
 
 
@@ -18,24 +16,10 @@ def valuate(stock):
     return round(supply_demand_ratio * intrinsic_value,2)
 
 
-def get_stocks_table():
-    df1 = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
-    df2 = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
-    df = pd.concat([df1, df2], axis=1)
-
-    current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
-    df.insert(0,'current_name', current_name_column)
-
-    df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
-    df["value"] = df.apply(valuate, axis=1)
-    df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
-    df["market_cap"] = df.apply(get_market_cap_from_stock, axis=1)
-    return df
-
 def get_net_worth(investor_name: str) -> float:
     investor = get_investor_by_name(investor_name)
     net_worth = investor.cash_balance
-    portfolio = get_portfolio(investor_name)
+    portfolio = get_portfolio(investor_name, short=True)
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
         stock = get_stock_by_id(s)
@@ -72,7 +56,8 @@ def tax_from_datetime(d):
 
 def compute_tax_applied(trade_hist, quantity_to_sell):
     assert quantity_to_sell>0
-
+    if len(trade_hist[0])==3:
+        trade_hist = [x[0:2] for x in trade_hist]
     # 1-create stack where 1 layer = 1 quantity of shares owned and an associated datetime
     stack = []  # will contain only positive values
     for qty,tme in trade_hist:  # chronological order

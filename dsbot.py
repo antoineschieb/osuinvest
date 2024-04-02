@@ -7,6 +7,7 @@ import time
 import typing
 import discord
 from discord.ext import commands
+import numpy as np
 import pandas as pd
 
 from discord.ui import Button, View
@@ -14,13 +15,13 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, SEASON_ID, id_name, name_id
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
-from visual import draw_table, plot_stock, print_market, print_profile, print_leaderboard, print_stock
-from utils import get_investor_by_name, get_pilimg_from_url, get_portfolio, get_stock_by_id, pretty_time_delta, split_df, split_msg
+from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
+from utils import ban_user, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -62,6 +63,11 @@ async def profile(ctx: commands.Context, *args):
             args.pop(idx+1)
             args.pop(idx)
         
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
         if len(args) <= 0:
             return ctx.message.author.name, ctx.message.author.display_avatar, n_hours, n_days
         else:
@@ -73,7 +79,8 @@ async def profile(ctx: commands.Context, *args):
             else:
                 user = discord.utils.get(ctx.guild.members, name=a)
                 if user is None:
-                    raise ValueError(f"ERROR: Unknown user {a}")
+                    # raise ValueError(f"ERROR: Unknown user {a}")
+                    return a, None, n_hours, n_days
                 return a, user.display_avatar, n_hours, n_days
 
     try:
@@ -82,7 +89,10 @@ async def profile(ctx: commands.Context, *args):
         await ctx.reply(e)
         return
 
-    avatar = get_pilimg_from_url(str(display_avatar))
+    if display_avatar is not None:
+        avatar = get_pilimg_from_url(str(display_avatar))
+    else:
+        avatar = None
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar, n_hours, n_days)
     
     if ret_str.startswith('ERROR:'):
@@ -105,6 +115,10 @@ async def market(ctx: commands.Context, *args):
         if '-h' in args:
             idx = args.index('-h')
             n_hours = int(args[idx+1])
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
@@ -123,18 +137,81 @@ async def market(ctx: commands.Context, *args):
         return 
     ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
 
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
+
+
+@bot.command()
+async def portfolio(ctx: commands.Context, *args):
+    def parse_args(args, ctx):
+        args = list(args)
+
+        n_hours=0
+        n_days=0
+        sortby='profit'
+        if '-d' in args:
+            idx = args.index('-d')
+            n_days = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        if '-h' in args:
+            idx = args.index('-h')
+            n_hours = int(args[idx+1])
+            args.pop(idx+1)
+            args.pop(idx)
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
+        if '-sortby' in args:
+            idx = args.index('-sortby')
+            sortby = args[idx+1]
+            if sortby not in ['value','v','current_total_value','c','dividend','d','profit','p']: 
+                raise NameError("-sortby argument must be one of [value (v), current_total_value (c), dividend (d), profit (p)]")
+            args.pop(idx+1)
+            args.pop(idx)
+        
+        if len(args) <= 0:
+            return ctx.message.author.name, n_hours, n_days, sortby
+        else:
+            a = args[0]
+            if a[0] == '<' and a[1] == '@' and a[-1] == '>':
+                investor_id = a.replace("<","").replace(">","").replace("@","")
+                u = bot.get_user(int(investor_id))               
+                return u.name, n_hours, n_days, sortby
+            else:
+                # user = discord.utils.get(ctx.guild.members, name=a)
+                # if user is None:
+                #     raise ValueError(f"ERROR: Unknown user {a}")
+                return a, n_hours, n_days, sortby
+
+    try:
+        investor_name,  n_hours, n_days, sortby = parse_args(args, ctx)
+    except Exception as e:
+        await ctx.reply(e)
+        return
+    
+    # Filter df to show only the investor's stocks
+    result = await run_blocking(print_portfolio, investor_name, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
+
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
+
 
 @bot.command()
 async def leaderboard(ctx: commands.Context):
     df = await run_blocking(print_leaderboard)
     ret_files = await run_blocking(draw_table, df, 'plots/lb', 20, min(12, len(df.index)), dpi=70)
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files))
+    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
 
 
 @bot.command()
 async def lb(ctx: commands.Context):
     await leaderboard(ctx)
+
+@bot.command()
+async def pf(ctx: commands.Context, *args):
+    await portfolio(ctx, *args)
 
 @bot.command()
 async def y(ctx: commands.Context):
@@ -161,6 +238,11 @@ async def stock(ctx: commands.Context, *args):
             n_hours = int(args[idx+1])
             args.pop(idx+1)
             args.pop(idx)
+        if '-ever' in args:
+            idx = args.index('-ever')
+            args.pop(idx)
+            n_days = 1 << 16   # Basically +infinity
+
         stock_name = ''
         for x in args:
             stock_name += x
@@ -221,6 +303,8 @@ async def buy(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: You can only buy 50 shares maximum at once.\nIf you want to buy {quantity} shares, do it in multiple transactions.')
         return
 
+    name_id = get_name_id()
+    id_name = get_id_name()
     if stock_name.lower() not in name_id.keys():
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
@@ -269,6 +353,8 @@ async def sell(ctx: commands.Context, *args):
         await ctx.reply(f'Could not parse arguments.\nUsage: $sell <stock> <quantity>')
         return 
 
+    id_name = get_id_name()
+    name_id = get_name_id()
     if stock_name.lower() not in name_id.keys():
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
@@ -341,9 +427,9 @@ async def register(ctx: commands.Context):
     season_start_date = datetime(year=2024, month=3, day=17, hour=19, minute=0, second=0)  #Sunday 7pm
     if datetime.now() < season_start_date:
         td = season_start_date - datetime.now()
-        await ctx.reply(f"You can't register before season starts!\nSeason will start in {pretty_time_delta(td.total_seconds())}")
+        await ctx.reply(f"You can't register before season starts!\nSeason will start in {beautify_time_delta(td.total_seconds())}")
     else:
-        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, 10000)
+        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, ctx.message.author.id, 10000)
         await ctx.reply(ret_str)
         await broadcast(ret_str)
 
@@ -377,7 +463,7 @@ async def pingmeif(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
         assert len(args) == 3
-        
+        name_id = get_name_id()
         if args[0].lower() not in name_id.keys():
             raise KeyError(f'ERROR: Unknown stock {args[0]}')
         stock_id = name_id[args[0].lower()]
@@ -477,6 +563,8 @@ async def adminsell(ctx: commands.Context, *args):
         await ctx.reply(f'ERROR: Unknown stock {stock_name}')
         return
     
+    id_name = get_id_name()
+    name_id = get_name_id()
     stock_name = name_id[stock_name.lower()]
     
     if quantity == 'all':
@@ -522,20 +610,57 @@ async def pingmezerotax(ctx: commands.Context, *args):
 
 
 @bot.command()
-async def generate_investorsjson(ctx):
-    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
-    d0 = dict()
-    d1 = dict()
-    for x in df.index:
-        user = discord.utils.get(ctx.guild.members, name=x)
-        if user is not None:
-            d0[x] = user.id
-            d1[user.id] = x
-    with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
-        json.dump(d0, outfile)
+async def ban(ctx: commands.Context, *args):
+    """
+    $ban <investor>
+    """
+    if ctx.message.author.name not in ADMINS:
+        await ctx.reply('Do not use admin commands!')
+        await ctx.message.author.timeout(timedelta(minutes=5))
+        return
+    
+    def parse_args(args):
+        args = list(args)
+        assert len(args)==1
+        investor = args[0]
+        return investor
+    try:
+        investor = parse_args(args)
+    except:
+        await ctx.reply(f'Could not parse arguments.\nUsage: $ban <investor>')
+        return
+    
+    ret_str = await run_blocking(ban_user, investor)
+    await ctx.reply(ret_str)
 
-    with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
-        json.dump(d1, outfile)
+
+
+# @bot.command()
+# async def generate_investorsjson(ctx):
+#     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+#     d0 = dict()
+#     d1 = dict()
+#     for x in df.index:
+#         user = discord.utils.get(ctx.guild.members, name=x)
+#         if user is not None:
+#             d0[x] = user.id
+#             d1[user.id] = x
+#     with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
+#         json.dump(d0, outfile)
+
+#     with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
+#         json.dump(d1, outfile)
+
+
+# @bot.command()
+# async def retrieve_hist(ctx: commands.Context):
+#     messages = ctx.channel.history(limit=1000)
+#     with open("test.txt", "a", encoding="utf-8") as myfile:
+#         async for m in messages:
+#             if 'share(s)' in m.content:
+#                 myfile.write(m.content + '\n')
+#     print("done")
+    
 
 if __name__ == "__main__":
     bot.run(discord_bot_token)
