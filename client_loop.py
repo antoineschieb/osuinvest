@@ -83,7 +83,6 @@ async def update_static_stats():
     df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
 
     channel = await client.fetch_channel(FEED_CHANNEL_ID)
 
@@ -123,6 +122,9 @@ async def update_static_stats():
 
     # update discord avatar cache
     update_cache_discord()
+
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
+    
     return 
 
 
