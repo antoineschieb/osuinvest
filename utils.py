@@ -199,16 +199,15 @@ def beautify_time_delta(seconds, include_seconds=True):
 
 def get_avatar_from_discord_cache(investor: str):
     if os.path.exists(f'plots/discordavatar_{investor}.png'):
-        return Image.load(f'plots/discordavatar_{investor}.png')
+        return Image.open(f'plots/discordavatar_{investor}.png')
     else:
         return None
     
 def get_avatar_from_osu_cache(stock):
     if os.path.exists(f"plots/osuavatar_{stock}.png"): #
-        return Image.load(f"plots/osuavatar_{stock}.png")
+        return Image.open(f"plots/osuavatar_{stock}.png")
     else:
         return None
-
 
 # TODO: rewrite this nicely as df
 def get_stack_from_trade_hist(trade_hist):

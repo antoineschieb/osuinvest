@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 import pandas as pd
 import matplotlib
 from formulas import get_dividend_yield_from_stock, get_net_worth, valuate
-from utils import get_id_name, get_name_id, get_ownership, get_portfolio, get_stock_by_id, beautify_time_delta
+from utils import get_avatar_from_osu_cache, get_id_name, get_name_id, get_ownership, get_portfolio, get_stock_by_id, beautify_time_delta
 
 from constants import SEASON_ID
 from visual import get_stocks_table
@@ -35,10 +35,7 @@ def get_pilimg_of_pie(x, colors):
 
 def get_profile_info_for_stock(uuid):
     u = api.user(uuid, mode='osu')
-    url = u.avatar_url
-    url = str(url)
-    avatar = get_pilimg_from_url(url)
-    return u.statistics.global_rank,u.statistics.pp,u.statistics.rank['country'],avatar
+    return u.statistics.global_rank,u.statistics.pp,u.statistics.rank['country']
 
 def buffer_plot_and_get(fig):
     buf = io.BytesIO()
@@ -157,7 +154,8 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     ret_path, td = plot_stock(s.current_name.lower(), n_days=n_days, n_hours=n_hours)
     graph = Image.open(ret_path)
 
-    global_rank,pp,country_rank,avatar = get_profile_info_for_stock(stock_id)
+    global_rank,pp,country_rank = get_profile_info_for_stock(stock_id)
+    avatar = get_avatar_from_osu_cache(stock_id)
 
     colors= ['#181D27'] if shareholders_list[0][0] is None else ["darkred","darkgreen","goldenrod","darkblue"]
     pie = get_pilimg_of_pie([x[1] for x in shareholders_list], colors)
