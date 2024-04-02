@@ -21,7 +21,7 @@ from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
 from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
-from utils import ban_user, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
+from utils import ban_user, get_avatar_from_discord_cache, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
 
 
 intents = discord.Intents().all()
@@ -69,30 +69,22 @@ async def profile(ctx: commands.Context, *args):
             n_days = 1 << 16   # Basically +infinity
 
         if len(args) <= 0:
-            return ctx.message.author.name, ctx.message.author.display_avatar, n_hours, n_days
+            return ctx.message.author.name, n_hours, n_days
         else:
             a = args[0]
             if a[0] == '<' and a[1] == '@' and a[-1] == '>':
                 investor_id = a.replace("<","").replace(">","").replace("@","")
                 u = bot.get_user(int(investor_id))               
-                return u.name, u.display_avatar, n_hours, n_days
-            else:
-                user = discord.utils.get(ctx.guild.members, name=a)
-                if user is None:
-                    # raise ValueError(f"ERROR: Unknown user {a}")
-                    return a, None, n_hours, n_days
-                return a, user.display_avatar, n_hours, n_days
+                return u.name, n_hours, n_days                
+            return a, n_hours, n_days
 
     try:
-        investor_name, display_avatar, n_hours, n_days = parse_args(args, ctx)
+        investor_name, n_hours, n_days = parse_args(args, ctx)
     except ValueError as e:
         await ctx.reply(e)
         return
 
-    if display_avatar is not None:
-        avatar = get_pilimg_from_url(str(display_avatar))
-    else:
-        avatar = None
+    avatar = get_avatar_from_discord_cache(investor_name)
     ret_str = await run_blocking(generate_profile_card, investor_name, avatar, n_hours, n_days)
     
     if ret_str.startswith('ERROR:'):

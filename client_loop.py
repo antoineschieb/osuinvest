@@ -3,16 +3,21 @@ import functools
 import typing
 import discord
 import pandas as pd
+import os
 from bank import check_for_alerts, check_for_zero_tax_alerts, pay_all_dividends
 from constants import ALERTS_CHANNEL_ID, FEED_CHANNEL_ID, GUILD_ID, SEASON_ID
 from creds import discord_bot_token
 import asyncio
 from discord.ext import commands, tasks
+from discord import Member, Guild
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
 from utils import calculate_remaining_time, get_id_name, get_name_id, get_stock_by_id, liquidate, split_msg
 from visual import get_richest_investor, print_investors_gains
+from game_related import create_id_list
+from utils import get_pilimg_from_url
+from osuapi import api
 
 intents = discord.Intents().all()
 client = discord.Client(intents=intents)
@@ -32,15 +37,14 @@ async def on_ready():
     seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
     await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
-
+    
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
-
+    
     name_id = get_name_id()
     id_name = get_id_name()
-
     old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
     # Update name_id, liquidate stocks if needed
     stocks_to_liquidate, in_market_users = await run_blocking(update_name_id, name_id, id_name)
@@ -50,13 +54,11 @@ async def update_static_stats():
         for m in ret_msgs:
             print(m)
             await channel.send(m)
-    
     # Refresh all player data
     await run_blocking(refresh_player_data_raw, in_market_users)
     df = await run_blocking(compute_prestige_and_hype)
     df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
-
     for i,x in enumerate(df.index):
         pp,p,h = df.loc[x,:]
         stock = await run_blocking(get_stock_by_id, x)
@@ -74,13 +76,11 @@ async def update_static_stats():
             channel = await client.fetch_channel(FEED_CHANNEL_ID) 
             await channel.send(f"New stock **{id_name[x]}** has entered the market!")
             
-    
     # update stock prices
     df_updates = pd.concat([df_updates, df_updates_appendice])
     df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
     df_updates = df_updates.sort_values(by="datetime")
     df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
-
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
@@ -121,6 +121,8 @@ async def update_static_stats():
         # s = "```"+s+"```"
         await alerts_channel.send(s)
 
+    # update discord avatar cache
+    update_cache_discord()
     return 
 
 
@@ -162,5 +164,15 @@ async def pay_all_dividends_async():
                 await user.add_roles(role, reason='Added automatically for best net gains today')        
             await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
 
+
+def update_cache_discord():
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    investors = df.index
+    guild = client.get_guild(GUILD_ID)
+    for investor in investors:
+        user = discord.utils.get(guild.members, name=investor)
+        if user is not None:
+            im = get_pilimg_from_url(user.display_avatar)
+            im.save(f'plots/discordavatar_{investor}.png')
 
 client.run(discord_bot_token)

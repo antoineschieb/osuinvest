@@ -9,6 +9,7 @@ from math import log
 
 from formulas import recency_function, topplay_importancy_function 
 from osuapi import api, top_i
+from utils import get_pilimg_from_url
 
 
 def get_username(uuid):
@@ -65,6 +66,10 @@ def get_topplay_activity(uuid):
 
 def all_user_info(u):
     # u = api.user(uuid, mode='osu')
+
+    # update cache osu
+    im = get_pilimg_from_url(u.avatar_url)
+    im.save(f"plots/osuavatar_{u.id}.png")
 
     all_info = {}
     # first add all u.statistics
@@ -123,4 +128,3 @@ def all_user_info(u):
 
 
     return all_info
-

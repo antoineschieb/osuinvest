@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO
 import json
 from math import ceil
+import os
 from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
@@ -194,6 +195,19 @@ def beautify_time_delta(seconds, include_seconds=True):
         ret_str = ret_str.split( )[:2]
         ret_str = ' '.join(ret_str)
     return ret_str
+
+
+def get_avatar_from_discord_cache(investor: str):
+    if os.path.exists(f'plots/discordavatar_{investor}.png'):
+        return Image.open(f'plots/discordavatar_{investor}.png')
+    else:
+        return None
+    
+def get_avatar_from_osu_cache(stock):
+    if os.path.exists(f"plots/osuavatar_{stock}.png"): #
+        return Image.open(f"plots/osuavatar_{stock}.png")
+    else:
+        return None
 
 # TODO: rewrite this nicely as df
 def get_stack_from_trade_hist(trade_hist):
