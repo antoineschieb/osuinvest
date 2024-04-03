@@ -100,6 +100,7 @@ async def market(ctx: commands.Context, *args):
         args = list(args)
         n_hours=0
         n_days=0
+        to_csv = False
         sortby='market_cap'
         if '-d' in args:
             idx = args.index('-d')
@@ -111,14 +112,18 @@ async def market(ctx: commands.Context, *args):
             idx = args.index('-ever')
             args.pop(idx)
             n_days = 1 << 16   # Basically +infinity
+        if '-csv' in args:
+            idx = args.index('-csv')
+            args.pop(idx)
+            to_csv = True  
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['market_cap','m','value','v','evolution','e','dividend','d']:
                 raise NameError
-        return n_hours, n_days, sortby
+        return n_hours, n_days, sortby, to_csv
     try:
-        n_hours, n_days, sortby = await parse_args(args)
+        n_hours, n_days, sortby, to_csv = await parse_args(args)
     except:
         await ctx.reply(f'Could not parse arguments.\nUsage $market [-d days] [-h hours] [-sortby value | evolution | dividend]')
         return 
@@ -127,9 +132,13 @@ async def market(ctx: commands.Context, *args):
     if isinstance(df,str) and df.startswith('ERROR:'):
         await ctx.reply(df)
         return 
-    ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
-
-    await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
+    
+    if to_csv:
+        df.to_csv("plots/market.csv")
+        await ctx.send(file=discord.File("plots/market.csv"))
+    else:
+        ret_files = await run_blocking(draw_table, df, f'plots/market', 28, 18)
+        await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
 
 
 @bot.command()
