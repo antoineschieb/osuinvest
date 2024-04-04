@@ -121,7 +121,7 @@ async def update_static_stats():
         await alerts_channel.send(s)
 
     # update discord avatar cache
-    update_cache_discord()
+    await run_blocking(update_cache_discord)
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
     
