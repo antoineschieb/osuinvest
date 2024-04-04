@@ -115,7 +115,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
 
 
 
-def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
+def generate_stock_card(stock_str_name, td):
     def shorten_shareholders_list(l):
         if len(l) == 0:
             return [[None,1]]
@@ -135,15 +135,11 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
         return f'ERROR: Unknown stock "{stock_str_name}"'
     stock_id = name_id[stock_str_name.lower()]
     
-    if n_hours==0 and n_days==0:
-        n_days = 7
-    if n_days<0 or (n_days==0 and n_hours<1):
-        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
+    
     
     df = get_stocks_table()
     s = df.loc[stock_id]
     
-    td = datetime.timedelta(hours=n_hours, days=n_days)
     value_previous=get_stock_value_timedelta(s.current_name, td)
     evolution = 0 if value_previous==0 else (s.value - value_previous)/value_previous
 
@@ -151,7 +147,7 @@ def generate_stock_card(stock_str_name, n_hours=0, n_days=7):
     shareholders_list = [[x, own.loc[x].shares_owned] for x in own.index]
     shareholders_list = shorten_shareholders_list(shareholders_list)
 
-    ret_path, td = plot_stock(s.current_name.lower(), n_days=n_days, n_hours=n_hours)
+    ret_path, td = plot_stock(s.current_name.lower(), td)
     graph = Image.open(ret_path)
 
     global_rank,pp,country_rank = get_profile_info_for_stock(stock_id)
@@ -303,15 +299,10 @@ def profile_card(investor_name, avatar, graph_filepath, current_networth, cash_b
     
     return full
 
-def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_days: int=7):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
+def generate_profile_card(investor_name: str, avatar:Image, td):  # take avatar as parameter too, dince it's easier to retrieve it in dsbot.py
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     if investor_name not in df.index:
         return f'ERROR: Unknown investor "{investor_name}"'
-    
-    if n_hours==0 and n_days==0:
-        n_days = 7
-    if n_days<0 or (n_days==0 and n_hours<1):
-        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
     
 
     # CASH BALANCE
@@ -334,7 +325,6 @@ def generate_profile_card(investor_name: str, avatar:Image, n_hours: int=0, n_da
     hist = pd.read_csv(f"{SEASON_ID}/net_worth_history_continuous.csv")
     hist_filtered_investor = hist[hist.investor==investor_name].copy()
     hist_filtered_investor["datetime"] = pd.to_datetime(hist_filtered_investor["datetime"], format="ISO8601")
-    td = datetime.timedelta(hours=n_hours, days=n_days)
     hist_filtered_investor_time = hist_filtered_investor[hist_filtered_investor['datetime'] > datetime.datetime.now() - td]
 
     all_net_worth_vals = [round(x/1000,5) for x in hist_filtered_investor_time["net_worth"]]

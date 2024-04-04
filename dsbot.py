@@ -20,8 +20,8 @@ from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
 from templating import generate_profile_card, generate_stock_card
-from visual import draw_table, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
-from utils import ban_user, get_avatar_from_discord_cache, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg
+from visual import draw_table, get_price_df, plot_stock, print_market, print_portfolio, print_profile, print_leaderboard, print_stock
+from utils import ban_user, get_avatar_from_discord_cache, get_id_name, get_investor_by_name, get_name_id, get_pilimg_from_url, get_portfolio, get_stock_by_id, beautify_time_delta, split_df, split_msg, time_parser
 
 
 intents = discord.Intents().all()
@@ -50,42 +50,29 @@ async def profile(ctx: commands.Context, *args):
     def parse_args(args, ctx):
         args = list(args)
 
-        n_hours=0
-        n_days=0
-        if '-d' in args:
-            idx = args.index('-d')
-            n_days = int(args[idx+1])
-            args.pop(idx+1)
-            args.pop(idx)
-        if '-h' in args:
-            idx = args.index('-h')
-            n_hours = int(args[idx+1])
-            args.pop(idx+1)
-            args.pop(idx)
-        
-        if '-ever' in args:
-            idx = args.index('-ever')
-            args.pop(idx)
-            n_days = 1 << 16   # Basically +infinity
+        args, td = time_parser(args)
 
         if len(args) <= 0:
-            return ctx.message.author.name, n_hours, n_days
+            return ctx.message.author.name, td
         else:
             a = args[0]
             if a[0] == '<' and a[1] == '@' and a[-1] == '>':
                 investor_id = a.replace("<","").replace(">","").replace("@","")
                 u = bot.get_user(int(investor_id))               
-                return u.name, n_hours, n_days                
-            return a, n_hours, n_days
+                return u.name, td              
+            return a, td
 
     try:
-        investor_name, n_hours, n_days = parse_args(args, ctx)
-    except ValueError as e:
-        await ctx.reply(e)
+        investor_name, td = parse_args(args, ctx)
+    except Exception as e:
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $profile <investor_name> [-d days] [-h hours] [-ever]')
         return
 
     avatar = get_avatar_from_discord_cache(investor_name)
-    ret_str = await run_blocking(generate_profile_card, investor_name, avatar, n_hours, n_days)
+    ret_str = await run_blocking(generate_profile_card, investor_name, avatar, td)
     
     if ret_str.startswith('ERROR:'):
         await ctx.reply(ret_str)
@@ -98,37 +85,32 @@ async def profile(ctx: commands.Context, *args):
 async def market(ctx: commands.Context, *args):
     async def parse_args(args):
         args = list(args)
-        n_hours=0
-        n_days=0
+        
         to_csv = False
         sortby='market_cap'
-        if '-d' in args:
-            idx = args.index('-d')
-            n_days = int(args[idx+1])
-        if '-h' in args:
-            idx = args.index('-h')
-            n_hours = int(args[idx+1])
-        if '-ever' in args:
-            idx = args.index('-ever')
-            args.pop(idx)
-            n_days = 1 << 16   # Basically +infinity
+        
+        args, td = time_parser(args)
+        
         if '-csv' in args:
             idx = args.index('-csv')
             args.pop(idx)
-            to_csv = True  
+            to_csv = True
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['market_cap','m','value','v','evolution','e','dividend','d']:
                 raise NameError
-        return n_hours, n_days, sortby, to_csv
+        return td, sortby, to_csv
     try:
-        n_hours, n_days, sortby, to_csv = await parse_args(args)
-    except:
-        await ctx.reply(f'Could not parse arguments.\nUsage $market [-d days] [-h hours] [-sortby value | evolution | dividend]')
+        td, sortby, to_csv = await parse_args(args)
+    except Exception as e:
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $market [-d days] [-h hours] [-sortby value | evolution | dividend]')
         return 
     
-    df = await run_blocking(print_market, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    df = await run_blocking(print_market, td, sortby=sortby)
     if isinstance(df,str) and df.startswith('ERROR:'):
         await ctx.reply(df)
         return 
@@ -146,54 +128,39 @@ async def portfolio(ctx: commands.Context, *args):
     def parse_args(args, ctx):
         args = list(args)
 
-        n_hours=0
-        n_days=0
-        sortby='profit'
-        if '-d' in args:
-            idx = args.index('-d')
-            n_days = int(args[idx+1])
-            args.pop(idx+1)
-            args.pop(idx)
-        if '-h' in args:
-            idx = args.index('-h')
-            n_hours = int(args[idx+1])
-            args.pop(idx+1)
-            args.pop(idx)
-        if '-ever' in args:
-            idx = args.index('-ever')
-            args.pop(idx)
-            n_days = 1 << 16   # Basically +infinity
+        args, td = time_parser(args)
 
+        sortby='profit'
         if '-sortby' in args:
             idx = args.index('-sortby')
             sortby = args[idx+1]
             if sortby not in ['value','v','current_total_value','c','dividend','d','profit','p']: 
                 raise NameError("-sortby argument must be one of [value (v), current_total_value (c), dividend (d), profit (p)]")
-            args.pop(idx+1)
+            args.pop(idx)
             args.pop(idx)
         
         if len(args) <= 0:
-            return ctx.message.author.name, n_hours, n_days, sortby
+            return ctx.message.author.name, td, sortby
         else:
             a = args[0]
             if a[0] == '<' and a[1] == '@' and a[-1] == '>':
                 investor_id = a.replace("<","").replace(">","").replace("@","")
                 u = bot.get_user(int(investor_id))               
-                return u.name, n_hours, n_days, sortby
+                return u.name, td, sortby
             else:
-                # user = discord.utils.get(ctx.guild.members, name=a)
-                # if user is None:
-                #     raise ValueError(f"ERROR: Unknown user {a}")
-                return a, n_hours, n_days, sortby
+                return a, td, sortby
 
     try:
-        investor_name,  n_hours, n_days, sortby = parse_args(args, ctx)
+        investor_name, td, sortby = parse_args(args, ctx)
     except Exception as e:
-        await ctx.reply(e)
-        return
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $pf [-d days] [-h hours] [-ever] [-sortby (v)alue | (c)urrent_total_value | (d)ividend | (p)rofit]')
+        return 
     
     # Filter df to show only the investor's stocks
-    result = await run_blocking(print_portfolio, investor_name, n_hours=n_hours, n_days=n_days, sortby=sortby)
+    result = await run_blocking(print_portfolio, investor_name, td, sortby=sortby)
     ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
@@ -226,24 +193,13 @@ async def n(ctx: commands.Context):
 async def stock(ctx: commands.Context, *args):
     def parse_args(args):
         args = list(args)
-        #start by optional args -d and -h
-        n_days = 0
-        n_hours = 0
-        if '-d' in args:
-            idx = args.index('-d')
-            n_days = int(args[idx+1])
-            args.pop(idx+1)
+        args, td = time_parser(args)
+        to_csv = False
+        if '-csv' in args:
+            idx = args.index('-csv')
             args.pop(idx)
-        if '-h' in args:
-            idx = args.index('-h')
-            n_hours = int(args[idx+1])
-            args.pop(idx+1)
-            args.pop(idx)
-        if '-ever' in args:
-            idx = args.index('-ever')
-            args.pop(idx)
-            n_days = 1 << 16   # Basically +infinity
-
+            to_csv = True
+        
         stock_name = ''
         for x in args:
             stock_name += x
@@ -251,20 +207,28 @@ async def stock(ctx: commands.Context, *args):
         stock_name = stock_name.strip()
         stock_name = re.sub('"','',stock_name)
         stock_name = re.sub("'",'',stock_name)
-        return stock_name.lower(), n_hours, n_days
+        return stock_name.lower(), td, to_csv
 
     try:
-        stock_name, n_hours, n_days = parse_args(args)
-    except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: $stock <stock_name> [-d days] [-h hours]')
+        stock_name, td, to_csv = parse_args(args)
+    except Exception as e:
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $stock [-d days] [-h hours] [-ever]')
         return 
 
-    ret_str = await run_blocking(generate_stock_card, stock_name, n_hours=n_hours, n_days=n_days)
-    if ret_str.startswith('ERROR:'):
-        await ctx.reply(ret_str)
-        return
-    # Else, ret_str should be a file path
-    await ctx.channel.send(file=discord.File(ret_str))
+    if to_csv:
+        df = await run_blocking(get_price_df, stock_name, td)
+        df.to_csv(f"plots/{stock_name}.csv")
+        await ctx.send(file=discord.File(f"plots/{stock_name}.csv"))        
+    else:
+        ret_str = await run_blocking(generate_stock_card, stock_name, td)
+        if ret_str.startswith('ERROR:'):
+            await ctx.reply(ret_str)
+            return
+        # Else, ret_str should be a file path
+        await ctx.channel.send(file=discord.File(ret_str))
 
 
 async def broadcast(msg :str, channel_id=FEED_CHANNEL_ID):
@@ -291,8 +255,11 @@ async def buy(ctx: commands.Context, *args):
         return stock_name.lower(), quantity
     try:
         stock_name, quantity = parse_args(args)
-    except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: $buy <stock> <quantity>')
+    except Exception as e:
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $buy <stock> <quantity>')
         return 
 
     if quantity < 0.1:
@@ -350,8 +317,11 @@ async def sell(ctx: commands.Context, *args):
         return stock_name.lower(), quantity
     try:
         stock_name, quantity = parse_args(args)
-    except:
-        await ctx.reply(f'Could not parse arguments.\nUsage: $sell <stock> <quantity>')
+    except Exception as e:
+        if str(e).startswith('ERROR:'):
+            await ctx.reply(e)
+        else:
+            await ctx.reply(f'Could not parse arguments.\nUsage $sell <stock> <quantity | all>')
         return 
 
     id_name = get_id_name()
@@ -537,8 +507,7 @@ async def adminsell(ctx: commands.Context, *args):
     
     def parse_args(args):
         args = list(args)
-        investor = args[0]
-        args.pop(0)
+        investor = args.pop(0)
 
         if args[-1] == 'all':
             quantity = 'all'
@@ -633,25 +602,6 @@ async def ban(ctx: commands.Context, *args):
     
     ret_str = await run_blocking(ban_user, investor)
     await ctx.reply(ret_str)
-
-
-
-# @bot.command()
-# async def generate_investorsjson(ctx):
-#     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
-#     d0 = dict()
-#     d1 = dict()
-#     for x in df.index:
-#         user = discord.utils.get(ctx.guild.members, name=x)
-#         if user is not None:
-#             d0[x] = user.id
-#             d1[user.id] = x
-#     with open(f"{SEASON_ID}/investor_uuid.json", "w") as outfile: 
-#         json.dump(d0, outfile)
-
-#     with open(f"{SEASON_ID}/uuid_investor.json", "w") as outfile: 
-#         json.dump(d1, outfile)
-
 
 # @bot.command()
 # async def retrieve_hist(ctx: commands.Context):

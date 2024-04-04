@@ -59,22 +59,37 @@ def add_current_name_col(df):
     return df
 
 
-def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
+def get_price_df(stock_str_name, td):
+    name_id = get_name_id()
+    if stock_str_name.lower() not in name_id.keys():
+        return f'ERROR: Unknown stock "{stock_str_name}"'
+    stock_id = name_id[stock_str_name.lower()]
+
+    # Read csv properly
+    df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
+    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")
+    df = df.astype({"stock_id": int})
+
+    # select the requested stock
+    selected_players =(df['stock_id']==stock_id)
+
+    # select the requested time period
+    start_date = datetime.datetime.now() - td
+    selected_period = df['datetime']>=start_date
+
+    df = df[selected_players & selected_period]
+    if df.empty:
+        print(f'No data to plot since {start_date}.')
+        return f'No data to plot since {start_date}.'
+    return df
+
+
+def plot_stock(stock_str_name :str, td):
     assert isinstance(stock_str_name, str)
     id_name = get_id_name()
     name_id = get_name_id()
     if stock_str_name not in name_id.keys():
         return f'ERROR: Unknown stock "{stock_str_name}"'
-
-    if n_hours==0 and n_days==0:
-        n_days = 7
-
-    
-    if n_days<0 or (n_days==0 and n_hours<1):
-        return 'n_days must be >= 0 and n_hours must be >=1'
-    
-
-    since=datetime.timedelta(hours=n_hours, days=n_days)
 
     plt.rcParams['font.family'] = "Aller"
     
@@ -90,30 +105,12 @@ def plot_stock(stock_str_name :str, n_hours=24, n_days=0):
              "axes.edgecolor" : "w"}
     plt.rcParams.update(params)
 
-    
-
-    stock = name_id[stock_str_name.lower()] 
+    # stock = name_id[stock_str_name.lower()] 
 
     sns.set_style(rc={'axes.facecolor':'#181D27', 'figure.facecolor':'#181D27'})
     # sns.set_style('darkgrid')
-
     
-    # Read csv properly
-    df = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
-    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")
-    df = df.astype({"stock_id": int})
-
-    # select the requested stock
-    selected_players =(df['stock_id']==stock)
-
-    # select the requested time period
-    start_date = datetime.datetime.now() - since
-    selected_period = df['datetime']>=start_date
-
-    df = df[selected_players & selected_period]
-    if df.empty:
-        print(f'No data to plot since {start_date}.')
-        return
+    df = get_price_df(stock_str_name, td)
     
     # Important to avoid visual glitches: sort the df by datetime
     df = df.sort_values(by='datetime')
@@ -174,12 +171,7 @@ def beautify_big_number(n: float):
 
     return '{:.1f}{}'.format(n / 10**(3 * millidx), millnames[millidx])   
 
-def print_market(n_hours=0, n_days=0, sortby='market_cap'):
-    if n_hours==0 and n_days==0:
-        n_days = 7
-    
-    if n_days<0 or (n_days==0 and n_hours<1):
-        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
+def print_market(td: datetime.timedelta, sortby='market_cap'):
     
     df = get_stocks_table()
     
@@ -187,7 +179,7 @@ def print_market(n_hours=0, n_days=0, sortby='market_cap'):
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
 
-    td = datetime.timedelta(hours=n_hours, days=n_days)
+    
     d = datetime.datetime.now() - td
     history_time_filtered = history[history['datetime'] >= d]
     assert len(history_time_filtered) > 0
@@ -390,14 +382,9 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
     return ret_files
 
 
-def print_portfolio(investor, n_hours=0, n_days=0, sortby='profit'):
-    if n_hours==0 and n_days==0:
-        n_days = 7
-    
-    if n_days<0 or (n_days==0 and n_hours<1):
-        return 'ERROR: n_days must be >= 0 and n_hours must be >=1'
+def print_portfolio(investor, td, sortby='profit'):
         
-    df = print_market(n_hours=n_hours, n_days=n_days)
+    df = print_market(td)  # No need sortby here
     pf = get_portfolio(investor)
     result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
     result['Current total value ($)'] = result['value'] * result['shares_owned']

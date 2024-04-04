@@ -4,6 +4,7 @@ from io import BytesIO
 import json
 from math import ceil
 import os
+from typing import List
 from urllib.request import Request, urlopen
 from PIL import Image
 import pandas as pd
@@ -338,3 +339,33 @@ def get_investor_uuid():
         investor_uuid = json.load(json_file)
         investor_uuid = {k:int(v) for k,v in investor_uuid.items()}
     return investor_uuid
+
+
+def time_parser(args: List):
+    n_hours=0
+    n_days=0
+    if '-d' in args:
+        idx = args.index('-d')
+        n_days = int(args[idx+1])
+        args.pop(idx)
+        args.pop(idx)
+    if '-h' in args:
+        idx = args.index('-h')
+        n_hours = int(args[idx+1])
+        args.pop(idx)
+        args.pop(idx)
+    if '-ever' in args:
+        idx = args.index('-ever')
+        args.pop(idx)
+        n_days = 1 << 16   # Basically +infinity
+
+    if n_hours==0 and n_days==0:
+        n_days = 7
+    
+    if n_days<0 or (n_days==0 and n_hours<1):
+        raise ValueError('ERROR: n_days must be >= 0 and n_hours must be >=1')
+    
+    td = timedelta(hours=n_hours, days=n_days)
+    td_offset = timedelta(minutes=5)
+
+    return args, td+td_offset
