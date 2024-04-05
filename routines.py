@@ -113,8 +113,12 @@ def log_all_net_worth():
 def log_all_net_worth_continuous():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
     lines = []
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+
     for inv in df.index:
-        nw = get_net_worth(inv)
+        nw = get_net_worth(inv, transac_hist=transac_hist)
         line = [inv, nw, datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
         lines.append(line)
     append_lines_to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv",lines)

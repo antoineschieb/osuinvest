@@ -23,14 +23,19 @@ def get_stocks_table():
     df1 = pd.read_csv(f"{SEASON_ID}/all_stocks_static.csv", index_col='name')
     df2 = pd.read_csv(f"{SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
     df = pd.concat([df1, df2], axis=1)
+
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+
     id_name = get_id_name()
     current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
     df.insert(0,'current_name', current_name_column)
 
-    df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
-    df["value"] = df.apply(valuate, axis=1)
+    # df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
+    df["value"] = df.apply(lambda x:valuate(x, transac_hist=transac_hist), axis=1)
     df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
-    df["market_cap"] = df.apply(get_market_cap_from_stock, axis=1)
+    df["market_cap"] = df.apply(lambda x:get_market_cap_from_stock(x, transac_hist=transac_hist), axis=1)
     return df
 
 
@@ -224,13 +229,17 @@ def print_profile(investor_name):
         return f'ERROR: Unknown investor "{investor_name}"'
 
     cash_balance = df.loc[investor_name, 'cash_balance']
-    
 
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+    
+    nw = round(get_net_worth(investor_name,transac_hist=transac_hist),2)
+    cb = round(cash_balance,2)
     ret_str = f'Investor: {investor_name}\n\n'
-    ret_str += f'Cash balance: ${round(cash_balance,2)}\n\n'
-    ret_str += f'From stocks: ${round(round(get_net_worth(investor_name),2) - round(cash_balance,2),2)}\n\n'
-    # ret_str += f'Portfolio:\n{pf.to_string(index=False, col_space=20)}\n\n'
-    ret_str += f'Total worth: ${round(get_net_worth(investor_name),2)}'
+    ret_str += f'Cash balance: ${cb}\n\n'
+    ret_str += f'From stocks: ${round(nw - cb,2)}\n\n'
+    ret_str += f'Total worth: ${nw}'
     return ret_str
 
 
@@ -260,8 +269,13 @@ def print_leaderboard():
     df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
     if df.empty:
         return pd.DataFrame(columns=['Name','Net worth ($)','Cash balance ($)'])
+    
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+
     df['Cash balance ($)'] = df.apply(lambda x:int(round(get_balance(x.name))), axis=1)
-    df['Net worth ($)'] = df.apply(lambda x:int(round(get_net_worth(x.name))), axis=1)
+    df['Net worth ($)'] = df.apply(lambda x:int(round(get_net_worth(x.name,transac_hist=transac_hist))), axis=1)
     df = df.sort_values(by='Net worth ($)', ascending=False)
     df.insert(0,'Name', df.index)
     return df[['Name','Net worth ($)','Cash balance ($)']]
@@ -385,7 +399,12 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
 def print_portfolio(investor, td, sortby='profit'):
         
     df = print_market(td)  # No need sortby here
-    pf = get_portfolio(investor)
+
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
+
+    pf = get_portfolio(investor, transac_hist=transac_hist)
     result = pd.merge(left=df, right=pf, left_on=df.index, right_on=pf.index)
     result['Current total value ($)'] = result['value'] * result['shares_owned']
     result['Profit ($)'] = result['Current total value ($)'] - result['bought_for']

@@ -10,11 +10,12 @@ def valuate_intrinsic(stock):
     return round(intrinsic_value,2)
 
 
-def valuate(stock):
+def valuate(stock, transac_hist=None):
     speculation_coeff = 0.4
     available_shares = stock.total_shares - speculation_coeff * stock.sold_shares
     supply_demand_ratio = (stock.total_shares + speculation_coeff * stock.sold_shares)/(available_shares+0.001)
-    own = get_ownership(stock.name)
+    
+    own = get_ownership(stock.name, transac_hist)
     L = list(own['shares_owned'])
     damped_entropy = min(entropy(L), sqrt(entropy(L)))
     adjusted_supply_demand_ratio = 1+(supply_demand_ratio-1)*damped_entropy
@@ -23,14 +24,14 @@ def valuate(stock):
     return round(adjusted_supply_demand_ratio * intrinsic_value,2)
 
 
-def get_net_worth(investor_name: str) -> float:
+def get_net_worth(investor_name: str, transac_hist=None) -> float:
     investor = get_investor_by_name(investor_name)
     net_worth = investor.cash_balance
-    portfolio = get_portfolio(investor_name, short=True)
+    portfolio = get_portfolio(investor_name, short=True, transac_hist=transac_hist)
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
         stock = get_stock_by_id(s)
-        net_worth += qty * valuate(stock)
+        net_worth += qty * valuate(stock, transac_hist=transac_hist)
     return round(net_worth,2)
 
 
@@ -44,8 +45,8 @@ def get_dividend_yield_from_stock(stock) -> float:
     return round(div_yield, 2)  # This is a percentage
 
 
-def get_market_cap_from_stock(stock) -> float:
-    market_cap = stock.sold_shares * valuate(stock)
+def get_market_cap_from_stock(stock, transac_hist=None) -> float:
+    market_cap = stock.sold_shares * valuate(stock, transac_hist=transac_hist)
     return round(market_cap)
 
 

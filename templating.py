@@ -135,7 +135,9 @@ def generate_stock_card(stock_str_name, td):
         return f'ERROR: Unknown stock "{stock_str_name}"'
     stock_id = name_id[stock_str_name.lower()]
     
-    
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
     
     df = get_stocks_table()
     s = df.loc[stock_id]
@@ -143,7 +145,7 @@ def generate_stock_card(stock_str_name, td):
     value_previous=get_stock_value_timedelta(s.current_name, td)
     evolution = 0 if value_previous==0 else (s.value - value_previous)/value_previous
 
-    own = get_ownership(stock_id)
+    own = get_ownership(stock_id, transac_hist=transac_hist)
     shareholders_list = [[x, own.loc[x].shares_owned] for x in own.index]
     shareholders_list = shorten_shareholders_list(shareholders_list)
 
@@ -304,17 +306,20 @@ def generate_profile_card(investor_name: str, avatar:Image, td):  # take avatar 
     if investor_name not in df.index:
         return f'ERROR: Unknown investor "{investor_name}"'
     
+    # For better optimization, read transac_history once and for all
+    transac_hist = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
+    transac_hist = transac_hist.astype({"stock_id": int,"quantity":float})
 
     # CASH BALANCE
     cash_balance = df.loc[investor_name, 'cash_balance']
 
     # PORTFOLIO
-    pf = get_portfolio(investor_name, short=True)
+    pf = get_portfolio(investor_name, short=True, transac_hist=transac_hist)
     id_name = get_id_name()
     if not pf.empty:
         stock_column = pf.apply(lambda x:id_name[x.name], axis=1)
         pf.insert(0,'Stock', stock_column)
-        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name)), axis=1)
+        pf['Total value ($)'] = pf.apply(lambda x: x.shares_owned * valuate(get_stock_by_id(x.name), transac_hist=transac_hist), axis=1)
         pf['Dividend yield (%)'] = pf.apply(lambda x:get_dividend_yield_from_stock(get_stock_by_id(x.name)), axis=1)
         pf = pf.rename(columns={'shares_owned':'Shares owned'})
         pf = pf.sort_values(by='Total value ($)', ascending=False)
@@ -333,13 +338,13 @@ def generate_profile_card(investor_name: str, avatar:Image, td):  # take avatar 
     graph_filepath = get_nw_plot(all_net_worth_dates, all_net_worth_vals)
 
     all_invs = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
-    all_invs['net_worth'] = all_invs.apply(lambda x:get_net_worth(x.name), axis=1)
+    all_invs['net_worth'] = all_invs.apply(lambda x:get_net_worth(x.name, transac_hist=transac_hist), axis=1)
     all_invs = all_invs.sort_values(by='net_worth', ascending=False)
     
     server_rank = list(all_invs.index).index(investor_name)+1
     server_total_investors = len(all_invs.index)
 
-    card = profile_card(investor_name, avatar, graph_filepath, round(get_net_worth(investor_name)), round(cash_balance), pf, server_rank, server_total_investors)
+    card = profile_card(investor_name, avatar, graph_filepath, round(get_net_worth(investor_name, transac_hist=transac_hist)), round(cash_balance), pf, server_rank, server_total_investors)
     file_path = f'plots/card_{investor_name}.png'
     card.save(file_path)
     return file_path
