@@ -8,7 +8,7 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
+from utils import append_lines_to_csv, append_one_line_to_csv, get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
 
 
 def refresh_player_data_raw(in_market_users, verbose=False):
@@ -39,9 +39,8 @@ def update_stock(stock: pd.Series, log_price=True):
 
     if log_price:
         # 3-log price update in stocks_prices_history
-        df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
-        df_updates.loc[len(df_updates),:] = [stock.name, valuate(stock), datetime.now()]
-        df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
+        line = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+        append_one_line_to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv",line)
     return
 
 
@@ -89,73 +88,42 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     # log initial stock price in stocks_prices_history
     d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
     stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
-    df_updates = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
-    df_updates.loc[len(df_updates),:] = [name, valuate(stock_object), datetime.now()]
-    df_updates.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
+
+    line = [name, valuate(stock_object), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    append_one_line_to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", line)
     return
 
-
-# Deprecated since season.py exists, just create a new season.
-def reset_all_trades():
-    df = pd.read_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index_col='name')
-    df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/all_stocks_dynamic.csv", index='name')
-
-    df = pd.read_csv(f"{constants.SEASON_ID}/all_stocks_static.csv", index_col='name')
-    df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/all_stocks_static.csv", index='name')
-
-    df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
-
-    df = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
-    df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
-
-    df = pd.read_csv(f"{constants.SEASON_ID}/stock_prices_history.csv")
-    df = df.iloc[0:0]
-    df.to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", index=None)
-
-    return
 
 def log_transaction(investor, stock_id, quantity, price):
-    # Read column types properly
-    history = pd.read_csv(f"{constants.SEASON_ID}/transactions_history.csv")
-    history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
-    
-    t_id = len(history)
-    history.loc[t_id,:] = [investor, int(stock_id), quantity, price, datetime.now()]
-    history.to_csv(f"{constants.SEASON_ID}/transactions_history.csv", index=None)
+    line = [investor, int(stock_id), quantity, price, datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    append_one_line_to_csv(f"{constants.SEASON_ID}/transactions_history.csv",line)
     return
 
 
 def log_all_net_worth():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history.csv")
+    lines = []
     for inv in df.index:
         nw = get_net_worth(inv)
-        hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history.csv", index=None)
+        line = [inv, nw, datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+        lines.append(line)
+    append_lines_to_csv(f"{constants.SEASON_ID}/net_worth_history.csv",lines)
     return
-
 
 def log_all_net_worth_continuous():
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
-    hist = pd.read_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv")
+    lines = []
     for inv in df.index:
         nw = get_net_worth(inv)
-        hist.loc[len(hist),:] = inv, nw, datetime.now()
-    hist.to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv", index=None)
+        line = [inv, nw, datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+        lines.append(line)
+    append_lines_to_csv(f"{constants.SEASON_ID}/net_worth_history_continuous.csv",lines)
     return
 
 
 def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
-    df = pd.read_csv(f"{constants.SEASON_ID}/alerts.csv")
-    df = df.astype({"stock": int})
-    df.loc[len(df.index),:]  = [investor, stock_id, is_greater_than, value]
-    df.to_csv(f"{constants.SEASON_ID}/alerts.csv", index=None)
+    line = [investor, int(stock_id), is_greater_than, value]
+    append_one_line_to_csv(f"{constants.SEASON_ID}/alerts.csv", line)
     id_name = get_id_name()
     return f'You will be pinged when {id_name[stock_id]} {">" if is_greater_than else "<"} {value}'
 

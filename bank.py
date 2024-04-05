@@ -66,7 +66,7 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     log_transaction(buyer_name, stock_name, quantity, transaction_price)
 
     if quantity > 0 and buyer.zero_tax_alerts == 1:
-        update_zta(buyer_name, stock_name, datetime.now())
+        update_zta(buyer_name, stock_name, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     return f"{buyer_name} has just {'bought' if quantity>0 else 'sold'} {abs(quantity)} share(s) of **{id_name[stock_name]}** for ${abs(transaction_price)} !"
 
@@ -120,9 +120,9 @@ def get_trade_history(buyer_name, stock_id):
 def add_pending_transaction(investor, stock_id, quantity):
     df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
     df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601").dt.floor('s')
-    df.loc[investor,:] = [stock_id,quantity,datetime.now()]
+    df.loc[investor,:] = [stock_id,quantity,datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
     df.to_csv(f"{SEASON_ID}/confirmations.csv", index="investor")
-    return 
+    return
 
 def find_transaction(investor):
     df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
