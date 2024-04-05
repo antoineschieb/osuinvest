@@ -109,7 +109,7 @@ def pay_all_dividends():
 def get_trade_history(buyer_name, stock_id):
     history = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
     history = history.astype({"stock_id": int})
-    history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601")
+    history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601").dt.floor('s')
     filtered = history[(history['investor']==buyer_name) & (history['stock_id']==stock_id)]
     quantities = list(filtered['quantity'])
     datetimes = list(filtered['datetime'])
@@ -119,14 +119,14 @@ def get_trade_history(buyer_name, stock_id):
 
 def add_pending_transaction(investor, stock_id, quantity):
     df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
-    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")   
+    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601").dt.floor('s')
     df.loc[investor,:] = [stock_id,quantity,datetime.now()]
     df.to_csv(f"{SEASON_ID}/confirmations.csv", index="investor")
     return 
 
 def find_transaction(investor):
     df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
-    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")   
+    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601").dt.floor('s')   
     
     # First, filter only transactions < 5mins
     df = df[datetime.now() - df['datetime'] < timedelta(minutes=5)]
@@ -143,7 +143,7 @@ def find_transaction(investor):
 
 def remove_transaction_from_pending(investor):
     df = pd.read_csv(f"{SEASON_ID}/confirmations.csv", index_col="investor")
-    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601")
+    df['datetime'] = pd.to_datetime(df['datetime'], format="ISO8601").dt.floor('s')
     # Remove it, and export
     if investor not in df.index:
         return None
@@ -179,7 +179,7 @@ def check_for_zero_tax_alerts():
     id_name = get_id_name()
     ret_strs = []
     df_zta = pd.read_csv(f"{SEASON_ID}/zero_tax_alerts.csv", index_col=['investor','stock'])
-    df_zta['last_bought'] = pd.to_datetime(df_zta['last_bought'], format="ISO8601")
+    df_zta['last_bought'] = pd.to_datetime(df_zta['last_bought'], format="ISO8601").dt.floor('s')
     indices_to_drop = []
     now = datetime.now()
     for inv,stock_id in df_zta.index:

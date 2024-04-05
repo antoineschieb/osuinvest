@@ -1,4 +1,5 @@
 from csv import writer
+import csv
 from datetime import date, datetime, timedelta
 from io import BytesIO
 import json
@@ -369,3 +370,17 @@ def time_parser(args: List):
     td_offset = timedelta(minutes=5)
 
     return args, td+td_offset
+
+
+def append_lines_to_csv(path, lines):
+    with open(path, 'a', newline='') as f:
+        f_append = csv.writer(f)
+        for line in lines:
+            f_append.writerow(line)   #line must be a list
+    return 
+
+def append_one_line_to_csv(path, line):
+    with open(path, 'a', newline='') as f:
+        f_append = csv.writer(f)
+        f_append.writerow(line)   #line must be a list
+    return 

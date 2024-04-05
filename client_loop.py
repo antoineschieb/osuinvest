@@ -13,7 +13,7 @@ from discord import Member, Guild
 from formulas import valuate
 from prestige_hype import compute_prestige_and_hype
 from routines import create_new_stock, log_all_net_worth, log_all_net_worth_continuous, refresh_player_data_raw, update_stock, update_name_id
-from utils import calculate_remaining_time, get_id_name, get_name_id, get_stock_by_id, liquidate, split_msg
+from utils import append_lines_to_csv, calculate_remaining_time, get_id_name, get_name_id, get_stock_by_id, liquidate, split_msg
 from visual import get_richest_investor, print_investors_gains
 from game_related import create_id_list
 from utils import get_pilimg_from_url
@@ -67,7 +67,7 @@ async def update_static_stats():
             stock.trendiness = h
             stock.prestige = p
 
-            df_updates_appendice.loc[len(df_updates)+i, :] = [stock.name, valuate(stock), datetime.now()]
+            df_updates_appendice.loc[len(df_updates)+i, :] = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
 
             await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
         else:
@@ -77,10 +77,9 @@ async def update_static_stats():
             await channel.send(f"New stock **{id_name[x]}** has entered the market!")
             
     # update stock prices
-    df_updates = pd.concat([df_updates, df_updates_appendice])
-    df_updates['datetime'] = pd.to_datetime(df_updates['datetime'], format="ISO8601")
-    df_updates = df_updates.sort_values(by="datetime")
-    df_updates.to_csv(f"{SEASON_ID}/stock_prices_history.csv", index=None)
+    lines = [list(df_updates_appendice.loc[x]) for x in df_updates_appendice.index]
+    append_lines_to_csv(f"{SEASON_ID}/stock_prices_history.csv", lines)
+
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
 
