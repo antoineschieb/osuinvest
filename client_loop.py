@@ -37,49 +37,52 @@ async def on_ready():
     seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
     await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
-    
+
 
 @tasks.loop(seconds=300)
 async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
     
-    # name_id = get_name_id()
-    # id_name = get_id_name()
-    # old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
-    # # Update name_id, liquidate stocks if needed
-    # stocks_to_liquidate, in_market_users = await run_blocking(update_name_id, name_id, id_name)
-    # ret_msgs = await run_blocking(liquidate, stocks_to_liquidate, old_id_name)
-    # if len(ret_msgs)>0:
-    #     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
-    #     for m in ret_msgs:
-    #         print(m)
-    #         await channel.send(m)
-    # # Refresh all player data
-    # await run_blocking(refresh_player_data_raw, in_market_users)
-    # df = await run_blocking(compute_prestige_and_hype)
-    # df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
-    # df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
-    # for i,x in enumerate(df.index):
-    #     pp,p,h = df.loc[x,:]
-    #     stock = await run_blocking(get_stock_by_id, x)
-    #     if stock is not None:
-    #         stock.raw_skill = pp
-    #         stock.trendiness = h
-    #         stock.prestige = p
+    name_id = get_name_id()
+    id_name = get_id_name()
+    old_id_name = {k:v for k,v in id_name.items()}  # Copy before updating
+    # Update name_id, liquidate stocks if needed
+    stocks_to_liquidate, in_market_users = await run_blocking(update_name_id, name_id, id_name)
+    ret_msgs = await run_blocking(liquidate, stocks_to_liquidate, old_id_name)
+    if len(ret_msgs)>0:
+        channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+        for m in ret_msgs:
+            print(m)
+            await channel.send(m)
+    # Refresh all player data
+    await run_blocking(refresh_player_data_raw, in_market_users)
+    df = await run_blocking(compute_prestige_and_hype)
+    df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
+    df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
+    for i,x in enumerate(df.index):
+        if i>=5:
+            break
+        pp,p,h = df.loc[x,:]
+        stock = await run_blocking(get_stock_by_id, x)
+        if stock is not None:
+            stock.raw_skill = pp
+            stock.trendiness = h
+            stock.prestige = p
 
-    #         df_updates_appendice.loc[len(df_updates)+i, :] = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+            df_updates_appendice.loc[len(df_updates)+i, :] = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
 
-    #         await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
-    #     else:
-    #         await run_blocking(create_new_stock, x, pp, h, p)
-    #         print(f"New stock **{id_name[x]}** has entered the market!")
-    #         channel = await client.fetch_channel(FEED_CHANNEL_ID) 
-    #         await channel.send(f"New stock **{id_name[x]}** has entered the market!")
-            
-    # # update stock prices
-    # lines = [list(df_updates_appendice.loc[x]) for x in df_updates_appendice.index]
-    # append_lines_to_csv(f"{SEASON_ID}/stock_prices_history.csv", lines)
+            await run_blocking(update_stock, stock, log_price=False)   # we'll log all the prices once at the end
+        else:
+            await run_blocking(create_new_stock, x, pp, h, p)
+            print(f"New stock **{id_name[x]}** has entered the market!")
+            channel = await client.fetch_channel(FEED_CHANNEL_ID) 
+            await channel.send(f"New stock **{id_name[x]}** has entered the market!")
 
+    # update stock prices
+    lines = [list(df_updates_appendice.loc[x]) for x in df_updates_appendice.index]
+    append_lines_to_csv(f"{SEASON_ID}/stock_prices_history.csv", lines)
+    
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging continuous net worth...")
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
 
@@ -103,7 +106,7 @@ async def update_static_stats():
                 await user.add_roles(role, reason='Added automatically for having highest net worth')      
                 await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
-
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Checking for alerts...")
     alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
     # Check for alerts
     ret_strs = await run_blocking(check_for_alerts)
@@ -120,6 +123,7 @@ async def update_static_stats():
         await alerts_channel.send(s)
 
     # update discord avatar cache
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: avatar cache...")
     await run_blocking(update_cache_discord)
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
