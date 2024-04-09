@@ -89,7 +89,7 @@ def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_
     d = {'name':name, 'raw_skill': raw_skill, 'trendiness':trendiness, 'prestige':prestige, 'total_shares':total_shares, 'sold_shares':sold_shares}
     stock_object = pd.Series(data=d)  # need to create it manually in case it's not yet found inside all_stocks.csv (async behavior)
 
-    line = [name, valuate(stock_object), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    line = [name, valuate(stock_object, L=[]), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
     append_one_line_to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv", line)
     return
 

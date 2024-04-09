@@ -10,13 +10,15 @@ def valuate_intrinsic(stock):
     return round(intrinsic_value,2)
 
 
-def valuate(stock, transac_hist=None):
+def valuate(stock, transac_hist=None, L=None):
     speculation_coeff = 0.4
     available_shares = stock.total_shares - speculation_coeff * stock.sold_shares
     supply_demand_ratio = (stock.total_shares + speculation_coeff * stock.sold_shares)/(available_shares+0.001)
     
-    own = get_ownership(stock.name, transac_hist)
-    L = list(own['shares_owned'])
+    if L is None:
+        own = get_ownership(stock.name, transac_hist)
+        L = list(own['shares_owned'])
+
     damped_entropy = min(entropy(L), sqrt(entropy(L)))
     adjusted_supply_demand_ratio = 1+(supply_demand_ratio-1)*damped_entropy
 

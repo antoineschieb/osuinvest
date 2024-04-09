@@ -107,7 +107,6 @@ def pay_all_dividends():
 
 
 def get_trade_history(buyer_name, stock_id):
-    print("reading it 3")
     history = pd.read_csv(f"{SEASON_ID}/transactions_history.csv")
     history = history.astype({"stock_id": int})
     history['datetime'] = pd.to_datetime(history['datetime'], format="ISO8601").dt.floor('s')
