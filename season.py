@@ -6,6 +6,9 @@ import os
 
 
 def new_season(new_season_id, N_in=100, N_out=105, set_as_default=True):
+
+    assert N_in < N_out
+
     if os.path.exists(f'{new_season_id}/'):
         raise ValueError("Season already exists!")
     
@@ -97,7 +100,10 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('season_name')
-    parser.add_argument('player_count')
+    parser.add_argument('player_count_in')
+    parser.add_argument('player_count_out')
+
     args = parser.parse_args()
-    print(f"Creating new season {args.season_name} with the top {int(args.player_count)} players")
-    new_season(args.season_name, N=int(args.player_count))
+    print(f"Creating new season {args.season_name} with the top {(int(args.player_count_in),int(args.player_count_out))} players")
+    new_season(args.season_name, N_in=int(args.player_count_in), N_out=int(args.player_count_out))
+    
