@@ -60,8 +60,6 @@ async def update_static_stats():
     df_updates = pd.read_csv(f"{SEASON_ID}/stock_prices_history.csv")
     df_updates_appendice = pd.DataFrame(columns=['stock_id','value','datetime'])
     for i,x in enumerate(df.index):
-        if i>=5:
-            break
         pp,p,h = df.loc[x,:]
         stock = await run_blocking(get_stock_by_id, x)
         if stock is not None:
