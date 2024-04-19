@@ -397,7 +397,9 @@ def draw_table(df: pd.DataFrame, filename: str, fontsize:int, rows_per_page: int
 
 
 def print_portfolio(investor, td, sortby='profit'):
-        
+    df = pd.read_csv(f"{SEASON_ID}/all_investors.csv", index_col='name')
+    if investor not in df.index:
+        return f'ERROR: Unknown investor "{investor}"'
     df = print_market(td)  # No need sortby here
 
     # For better optimization, read transac_history once and for all

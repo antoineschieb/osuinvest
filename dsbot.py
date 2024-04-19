@@ -161,6 +161,11 @@ async def portfolio(ctx: commands.Context, *args):
     
     # Filter df to show only the investor's stocks
     result = await run_blocking(print_portfolio, investor_name, td, sortby=sortby)
+    
+    if isinstance(result, str) and result.startswith('ERROR:'):
+        await ctx.reply(result)
+        return
+    
     ret_files = await run_blocking(draw_table, result, f'plots/portfolio_{investor_name}', 28, 18)
 
     await ctx.send(content=f'Page (1/{len(ret_files)})', file=discord.File(ret_files[0]), view=PaginationView(ret_files) if len(ret_files)>1 else None)
