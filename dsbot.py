@@ -15,7 +15,7 @@ from discord import ButtonStyle
 
 
 from bank import add_pending_transaction, buy_stock, calc_price, find_transaction, remove_transaction_from_pending, check_for_alerts
-from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS
+from constants import FEED_CHANNEL_ID, DETAILS_CHANNEL_ID, ADMINS, SEASON_ID
 from creds import discord_bot_token
 from formulas import valuate
 from routines import create_alert, create_new_investor, update_zero_tax_preferences
@@ -246,6 +246,14 @@ async def broadcast(msg :str, channel_id=FEED_CHANNEL_ID):
 
 @bot.command()
 async def buy(ctx: commands.Context, *args):
+    with open(f"{SEASON_ID}/season_config.json") as json_file:
+        cfg = json.load(json_file)
+        season_end_date = datetime.strptime(cfg['season_end_date'],'%Y-%m-%d %H:%M:%S')
+        
+    if datetime.now() >= season_end_date:
+        td = season_end_date - datetime.now()
+        await ctx.reply(f"Season has ended {beautify_time_delta(abs(td.total_seconds()))} ago!")
+        return
     def parse_args(args):
         args = list(args)
         quantity = round(float(args[-1]), 1)
@@ -305,6 +313,14 @@ async def buy(ctx: commands.Context, *args):
 
 @bot.command()
 async def sell(ctx: commands.Context, *args):
+    with open(f"{SEASON_ID}/season_config.json") as json_file:
+        cfg = json.load(json_file)
+        season_end_date = datetime.strptime(cfg['season_end_date'],'%Y-%m-%d %H:%M:%S')
+        
+    if datetime.now() >= season_end_date:
+        td = season_end_date - datetime.now()
+        await ctx.reply(f"Season has ended {beautify_time_delta(td.total_seconds())} ago!")
+        return
     def parse_args(args):
         args = list(args)
         if args[-1] == 'all':
@@ -400,14 +416,22 @@ async def no(ctx: commands.Context):
 
 @bot.command()
 async def register(ctx: commands.Context):
-    season_start_date = datetime(year=2024, month=3, day=17, hour=19, minute=0, second=0)  #Sunday 7pm
-    if datetime.now() < season_start_date:
+    with open(f"{SEASON_ID}/season_config.json") as json_file:
+        cfg = json.load(json_file)
+        season_start_date = datetime.strptime(cfg['season_start_date'],'%Y-%m-%d %H:%M:%S')
+        season_end_date = datetime.strptime(cfg['season_end_date'],'%Y-%m-%d %H:%M:%S')
+        
+    if datetime.now() <= season_start_date:
         td = season_start_date - datetime.now()
         await ctx.reply(f"You can't register before season starts!\nSeason will start in {beautify_time_delta(td.total_seconds())}")
-    else:
-        ret_str = await run_blocking(create_new_investor, ctx.message.author.name, ctx.message.author.id, 10000)
-        await ctx.reply(ret_str)
-        await broadcast(ret_str)
+        return
+    if datetime.now() >= season_end_date:
+        td = season_end_date - datetime.now()
+        await ctx.reply(f"Season has ended {beautify_time_delta(abs(td.total_seconds()))} ago!")
+        return
+    ret_str = await run_blocking(create_new_investor, ctx.message.author.name, ctx.message.author.id, 10000)
+    await ctx.reply(ret_str)
+    await broadcast(ret_str)
 
 
 class PaginationView(View):

@@ -412,7 +412,6 @@ def print_portfolio(investor, td, sortby='profit'):
     result['Profit ($)'] = result['Current total value ($)'] - result['bought_for']
     result = result.drop(columns=['key_0','last_bought','Market cap ($)',])
     
-    
     # -sortby : Link argument with column name
     args_colname = {'value':'value',
                     'v':'value',

@@ -1,11 +1,12 @@
 import argparse
+from datetime import datetime
 import json
 from osuapi import api, top_i
 import csv
 import os
 
 
-def new_season(new_season_id, N_in=100, N_out=105, set_as_default=True):
+def new_season(new_season_id, N_in=100, N_out=105, season_start_date=None, season_end_date=None, set_as_default=True):
 
     assert N_in < N_out
 
@@ -80,7 +81,16 @@ def new_season(new_season_id, N_in=100, N_out=105, set_as_default=True):
         json.dump(dict() , fp) 
 
     #Create season_config.json
-    d = {"N_in":N_in, "N_out":N_out}
+    
+    try:
+        #parse date with '%Y-%m-%d %H:%M:%S' format
+        season_start_date = datetime.strptime(season_start_date,'%Y-%m-%d %H:%M:%S')
+        season_end_date = datetime.strptime(season_end_date,'%Y-%m-%d %H:%M:%S')
+    except Exception as e:
+        print(e)
+        raise ValueError("Date format must be '%Y-%m-%d %H:%M:%S'")
+    
+    d = {"N_in":N_in, "N_out":N_out,"season_start_date":season_start_date.strftime('%Y-%m-%d %H:%M:%S'),"season_end_date":season_end_date.strftime('%Y-%m-%d %H:%M:%S')}
     with open(f"{new_season_id}/season_config.json", "w") as fp:
         json.dump(d, fp)
 
@@ -102,8 +112,12 @@ if __name__=='__main__':
     parser.add_argument('season_name')
     parser.add_argument('player_count_in')
     parser.add_argument('player_count_out')
+    parser.add_argument('start_date')
+    parser.add_argument('end_date')
+    
 
     args = parser.parse_args()
-    print(f"Creating new season {args.season_name} with the top {(int(args.player_count_in),int(args.player_count_out))} players")
-    new_season(args.season_name, N_in=int(args.player_count_in), N_out=int(args.player_count_out))
+    print(f"Creating new season {args.season_name} with the top {(int(args.player_count_in),int(args.player_count_out))} players \
+           starting {args.start_date} and ending {args.end_date}")
+    new_season(args.season_name, N_in=int(args.player_count_in), N_out=int(args.player_count_out), season_start_date=args.start_date,season_end_date=args.end_date)
     
