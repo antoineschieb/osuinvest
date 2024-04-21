@@ -46,6 +46,7 @@ def update_stock(stock: pd.Series, log_price=True):
 
 def update_buyer(buyer: pd.Series):
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
+    df = df.astype({"cash_balance": float})
     df.loc[buyer.name,:] = buyer
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
     return 
