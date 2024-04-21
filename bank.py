@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 import json
+import time
 import pandas as pd
 from constants import SEASON_ID
 from formulas import compute_tax_applied, valuate, get_dividend_yield
-from utils import get_id_name, get_investor_by_name, get_investor_uuid, get_name_id, get_portfolio, get_stock_by_id
+from utils import append_one_line_to_csv, get_id_name, get_investor_by_name, get_investor_uuid, get_name_id, get_portfolio, get_stock_by_id
 from routines import update_buyer, update_stock, log_transaction, update_zta
 
 
@@ -61,9 +62,14 @@ def buy_stock(buyer_name: str, stock_name, quantity: float):
     update_buyer(buyer)
     
     stock.sold_shares += quantity
-    update_stock(stock)
+    update_stock(stock, log_price=False)  # Do not log price since it won't be updated directly
 
     log_transaction(buyer_name, stock_name, quantity, transaction_price)
+
+    # log price update in stock_prices_history
+    time.sleep(0.5)
+    line = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
+    append_one_line_to_csv(f"{SEASON_ID}/stock_prices_history.csv",line)
 
     if quantity > 0 and buyer.zero_tax_alerts == 1:
         update_zta(buyer_name, stock_name, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -91,12 +97,6 @@ def pay_all_dividends():
             stock = get_stock_by_id(s)
             volume = qty * valuate(stock)
             
-            # if stock.sold_shares == 0:
-            #     print("ok")
-            #     print(stock)
-            #     print(qty)
-            #     print(portfolio.loc[s])
-            #     raise ValueError
             dividend = round(get_dividend_yield(s) * 0.01 * volume, 2)
             investor.cash_balance += dividend
             sum_of_dividends += dividend

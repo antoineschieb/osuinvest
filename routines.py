@@ -8,7 +8,7 @@ import constants
 from importlib import reload
 from formulas import get_net_worth, valuate
 from game_related import all_user_info, top_i, api
-from utils import append_lines_to_csv, append_one_line_to_csv, get_id_name, get_investor_uuid, get_portfolio, get_uuid_investor
+from utils import append_lines_to_csv, append_one_line_to_csv, get_id_name, get_investor_uuid, get_portfolio, get_stock_by_id, get_uuid_investor
 
 
 def refresh_player_data_raw(in_market_users, verbose=False):
@@ -38,7 +38,7 @@ def update_stock(stock: pd.Series, log_price=True):
     df.to_csv(f"{constants.SEASON_ID}/all_stocks_static.csv", index='name')
 
     if log_price:
-        # 3-log price update in stocks_prices_history
+        # 3-log price update in stock_prices_history
         line = [int(stock.name), valuate(stock), datetime.now().strftime('%Y-%m-%d %H:%M:%S')]
         append_one_line_to_csv(f"{constants.SEASON_ID}/stock_prices_history.csv",line)
     return

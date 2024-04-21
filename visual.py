@@ -297,9 +297,9 @@ def print_investors_gains(dividends_dict):
         hist_filtered = hist[hist['investor']==inv]
         current = hist_filtered.iloc[-1,:].net_worth
         if len(hist_filtered)<2:
-            ranking.loc[len(ranking),:] = ['#', inv, 0, 0]   # TODO: fix this one day, it shouldn't appear as 0,0
-            continue
-        previous = hist_filtered.iloc[-2,:].net_worth
+            previous=10000
+        else:
+            previous = hist_filtered.iloc[-2,:].net_worth
         
         gains = current - previous
         current = round(current, 2)

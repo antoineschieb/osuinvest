@@ -34,13 +34,11 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    # seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
-    seconds = 45
+    seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
     await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
 
-# @tasks.loop(seconds=300)
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=300)
 async def update_static_stats():
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...", end='')
     
@@ -122,7 +120,7 @@ async def update_static_stats():
         await alerts_channel.send(s)
 
     # update discord avatar cache
-    print(f"avatar cache...", end='')
+    print(f"avatar cache...")
     await run_blocking(update_cache_discord)
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
@@ -130,8 +128,7 @@ async def update_static_stats():
     return 
 
 
-# @tasks.loop(hours=24)
-@tasks.loop(seconds=60)
+@tasks.loop(hours=24)
 async def pay_all_dividends_async():      
     # Pay all dividends
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Paying all dividends..")
