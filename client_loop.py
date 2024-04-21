@@ -34,14 +34,15 @@ async def run_blocking(blocking_func: typing.Callable, *args, **kwargs) -> typin
 async def on_ready():
     print("Client loop started.")
     update_static_stats.start()
-    seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
+    # seconds = calculate_remaining_time(datetime.now().time(), time(hour=20, minute=0))
+    seconds = 45
     await asyncio.sleep(seconds)
     pay_all_dividends_async.start()
 
-
-@tasks.loop(seconds=300)
+# @tasks.loop(seconds=300)
+@tasks.loop(seconds=30)
 async def update_static_stats():
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Updating all player stats...", end='')
     
     name_id = get_name_id()
     id_name = get_id_name()
@@ -80,7 +81,7 @@ async def update_static_stats():
     lines = [list(df_updates_appendice.loc[x]) for x in df_updates_appendice.index]
     append_lines_to_csv(f"{SEASON_ID}/stock_prices_history.csv", lines)
     
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging continuous net worth...")
+    print(f"Logging continuous net worth...", end='')
     # log all_net_worth (continuous)
     await run_blocking(log_all_net_worth_continuous)
 
@@ -104,7 +105,7 @@ async def update_static_stats():
                 await user.add_roles(role, reason='Added automatically for having highest net worth')      
                 await channel.send(f'🤑 {elon} is now <@&{role.id}> with a Net Worth of ${net_worth}! 🤑')  
 
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Checking for alerts...")
+    print(f"Checking for alerts...", end='')
     alerts_channel = await client.fetch_channel(ALERTS_CHANNEL_ID)
     # Check for alerts
     ret_strs = await run_blocking(check_for_alerts)
@@ -121,7 +122,7 @@ async def update_static_stats():
         await alerts_channel.send(s)
 
     # update discord avatar cache
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: avatar cache...")
+    print(f"avatar cache...", end='')
     await run_blocking(update_cache_discord)
 
     print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Done!")
@@ -129,9 +130,11 @@ async def update_static_stats():
     return 
 
 
-@tasks.loop(hours=24)
+# @tasks.loop(hours=24)
+@tasks.loop(seconds=60)
 async def pay_all_dividends_async():      
     # Pay all dividends
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Paying all dividends..")
     channel = await client.fetch_channel(FEED_CHANNEL_ID) 
     ret_str, ret_dict = await run_blocking(pay_all_dividends)
     message_bits = split_msg(ret_str)
@@ -140,7 +143,7 @@ async def pay_all_dividends_async():
         await channel.send(x)
 
     # log all_net_worth
-    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging net worth..")
+    print(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Logging daily net worth..")
     await run_blocking(log_all_net_worth)
 
     # Print net gains since last day
@@ -166,6 +169,7 @@ async def pay_all_dividends_async():
 
                 await user.add_roles(role, reason='Added automatically for best net gains today')        
             await channel.send(f'👏 {top_investor} is now the <@&{role.id}> ! 👏')
+            print(f'👏 {top_investor} is now the Trader of the day ! 👏')
 
 
 def update_cache_discord():
