@@ -319,7 +319,7 @@ async def sell(ctx: commands.Context, *args):
         
     if datetime.now() >= season_end_date:
         td = season_end_date - datetime.now()
-        await ctx.reply(f"Season has ended {beautify_time_delta(td.total_seconds())} ago!")
+        await ctx.reply(f"Season has ended {beautify_time_delta(abs(td.total_seconds()))} ago!")
         return
     def parse_args(args):
         args = list(args)

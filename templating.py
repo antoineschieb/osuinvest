@@ -106,7 +106,7 @@ def stock_card(playername,global_rank,value,evolution,dividend_yield,pp,country_
         if shareholders_list[i][0] is None:
             txt = f'Nobody owns any shares\nof {playername} yet!'
         else:
-            txt = f'{shareholders_list[i][0]} : {shareholders_list[i][1]}'
+            txt = f'{shareholders_list[i][0]} : {round(shareholders_list[i][1],1)}'
         fontsize = int(16*sqrt(17/(len(txt)))) if len(txt)>17 else 16
         draw.text((26, 310 + 20*i), txt, font=ImageFont.truetype(file, fontsize), fill=(255,255,255))
         full.paste(square, (margin, 310 + 20*i + 6))
