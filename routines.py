@@ -76,7 +76,7 @@ def create_new_investor(name, discord_uuid, initial_balance):
     return f'{name} has entered the market with ${initial_balance}!'
 
 
-def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=1000,sold_shares=0):
+def create_new_stock(name, raw_skill,trendiness,prestige,total_shares=3000,sold_shares=0):
 
     df_s = pd.read_csv(f"{constants.SEASON_ID}/all_stocks_static.csv", index_col='name')
     df_s.loc[name,:] = [raw_skill,trendiness,prestige]
