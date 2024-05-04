@@ -127,6 +127,9 @@ def log_all_net_worth_continuous():
 
 
 def create_alert(investor: str, stock_id: int, is_greater_than: bool, value: float):
+    df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
+    if investor not in df.index:
+        return f'ERROR: Unknown investor {investor}'
     line = [investor, int(stock_id), is_greater_than, value]
     append_one_line_to_csv(f"{constants.SEASON_ID}/alerts.csv", line)
     id_name = get_id_name()
