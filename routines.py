@@ -185,6 +185,8 @@ def update_name_id(name_id, id_name):
 def update_zero_tax_preferences(investor, zero_tax_bool):
     # Step 1: update the bool in all_investors.csv
     df = pd.read_csv(f"{constants.SEASON_ID}/all_investors.csv", index_col='name')
+    if investor not in df.index:
+        return f'ERROR: Unknown investor {investor}'
     df.loc[investor,'zero_tax_alerts'] = zero_tax_bool
     df.to_csv(f"{constants.SEASON_ID}/all_investors.csv", index='name')
 
@@ -202,7 +204,7 @@ def update_zero_tax_preferences(investor, zero_tax_bool):
         for stock_id in pf.index:
             last_bought = pf.loc[stock_id,'last_bought']
             update_zta(investor, stock_id, last_bought)
-    return
+    return ''
 
 
 def update_zta(investor, stock_id, last_bought):

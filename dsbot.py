@@ -603,7 +603,10 @@ async def pingmezerotax(ctx: commands.Context, *args):
         await ctx.reply(e)
         return
     
-    await run_blocking(update_zero_tax_preferences, ctx.message.author.name, zero_tax_bool)
+    ret = await run_blocking(update_zero_tax_preferences, ctx.message.author.name, zero_tax_bool)
+    if ret.startswith('ERROR:'):
+        await ctx.reply(ret)
+        return
     await ctx.reply(f"You will {'' if zero_tax_bool else 'not '}be pinged when your stocks can be sold for 0.0% tax.")
 
 
