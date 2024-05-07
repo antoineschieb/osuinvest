@@ -119,7 +119,7 @@ def get_stock_value_timedelta(stock_name, td: timedelta, history=None, history_t
     return history_name_time_filtered.iloc[0,:].value
 
 
-def split_msg(msg, max_len=1999):
+def split_msg(msg, max_len=1950):
     if len(msg) < max_len:
         return [msg]
     else:
