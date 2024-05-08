@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
-from math import exp
-import pandas as pd
-from constants import id_name, name_id
-from utils import get_investor_by_name, get_portfolio, get_stock_by_name
+from math import exp, sqrt
+from scipy.stats import entropy
+
+from utils import get_investor_by_name, get_ownership, get_portfolio, get_stock_by_id
 
 
 def valuate_intrinsic(stock):
@@ -10,59 +10,64 @@ def valuate_intrinsic(stock):
     return round(intrinsic_value,2)
 
 
-def valuate(stock):
-    available_shares = stock.total_shares - stock.sold_shares
-    supply_demand_ratio = (stock.total_shares + stock.sold_shares)/(available_shares+0.001)
+def valuate(stock, transac_hist=None, L=None):
+    speculation_coeff = 0.4
+    available_shares = stock.total_shares - speculation_coeff * stock.sold_shares
+    supply_demand_ratio = (stock.total_shares + speculation_coeff * stock.sold_shares)/(available_shares+0.001)
+    
+    if L is None:
+        own = get_ownership(stock.name, transac_hist)
+        L = list(own['shares_owned'])
+
+    damped_entropy = min(entropy(L), sqrt(entropy(L)))
+    adjusted_supply_demand_ratio = 1+(supply_demand_ratio-1)*damped_entropy
+
     intrinsic_value = valuate_intrinsic(stock)
-    return round(supply_demand_ratio * intrinsic_value,2)
+    return round(adjusted_supply_demand_ratio * intrinsic_value,2)
 
 
-def get_stocks_table():
-    df1 = pd.read_csv("all_stocks_static.csv", index_col='name')
-    df2 = pd.read_csv("all_stocks_dynamic.csv", index_col='name')
-    df = pd.concat([df1, df2], axis=1)
-
-    current_name_column = df.apply(lambda x:id_name[x.name], axis=1)
-    df.insert(0,'current_name', current_name_column)
-
-    df["value_intrinsic"] = df.apply(valuate_intrinsic, axis=1)
-    df["value"] = df.apply(valuate, axis=1)
-    df["dividend_yield"] = df.apply(get_dividend_yield_from_stock, axis=1)
-    return df
-
-def get_net_worth(investor_name: str) -> float:
+def get_net_worth(investor_name: str, transac_hist=None) -> float:
     investor = get_investor_by_name(investor_name)
     net_worth = investor.cash_balance
-    portfolio = get_portfolio(investor_name)
+    portfolio = get_portfolio(investor_name, short=True, transac_hist=transac_hist)
     for s in portfolio.index:
         qty = portfolio.loc[s,'shares_owned']
-        stock = get_stock_by_name(s)
-        net_worth += qty * valuate(stock)
-    return net_worth
+        stock = get_stock_by_id(s)
+        net_worth += qty * valuate(stock, transac_hist=transac_hist)
+    return round(net_worth,2)
 
 
 def get_dividend_yield(stock_name) -> float:
-    return get_dividend_yield_from_stock(get_stock_by_name(stock_name))
+    return get_dividend_yield_from_stock(get_stock_by_id(stock_name))
 
 
 def get_dividend_yield_from_stock(stock) -> float:
-    div_yield = 0.8*(stock.prestige-1) + 0.2*(stock.trendiness-1)
+    div_yield = 0.8*(pow(stock.prestige, 0.38)-1) + 0.2*(stock.trendiness-1)
+    div_yield = 1.0*div_yield
     return round(div_yield, 2)  # This is a percentage
 
 
-def tax_from_datetime(d):  ##
+def get_market_cap_from_stock(stock, transac_hist=None) -> float:
+    market_cap = stock.sold_shares * valuate(stock, transac_hist=transac_hist)
+    return round(market_cap)
+
+
+def tax_from_datetime(d):
     now = datetime.now()
-    if (now-d) > timedelta(hours=4):
+    if (now-d) > timedelta(days=4):
+        return 0
+    elif (now-d) > timedelta(days=2):
         return 0.05
-    elif (now-d) > timedelta(hours=1):
-        return 0.1
+    elif (now-d) > timedelta(days=1):
+        return 0.10
     else:
-        return 0.2
+        return 0.20
 
 
 def compute_tax_applied(trade_hist, quantity_to_sell):
     assert quantity_to_sell>0
-
+    if len(trade_hist[0])==3:
+        trade_hist = [x[0:2] for x in trade_hist]
     # 1-create stack where 1 layer = 1 quantity of shares owned and an associated datetime
     stack = []  # will contain only positive values
     for qty,tme in trade_hist:  # chronological order
@@ -93,7 +98,8 @@ def compute_tax_applied(trade_hist, quantity_to_sell):
         else:
             parts.append([left_to_sell,tme])
             break
-    assert sum([x[0] for x in parts]) == quantity_to_sell
+    
+    assert sum([x[0] for x in parts]) - quantity_to_sell < 0.00001
     
     # 4-calculate final tax%
     combination = [[x/abs(quantity_to_sell),tax_from_datetime(y)] for x,y in parts]

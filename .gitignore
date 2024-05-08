@@ -159,5 +159,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-ownerships/
-portfolios/
+plots/*.png
+config.json
+creds.py
+test.ipynb
+test_season/
+beta1_copy/
